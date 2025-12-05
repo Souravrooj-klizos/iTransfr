@@ -1,6 +1,8 @@
 import { createSupabaseServerClient } from '@/lib/supabaseServer';
-import { prisma } from '@/lib/db';
-import { User, UserRole, UserStatus } from '@prisma/client';
+
+// Local type definitions instead of Prisma
+export type UserRole = 'client' | 'admin' | 'super_admin';
+export type UserStatus = 'pending_kyc' | 'active' | 'suspended';
 
 export interface AppUser {
   id: string;
@@ -24,36 +26,38 @@ export async function getUserFromRequest(): Promise<AppUser | null> {
       return null;
     }
 
-    // Get or create user in our database
-    let dbUser = await prisma.user.findUnique({
-      where: { supabaseUserId: supabaseUser.id },
-    });
+    // Get user profile from client_profiles table
+    const { data: profile } = await supabase
+      .from('client_profiles')
+      .select('*')
+      .eq('id', supabaseUser.id)
+      .single();
 
-    if (!dbUser) {
-      // Create user record if it doesn't exist
-      dbUser = await prisma.user.create({
-        data: {
-          supabaseUserId: supabaseUser.id,
-          email: supabaseUser.email!,
-          fullName: supabaseUser.user_metadata?.full_name || supabaseUser.email!,
-          companyName: supabaseUser.user_metadata?.company_name,
-          role: 'client' as UserRole,
-          status: 'pending_kyc' as UserStatus,
-        },
-      });
+    if (!profile) {
+      // Return basic user info if no profile found
+      return {
+        id: supabaseUser.id,
+        supabaseUserId: supabaseUser.id,
+        email: supabaseUser.email || '',
+        fullName: supabaseUser.user_metadata?.full_name || supabaseUser.email || 'User',
+        companyName: supabaseUser.user_metadata?.company_name,
+        role: 'client',
+        status: 'pending_kyc',
+      };
     }
 
     return {
-      id: dbUser.id,
-      supabaseUserId: dbUser.supabaseUserId,
-      email: dbUser.email,
-      fullName: dbUser.fullName,
-      companyName: dbUser.companyName,
-      role: dbUser.role,
-      status: dbUser.status,
+      id: profile.id,
+      supabaseUserId: supabaseUser.id,
+      email: supabaseUser.email || '',
+      fullName: `${profile.first_name} ${profile.last_name}`,
+      companyName: profile.company_name,
+      role: 'client',
+      status: profile.status as UserStatus,
     };
   } catch (error) {
     console.error('Error getting user from request:', error);
     return null;
   }
 }
+
