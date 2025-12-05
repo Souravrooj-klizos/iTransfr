@@ -1,6 +1,4 @@
-import { NextResponse } from 'next/server';
-import { getUserFromRequest, AppUser } from './getUserFromRequest';
-import { UserRole } from '@prisma/client';
+import { AppUser, getUserFromRequest, UserRole } from './getUserFromRequest';
 
 export async function requireRole(allowedRoles: UserRole[]): Promise<AppUser> {
   const user = await getUserFromRequest();
