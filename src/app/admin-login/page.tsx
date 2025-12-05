@@ -1,0 +1,162 @@
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabaseClient';
+import { Shield, Mail, Lock, AlertCircle } from 'lucide-react';
+
+export default function AdminLoginPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const router = useRouter();
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      // Sign in with Supabase
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (authError) throw authError;
+
+      if (!authData.user) {
+        throw new Error('Login failed');
+      }
+
+      // Verify user is an admin
+      const response = await fetch('/api/admin/auth/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: authData.user.id }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.isAdmin) {
+        // Sign out if not admin
+        await supabase.auth.signOut();
+        throw new Error('Access denied. This login is for administrators only.');
+      }
+
+      // Redirect to admin dashboard
+      router.push('/admin/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'Login failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className='flex min-h-screen items-center justify-center bg-gray-900 p-4'>
+      <div className='w-full max-w-md'>
+        {/* Logo/Header */}
+        <div className='mb-8 text-center'>
+          <div className='mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-blue-600'>
+            <Shield className='h-8 w-8 text-white' />
+          </div>
+          <h1 className='text-2xl font-bold text-white'>Admin Console</h1>
+          <p className='mt-1 text-gray-400'>iTransfer Administration</p>
+        </div>
+
+        {/* Login Form */}
+        <div className='rounded-lg border border-gray-700 bg-gray-800 p-8 shadow-xl'>
+          <form onSubmit={handleLogin} className='space-y-6'>
+            {error && (
+              <div className='flex items-center gap-2 rounded-lg border border-red-500 bg-red-900/50 px-4 py-3 text-red-200'>
+                <AlertCircle className='h-5 w-5 flex-shrink-0' />
+                <span className='text-sm'>{error}</span>
+              </div>
+            )}
+
+            <div>
+              <label htmlFor='email' className='mb-2 block text-sm font-medium text-gray-300'>
+                Email Address
+              </label>
+              <div className='relative'>
+                <Mail className='absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-500' />
+                <input
+                  id='email'
+                  type='email'
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder='admin@company.com'
+                  required
+                  className='w-full rounded-lg border border-gray-600 bg-gray-700 py-3 pr-4 pl-10 text-white placeholder-gray-400 focus:border-transparent focus:ring-2 focus:ring-blue-500'
+                />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor='password' className='mb-2 block text-sm font-medium text-gray-300'>
+                Password
+              </label>
+              <div className='relative'>
+                <Lock className='absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-500' />
+                <input
+                  id='password'
+                  type='password'
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  placeholder='••••••••'
+                  required
+                  className='w-full rounded-lg border border-gray-600 bg-gray-700 py-3 pr-4 pl-10 text-white placeholder-gray-400 focus:border-transparent focus:ring-2 focus:ring-blue-500'
+                />
+              </div>
+            </div>
+
+            <button
+              type='submit'
+              disabled={loading}
+              className='w-full rounded-lg bg-blue-600 px-4 py-3 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50'
+            >
+              {loading ? (
+                <span className='flex items-center justify-center gap-2'>
+                  <svg className='h-5 w-5 animate-spin' viewBox='0 0 24 24'>
+                    <circle
+                      className='opacity-25'
+                      cx='12'
+                      cy='12'
+                      r='10'
+                      stroke='currentColor'
+                      strokeWidth='4'
+                      fill='none'
+                    />
+                    <path
+                      className='opacity-75'
+                      fill='currentColor'
+                      d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
+                    />
+                  </svg>
+                  Signing in...
+                </span>
+              ) : (
+                'Sign In to Admin'
+              )}
+            </button>
+          </form>
+
+          <div className='mt-6 border-t border-gray-700 pt-6'>
+            <p className='text-center text-sm text-gray-500'>
+              Not an administrator?{' '}
+              <a href='/login' className='text-blue-400 hover:text-blue-300'>
+                Go to Client Login
+              </a>
+            </p>
+          </div>
+        </div>
+
+        <p className='mt-8 text-center text-xs text-gray-500'>
+          Protected area. Unauthorized access is prohibited.
+        </p>
+      </div>
+    </div>
+  );
+}

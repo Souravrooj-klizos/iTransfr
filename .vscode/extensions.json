@@ -1,0 +1,21 @@
+{
+  "recommendations": [
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+    "bradlc.vscode-tailwindcss",
+    "ms-vscode.vscode-typescript-next",
+    "ms-vscode.vscode-json",
+    "christian-kohler.path-intellisense",
+    "ms-vscode.vscode-css-peek",
+    "formulahendry.auto-rename-tag",
+    "ms-vscode.vscode-css-intellisense",
+    "bradlc.vscode-tailwindcss",
+    "unifiedjs.vscode-mdx",
+    "ms-vscode-remote.remote-containers",
+    "ms-vscode.vscode-docker"
+  ],
+  "unwantedRecommendations": [
+    "ms-vscode.vscode-typescript",
+    "hookyqr.beautify"
+  ]
+}

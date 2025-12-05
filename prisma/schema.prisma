@@ -1,0 +1,365 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["public", "auth"]
+}
+
+enum UserRole {
+  client
+  admin
+  super_admin
+
+  @@schema("public")
+}
+
+enum UserStatus {
+  pending_kyc
+  active
+  suspended
+
+  @@schema("public")
+}
+
+enum AdminRole {
+  admin
+  super_admin
+
+  @@schema("public")
+}
+
+enum AdminStatus {
+  active
+  inactive
+  suspended
+
+  @@schema("public")
+}
+
+enum TransactionType {
+  deposit
+  swap
+  payout
+
+  @@schema("public")
+}
+
+enum TransactionStatus {
+  // KYC statuses
+  KYC_PENDING
+  KYC_UNDER_REVIEW
+  KYC_REJECTED
+  READY_FOR_DEPOSIT
+
+  // Deposit statuses
+  DEPOSIT_REQUESTED
+  DEPOSIT_PENDING_CONFIRMATION
+  DEPOSIT_CONFIRMED
+  READY_FOR_SWAP
+  READY_FOR_PAYOUT
+
+  // Swap statuses
+  SWAP_PENDING
+  SWAP_IN_PROGRESS
+  SWAP_COMPLETED
+  SWAP_FAILED
+
+  // Payout statuses
+  PAYOUT_PENDING
+  PAYOUT_IN_PROGRESS
+  PAYOUT_COMPLETED
+  PAYOUT_FAILED
+
+  // General
+  FAILED
+
+  @@schema("public")
+}
+
+enum KycStatus {
+  pending
+  under_review
+  approved
+  rejected
+
+  @@schema("public")
+}
+
+enum FxOrderStatus {
+  quote_requested
+  quote_accepted
+  executing
+  completed
+  failed
+
+  @@schema("public")
+}
+
+enum PayoutRequestStatus {
+  pending
+  processing
+  completed
+  failed
+
+  @@schema("public")
+}
+
+enum KycDocumentType {
+  passport
+  address_proof
+  photo_id
+
+  @@schema("public")
+}
+
+// =====================================================
+// CLIENT USER MODEL
+// =====================================================
+model ClientProfile {
+  id                String   @id @default(cuid())
+  supabaseUserId    String   @unique @map("id") // References auth.users(id)
+
+  // Personal Information
+  firstName         String   @map("first_name")
+  lastName          String   @map("last_name")
+  mobile            String?
+  countryCode       String? @map("country_code")
+  city              String?
+  country           String?
+  pincode           String?
+
+  // Business Information
+  companyName       String?  @map("company_name")
+  businessType      String?  @map("business_type")
+
+  // Status
+  status            UserStatus @default(pending_kyc)
+  createdAt         DateTime   @default(now()) @map("created_at")
+  updatedAt         DateTime   @updatedAt @map("updated_at")
+
+  // Relations
+  wallets           Wallet[]
+  transactions      Transaction[]
+  kycRecord         KycRecord?
+  fxOrders          FxOrder[]
+  payoutRequests    PayoutRequest[]
+  ledgerEntries     LedgerEntry[]
+  emailVerifications EmailVerification[]
+
+  @@map("client_profiles")
+  @@schema("public")
+}
+
+// =====================================================
+// ADMIN USER MODEL
+// =====================================================
+model AdminProfile {
+  id                String   @id @default(cuid())
+  supabaseUserId    String   @unique @map("id") // References auth.users(id)
+
+  // Personal Information
+  firstName         String   @map("first_name")
+  lastName          String   @map("last_name")
+  mobile            String?
+  countryCode       String? @map("country_code")
+  city              String?
+  country           String?
+
+  // Admin Information
+  role              AdminRole @default(admin)
+  department        String?   @map("department")
+  employeeId        String?   @unique @map("employee_id")
+
+  // Status
+  status            AdminStatus @default(active)
+  createdAt         DateTime    @default(now()) @map("created_at")
+  updatedAt         DateTime    @updatedAt @map("updated_at")
+
+  // Relations
+  auditLogs         AuditLog[]
+
+  @@map("admin_profiles")
+  @@schema("public")
+}
+
+model Wallet {
+  id              String   @id @default(cuid())
+  userId          String
+  turnkeyWalletId String?
+  address         String
+  currency        String
+  balance         Decimal  @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  user            ClientProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions    Transaction[]
+  ledgerEntries   LedgerEntry[]
+
+  @@map("wallets")
+  @@schema("public")
+}
+
+model Transaction {
+  id              String            @id @default(cuid())
+  userId          String
+  walletId        String?
+  type            TransactionType
+  amount          Decimal
+  currencyFrom    String
+  currencyTo      String?
+  status          TransactionStatus @default(KYC_PENDING)
+  fxRate          Decimal?
+  feeAmount       Decimal?
+  reference       String?           @unique
+  notes           String[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  // Relations
+  user            ClientProfile     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wallet          Wallet?           @relation(fields: [walletId], references: [id])
+  ledgerEntries   LedgerEntry[]
+  fxOrder         FxOrder?
+  payoutRequest   PayoutRequest?
+
+  @@map("transactions")
+  @@schema("public")
+}
+
+model LedgerEntry {
+  id              String   @id @default(cuid())
+  transactionId   String
+  userId          String
+  walletId        String?
+  entryType       String   // "debit" | "credit"
+  ledgerAccount   String
+  amount          Decimal
+  currency        String
+  createdAt       DateTime @default(now())
+
+  // Relations
+  transaction     Transaction     @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  user            ClientProfile   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wallet          Wallet?         @relation(fields: [walletId], references: [id])
+
+  @@map("ledger_entries")
+  @@schema("public")
+}
+
+model KycRecord {
+  id                String      @id @default(cuid())
+  userId            String      @unique
+  status            KycStatus   @default(pending)
+  amlbotRequestId   String?
+  riskScore         Decimal?
+  notes             String[]
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  // Relations
+  user              ClientProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documents         KycDocument[]
+
+  @@map("kyc_records")
+  @@schema("public")
+}
+
+model KycDocument {
+  id            String           @id @default(cuid())
+  kycRecordId   String
+  documentType  KycDocumentType
+  fileName      String
+  fileUrl       String
+  uploadedAt    DateTime         @default(now())
+
+  // Relations
+  kycRecord     KycRecord       @relation(fields: [kycRecordId], references: [id], onDelete: Cascade)
+
+  @@unique([kycRecordId, documentType])
+  @@map("kyc_documents")
+  @@schema("public")
+}
+
+model EmailVerification {
+  id         String   @id @default(cuid())
+  email      String
+  otp        String
+  expiresAt  DateTime
+  userId     String?
+  createdAt  DateTime @default(now())
+
+  // Relations
+  user       ClientProfile? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("email_verifications")
+  @@schema("public")
+}
+
+model FxOrder {
+  id                String        @id @default(cuid())
+  transactionId     String       @unique
+  userId            String
+  bitsoQuoteId      String?
+  side              String        // "buy" | "sell"
+  baseCurrency      String
+  quoteCurrency     String
+  rate              Decimal
+  amountBase        Decimal
+  amountQuote       Decimal
+  status            FxOrderStatus @default(quote_requested)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  // Relations
+  transaction       Transaction     @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  user              ClientProfile   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("fx_orders")
+  @@schema("public")
+}
+
+model PayoutRequest {
+  id                  String              @id @default(cuid())
+  transactionId       String              @unique
+  userId              String
+  infinitusPaymentId  String?
+  destinationCountry  String
+  destinationBank     Json                // { accountNumber, ifsc/bank_code, bankName, beneficiaryName, etc. }
+  amount              Decimal
+  currency            String
+  status              PayoutRequestStatus @default(pending)
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  // Relations
+  transaction         Transaction     @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  user                ClientProfile   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("payout_requests")
+  @@schema("public")
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String   // admin who performed action
+  targetType  String   // "transaction" | "kyc" | "user" | ...
+  targetId    String
+  action      String
+  metadata    Json
+  createdAt   DateTime @default(now())
+
+  // Relations
+  user        AdminProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("audit_log")
+  @@schema("public")
+}
