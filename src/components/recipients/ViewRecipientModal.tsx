@@ -2,7 +2,6 @@
 
 import PenEdit from '@/components/icons/PenEdit';
 import { Modal } from '@/components/ui/Modal';
-import { Eye, Pencil } from 'lucide-react';
 import Image from 'next/image';
 
 interface Recipient {
@@ -42,13 +41,37 @@ export function ViewRecipientModal({
     return `**** **** ${lastFour}`;
   };
 
+  // Get type color based on recipient type
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case 'Crypto':
+        return 'bg-purple-100 text-purple-600';
+      case 'International':
+        return 'bg-green-100 text-green-600';
+      case 'Domestic':
+        return 'bg-blue-100 text-blue-600';
+      default:
+        return 'bg-gray-100 text-gray-600';
+    }
+  };
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title='Recipient Details' size='lg'>
       <div className='space-y-6'>
         {/* Full Name */}
-        <div>
-          <h3 className='mb-2 text-sm font-medium text-gray-600'>Full Name</h3>
-          <p className='text-base font-medium text-gray-900'>{recipient.name}</p>
+        <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
+          <div>
+            <h3 className='mb-2 text-sm font-medium text-gray-600'>Full Name</h3>
+            <p className='text-base font-medium text-gray-900'>{recipient.name}</p>
+          </div>
+          <div>
+            <h3 className='mb-2 text-sm font-medium text-gray-600'>Type</h3>
+            <span
+              className={`inline-block rounded-lg px-3 py-1.5 text-sm font-medium ${getTypeColor(recipient.type)}`}
+            >
+              {recipient.type}
+            </span>
+          </div>
         </div>
 
         {/* Contact Email and Phone Number */}
@@ -124,10 +147,10 @@ export function ViewRecipientModal({
         <div className='flex flex-col gap-3 border-t border-gray-200 pt-6 sm:flex-row'>
           <button
             type='button'
-            className='flex flex-1 items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50'
+            className='flex flex-1 items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700 transition-colors hover:bg-red-50'
           >
-            <Image src='/transaction.svg' alt='transaction' width={20} height={20} className='h-4 w-4' />
-            View Transactions
+            <Image src='/delete.svg' alt='delete' width={20} height={20} className='h-4 w-4' />
+            Remove
           </button>
           <button
             type='button'
