@@ -24,24 +24,15 @@ export async function POST(request: NextRequest) {
     const { amount, currency } = await request.json();
 
     if (!amount || amount <= 0) {
-      return NextResponse.json(
-        { error: 'Valid amount is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Valid amount is required' }, { status: 400 });
     }
 
     if (!currency) {
-      return NextResponse.json(
-        { error: 'Currency is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Currency is required' }, { status: 400 });
     }
 
     if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: 'Server configuration error' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
     }
 
     // Get authenticated user
@@ -58,13 +49,13 @@ export async function POST(request: NextRequest) {
       }
     );
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
     console.log('[Deposit] Creating deposit for user:', user.id);
@@ -73,10 +64,13 @@ export async function POST(request: NextRequest) {
     // 1. Check if user can transact (KYC approved)
     const canTransact = await canUserTransact(user.id);
     if (!canTransact.allowed) {
-      return NextResponse.json({
-        error: canTransact.reason || 'Cannot process transaction',
-        kycRequired: true,
-      }, { status: 403 });
+      return NextResponse.json(
+        {
+          error: canTransact.reason || 'Cannot process transaction',
+          kycRequired: true,
+        },
+        { status: 403 }
+      );
     }
 
     // 2. Generate transaction reference
@@ -101,10 +95,7 @@ export async function POST(request: NextRequest) {
 
     if (txError || !transaction) {
       console.error('[Deposit] Failed to create transaction:', txError);
-      return NextResponse.json(
-        { error: 'Failed to create deposit request' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Failed to create deposit request' }, { status: 500 });
     }
 
     console.log('[Deposit] Transaction created:', transaction.id);
@@ -136,13 +127,16 @@ export async function POST(request: NextRequest) {
 
       console.log('[Deposit] ❌ Transaction blocked by AML check');
 
-      return NextResponse.json({
-        success: false,
-        error: 'Transaction cannot be processed at this time',
-        message: 'Please contact support for assistance',
-        transactionId: transaction.id,
-        reference,
-      }, { status: 403 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Transaction cannot be processed at this time',
+          message: 'Please contact support for assistance',
+          transactionId: transaction.id,
+          reference,
+        },
+        { status: 403 }
+      );
     }
 
     // 6. AML passed - update transaction and return bank details
@@ -183,7 +177,6 @@ export async function POST(request: NextRequest) {
       },
       message: 'Deposit request created. Please transfer funds using the bank details provided.',
     });
-
   } catch (error: any) {
     console.error('[Deposit] Error:', error);
     return NextResponse.json(
@@ -201,10 +194,7 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: 'Server configuration error' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
     }
 
     // Get authenticated user
@@ -221,13 +211,13 @@ export async function GET(request: NextRequest) {
       }
     );
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
     // Fetch user's deposit transactions
@@ -244,7 +234,6 @@ export async function GET(request: NextRequest) {
       deposits: deposits || [],
       count: deposits?.length || 0,
     });
-
   } catch (error: any) {
     console.error('[Deposit GET] Error:', error);
     return NextResponse.json(

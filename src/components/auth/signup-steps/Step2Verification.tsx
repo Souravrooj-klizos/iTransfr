@@ -1,9 +1,10 @@
 'use client';
-'use client';
 
-import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { OTPInput } from '@/components/ui/OTPInput';
+import { useToast } from '@/components/ui/Toast';
+import { getFirstError, otpSchema } from '@/lib/validations/auth';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
 interface Step2Props {
   formData: any;
@@ -15,6 +16,8 @@ export function Step2Verification({ formData, onNext }: Step2Props) {
   const [canResend, setCanResend] = useState(false);
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
+  const [fieldError, setFieldError] = useState('');
+  const toast = useToast();
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -32,15 +35,15 @@ export function Step2Verification({ formData, onNext }: Step2Props) {
     setLoading(true);
     setTimer(30);
     setCanResend(false);
-    // Call API to resend OTP
     try {
       await fetch('/api/auth/otp/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: formData.email }),
       });
+      toast.success('Code Sent', 'A new verification code has been sent to your email.');
     } catch (error) {
-      console.error('Failed to resend OTP:', error);
+      toast.error('Failed to Send', 'Could not resend verification code. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -48,18 +51,29 @@ export function Step2Verification({ formData, onNext }: Step2Props) {
 
   const handleComplete = (enteredOtp: string) => {
     setOtp(enteredOtp);
+    setFieldError('');
   };
 
   const handleVerify = async () => {
-    if (otp && otp.length === 5) {
-      setLoading(true);
-      try {
-        await onNext(otp);
-      } catch (error) {
-        console.error('Verification failed:', error);
-      } finally {
-        setLoading(false);
-      }
+    setFieldError('');
+
+    // Validate with Zod
+    const result = otpSchema.safeParse({ otp });
+
+    if (!result.success) {
+      const errorMessage = getFirstError(result.error);
+      setFieldError(errorMessage);
+      toast.error('Validation Error', errorMessage);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await onNext(otp);
+    } catch (error) {
+      toast.error('Verification Failed', 'Invalid verification code. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -85,7 +99,7 @@ export function Step2Verification({ formData, onNext }: Step2Props) {
           <button
             onClick={handleResend}
             disabled={!canResend || loading}
-            className={`text-xs ${canResend && !loading ? 'cursor-pointer text-blue-600 hover:text-blue-700' : 'cursor-not-allowed text-gray-400'}`}
+            className={`cursor-pointer text-xs ${canResend && !loading ? 'text-blue-600 hover:text-blue-700' : 'cursor-not-allowed text-gray-400'}`}
           >
             {loading && !canResend
               ? 'Sending...'
@@ -96,12 +110,13 @@ export function Step2Verification({ formData, onNext }: Step2Props) {
         </div>
 
         <OTPInput length={5} onComplete={handleComplete} />
+        {fieldError && <p className='mt-2 text-xs text-red-500'>{fieldError}</p>}
       </div>
 
       <button
         onClick={handleVerify}
         disabled={!otp || otp.length !== 5 || loading}
-        className='h-11 w-full rounded-md bg-blue-600 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50'
+        className='h-11 w-full cursor-pointer rounded-[10px] bg-gradient-to-b from-[#588CFF] to-[#2462EB] font-medium text-white transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50'
       >
         {loading ? 'Verifying...' : 'Verify & Continue'}
       </button>

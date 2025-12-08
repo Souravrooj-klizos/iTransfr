@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
 import { FileUpload } from '@/components/ui/FileUpload';
+import { useToast } from '@/components/ui/Toast';
 import { Check, Circle } from 'lucide-react';
 
 interface Step5Props {
@@ -11,6 +11,8 @@ interface Step5Props {
 }
 
 export function Step5KYC({ formData, updateFormData, onSubmit }: Step5Props) {
+  const toast = useToast();
+
   const documents = [
     { id: 'passport', label: 'Passport copy' },
     { id: 'addressProof', label: 'Proof of address' },
@@ -18,6 +20,23 @@ export function Step5KYC({ formData, updateFormData, onSubmit }: Step5Props) {
   ];
 
   const isComplete = formData.passportFile && formData.addressProofFile && formData.photoIdFile;
+
+  const handleSubmit = () => {
+    if (!formData.passportFile) {
+      toast.error('Missing Document', 'Please upload your passport copy');
+      return;
+    }
+    if (!formData.addressProofFile) {
+      toast.error('Missing Document', 'Please upload your proof of address');
+      return;
+    }
+    if (!formData.photoIdFile) {
+      toast.error('Missing Document', 'Please upload your photo ID');
+      return;
+    }
+
+    onSubmit();
+  };
 
   return (
     <div className='flex min-h-[600px] gap-8'>
@@ -30,7 +49,6 @@ export function Step5KYC({ formData, updateFormData, onSubmit }: Step5Props) {
             {documents.map(doc => (
               <div key={doc.id} className='flex items-center justify-between'>
                 <div className='flex items-center gap-2'>
-                  {/* Icon based on doc type could go here */}
                   <span className='text-sm text-gray-700'>{doc.label}</span>
                 </div>
                 {formData[`${doc.id}File`] ? (
@@ -48,11 +66,9 @@ export function Step5KYC({ formData, updateFormData, onSubmit }: Step5Props) {
         {/* Button at bottom of left sidebar */}
         <div className='mt-auto pt-6'>
           <button
-            onClick={onSubmit}
+            onClick={handleSubmit}
             disabled={!isComplete}
-            className={`h-11 w-full rounded-md font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-              isComplete ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 hover:bg-gray-500'
-            }`}
+            className='h-11 w-full cursor-pointer rounded-[10px] bg-gradient-to-b from-[#588CFF] to-[#2462EB] font-medium text-white transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50'
           >
             Upload & Continue
           </button>
@@ -64,19 +80,16 @@ export function Step5KYC({ formData, updateFormData, onSubmit }: Step5Props) {
         <div className='space-y-6'>
           <FileUpload
             label='Upload your Passport'
-            required
             onFileSelect={file => updateFormData({ passportFile: file })}
           />
 
           <FileUpload
             label='Upload your Proof of Address'
-            required
             onFileSelect={file => updateFormData({ addressProofFile: file })}
           />
 
           <FileUpload
             label='Upload your Photo ID'
-            required
             onFileSelect={file => updateFormData({ photoIdFile: file })}
           />
         </div>

@@ -1,26 +1,36 @@
 'use client';
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import {
-  LayoutDashboard,
-  Wallet,
-  Send,
-  Users,
-  BarChart3,
-  Settings,
-  HelpCircle,
-  ChevronDown,
-} from 'lucide-react';
 import ItransfrLogo from '@/components/icons/ItransfrLogo';
 import ItransfrText from '@/components/icons/ItransfrText';
+import { supabase } from '@/lib/supabaseClient';
+import { useUser } from '@/providers/UserProvider';
+import {
+  BarChart3,
+  ChevronDown,
+  HelpCircle,
+  LayoutDashboard,
+  LogOut,
+  Send,
+  Settings,
+  Users,
+  Wallet,
+} from 'lucide-react';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
 
-interface SidebarProps {
-  user: any;
-}
-
-export function Sidebar({ user }: SidebarProps) {
+export function Sidebar() {
+  const { user } = useUser();
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      router.push('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
 
   const navigation = [
     { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
@@ -75,7 +85,9 @@ export function Sidebar({ user }: SidebarProps) {
                 key={item.name}
                 href={item.href}
                 className={`group flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                  isActive ? 'bg-linear-to-b from-[#588CFF] to-[#2462EB] text-white' : 'text-gray-700 hover:bg-gray-100'
+                  isActive
+                    ? 'bg-linear-to-b from-[#588CFF] to-[#2462EB] text-white'
+                    : 'text-gray-700 hover:bg-gray-100'
                 }`}
               >
                 <item.icon
@@ -98,7 +110,9 @@ export function Sidebar({ user }: SidebarProps) {
                 key={item.name}
                 href={item.href}
                 className={`group flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                  isActive ? 'bg-linear-to-b from-[#588CFF] to-[#2462EB] text-white' : 'text-gray-700 hover:bg-gray-100'
+                  isActive
+                    ? 'bg-linear-to-b from-[#588CFF] to-[#2462EB] text-white'
+                    : 'text-gray-700 hover:bg-gray-100'
                 }`}
               >
                 <item.icon
@@ -110,6 +124,15 @@ export function Sidebar({ user }: SidebarProps) {
               </Link>
             );
           })}
+
+          {/* Logout Button */}
+          <button
+            onClick={handleLogout}
+            className='group flex w-full cursor-pointer items-center rounded-lg px-3 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50'
+          >
+            <LogOut className='mr-3 h-5 w-5 shrink-0 text-red-500 group-hover:text-red-600' />
+            Logout
+          </button>
         </div>
       </div>
     </div>

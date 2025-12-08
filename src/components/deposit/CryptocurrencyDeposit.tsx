@@ -44,7 +44,7 @@ export function CryptocurrencyDeposit() {
           <div className='relative mt-1'>
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className='flex w-full items-center justify-between rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 transition-colors hover:bg-gray-50'
+              className='flex w-full cursor-pointer items-center justify-between rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 transition-colors hover:bg-gray-50'
               type='button'
             >
               <div className='flex items-center gap-2'>
@@ -102,7 +102,7 @@ export function CryptocurrencyDeposit() {
               <span className='font-mono text-sm break-all text-blue-600'>{bridgeUrl}</span>
               <button
                 onClick={handleCopyUrl}
-                className='z-10 ml-2 flex shrink-0 items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2 py-2 text-xs text-gray-500 transition-colors hover:text-gray-700'
+                className='z-10 ml-2 flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2 py-2 text-xs text-gray-500 transition-colors hover:text-gray-700'
                 type='button'
               >
                 {copiedUrl ? (
@@ -120,7 +120,7 @@ export function CryptocurrencyDeposit() {
             </div>
             <Button
               onClick={handleOpenPaymentPage}
-              className='flex shrink-0 items-center gap-2 bg-[#B762FF] px-6 py-2.5 text-white hover:bg-[#B762FF]/90'
+              className='flex shrink-0 cursor-pointer items-center gap-2 bg-[#B762FF] px-6 py-2.5 text-white hover:bg-[#B762FF]/90'
             >
               <Image src='/share.svg' alt='Share' width={16} height={16} />
               Open Payment Page

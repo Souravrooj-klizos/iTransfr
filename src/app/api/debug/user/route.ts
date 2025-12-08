@@ -18,10 +18,7 @@ export async function GET(request: NextRequest) {
 
     if (!userId) {
       // List all client profiles
-      const { data: profiles } = await supabaseAdmin
-        .from('client_profiles')
-        .select('*')
-        .limit(10);
+      const { data: profiles } = await supabaseAdmin.from('client_profiles').select('*').limit(10);
 
       return NextResponse.json({
         message: 'No userId provided. Here are existing profiles:',
@@ -56,14 +53,15 @@ export async function GET(request: NextRequest) {
       },
       clientProfile: profile || null,
       kycRecord: kyc || null,
-      authUser: authUser?.user ? {
-        id: authUser.user.id,
-        email: authUser.user.email,
-        created_at: authUser.user.created_at,
-      } : null,
+      authUser: authUser?.user
+        ? {
+            id: authUser.user.id,
+            email: authUser.user.email,
+            created_at: authUser.user.created_at,
+          }
+        : null,
       error: profileError?.message,
     });
-
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

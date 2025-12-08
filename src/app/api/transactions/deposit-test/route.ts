@@ -29,31 +29,19 @@ export async function POST(request: NextRequest) {
     const { userId, amount, currency } = await request.json();
 
     if (!userId) {
-      return NextResponse.json(
-        { error: 'userId is required for testing' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'userId is required for testing' }, { status: 400 });
     }
 
     if (!amount || amount <= 0) {
-      return NextResponse.json(
-        { error: 'Valid amount is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Valid amount is required' }, { status: 400 });
     }
 
     if (!currency) {
-      return NextResponse.json(
-        { error: 'Currency is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Currency is required' }, { status: 400 });
     }
 
     if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: 'Server configuration error' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
     }
 
     console.log('[Deposit Test] Creating deposit for user:', userId);
@@ -67,11 +55,14 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (!profile) {
-      return NextResponse.json({
-        error: 'User not found',
-        hint: 'Check the userId is correct',
-        dbError: profileError?.message,
-      }, { status: 404 });
+      return NextResponse.json(
+        {
+          error: 'User not found',
+          hint: 'Check the userId is correct',
+          dbError: profileError?.message,
+        },
+        { status: 404 }
+      );
     }
 
     const userName = `${profile.first_name} ${profile.last_name}`;
@@ -82,12 +73,15 @@ export async function POST(request: NextRequest) {
     console.log('[Deposit Test] Can transact:', canTransact);
 
     if (!canTransact.allowed) {
-      return NextResponse.json({
-        error: canTransact.reason || 'Cannot process transaction',
-        kycRequired: true,
-        userStatus: profile.status,
-        hint: 'User KYC must be approved before making transactions',
-      }, { status: 403 });
+      return NextResponse.json(
+        {
+          error: canTransact.reason || 'Cannot process transaction',
+          kycRequired: true,
+          userStatus: profile.status,
+          hint: 'User KYC must be approved before making transactions',
+        },
+        { status: 403 }
+      );
     }
 
     // 3. Generate transaction reference
@@ -149,14 +143,17 @@ export async function POST(request: NextRequest) {
 
       console.log('[Deposit Test] ❌ Transaction blocked by AML check');
 
-      return NextResponse.json({
-        success: false,
-        error: 'Transaction blocked by AML check',
-        reason: amlResult.reason,
-        transactionId: transaction.id,
-        reference,
-        amlCheck: amlResult,
-      }, { status: 403 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Transaction blocked by AML check',
+          reason: amlResult.reason,
+          transactionId: transaction.id,
+          reference,
+          amlCheck: amlResult,
+        },
+        { status: 403 }
+      );
     }
 
     // 7. AML passed - update transaction
@@ -205,7 +202,6 @@ export async function POST(request: NextRequest) {
         instructions: `Please include reference "${reference}" in your transfer memo`,
       },
     });
-
   } catch (error: any) {
     console.error('[Deposit Test] Error:', error);
     return NextResponse.json(

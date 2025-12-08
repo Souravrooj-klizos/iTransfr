@@ -16,17 +16,9 @@
 
 export type ApplicantType = 'PERSON' | 'COMPANY';
 
-export type VerificationStatus =
-  | 'pending'
-  | 'in_progress'
-  | 'completed'
-  | 'failed'
-  | 'expired';
+export type VerificationStatus = 'pending' | 'in_progress' | 'completed' | 'failed' | 'expired';
 
-export type VerificationResult =
-  | 'approved'
-  | 'declined'
-  | 'review_needed';
+export type VerificationResult = 'approved' | 'declined' | 'review_needed';
 
 export interface AMLBotApplicant {
   id: string;
@@ -140,7 +132,7 @@ function getApiKey(): string {
 
 function getHeaders(): HeadersInit {
   return {
-    'Authorization': `Token ${getApiKey()}`,
+    Authorization: `Token ${getApiKey()}`,
     'Content-Type': 'application/json',
   };
 }
@@ -182,9 +174,7 @@ async function handleResponse<T>(response: Response): Promise<T> {
  * Create a new applicant in AMLBot
  * Call this before creating a verification
  */
-export async function createApplicant(
-  data: CreateApplicantRequest
-): Promise<AMLBotApplicant> {
+export async function createApplicant(data: CreateApplicantRequest): Promise<AMLBotApplicant> {
   console.log('[AMLBot] Creating applicant:', data.external_id);
 
   const response = await fetch(`${AMLBOT_BASE_URL}/applicants`, {
@@ -298,13 +288,10 @@ export async function getVerificationsForApplicant(
 ): Promise<AMLBotVerification[]> {
   console.log('[AMLBot] Fetching verifications for applicant:', applicantId);
 
-  const response = await fetch(
-    `${AMLBOT_BASE_URL}/verifications?applicant_id=${applicantId}`,
-    {
-      method: 'GET',
-      headers: getHeaders(),
-    }
-  );
+  const response = await fetch(`${AMLBOT_BASE_URL}/verifications?applicant_id=${applicantId}`, {
+    method: 'GET',
+    headers: getHeaders(),
+  });
 
   const result = await handleResponse<{ data: AMLBotVerification[] }>(response);
   return result.data || [];
@@ -358,10 +345,7 @@ export async function getFormUrl(
 /**
  * Verify webhook signature (if webhook secret is configured)
  */
-export function verifyWebhookSignature(
-  payload: string,
-  signature: string
-): boolean {
+export function verifyWebhookSignature(payload: string, signature: string): boolean {
   const secret = process.env.AML_BOT_WEBHOOK_SECRET;
 
   if (!secret) {
@@ -371,10 +355,7 @@ export function verifyWebhookSignature(
 
   // AMLBot typically uses HMAC-SHA256 for webhook signatures
   const crypto = require('crypto');
-  const expectedSignature = crypto
-    .createHmac('sha256', secret)
-    .update(payload)
-    .digest('hex');
+  const expectedSignature = crypto.createHmac('sha256', secret).update(payload).digest('hex');
 
   return signature === expectedSignature;
 }
@@ -388,7 +369,11 @@ export function verifyWebhookSignature(
  * Use this to verify your API key is working
  * Returns detailed error info for debugging
  */
-export async function testConnection(): Promise<{ success: boolean; details: string; status?: number }> {
+export async function testConnection(): Promise<{
+  success: boolean;
+  details: string;
+  status?: number;
+}> {
   try {
     console.log('[AMLBot] Testing connection...');
     console.log('[AMLBot] Base URL:', AMLBOT_BASE_URL);
@@ -423,7 +408,6 @@ export async function testConnection(): Promise<{ success: boolean; details: str
     return { success: false, details: error.message || 'Network error' };
   }
 }
-
 
 /**
  * Map AMLBot result to internal KYC status

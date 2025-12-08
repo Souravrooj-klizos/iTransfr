@@ -16,7 +16,7 @@ export function QuickActionButton({
   return (
     <button
       onClick={onClick}
-      className={`group flex flex-col items-center justify-center rounded-xl border p-4 transition-all ${
+      className={`group flex cursor-pointer flex-col items-center justify-center rounded-xl border p-4 transition-all ${
         isPrimary ? 'bg-gradient-blue' : 'border-gray-200 hover:border-blue-500 hover:shadow-md'
       } `}
     >

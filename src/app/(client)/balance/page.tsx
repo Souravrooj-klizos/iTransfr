@@ -163,7 +163,7 @@ export default function BalancePage() {
     <div className='space-y-6'>
       <div className='grid grid-cols-1 gap-6 lg:grid-cols-3'>
         {/* Left Column - Wallet Balance Card */}
-        <div className='lg:col-span-1 rounded-xl border border-gray-200 bg-white p-6'>
+        <div className='rounded-xl border border-gray-200 bg-white p-6 lg:col-span-1'>
           <WalletBalanceCard
             totalBalance='$ 598,322.00'
             wallets={mockWallets}

@@ -229,7 +229,7 @@ export default function RecipientsPage() {
         <Tabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} variant='pills' />
         <button
           onClick={() => setIsAddModalOpen(true)}
-          className='bg-gradient-blue flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors hover:opacity-90'
+          className='bg-gradient-blue flex cursor-pointer items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors hover:opacity-90'
         >
           <Plus className='h-4 w-4' />
           Add Recipient

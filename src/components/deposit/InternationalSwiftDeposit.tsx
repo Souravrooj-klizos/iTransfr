@@ -2,7 +2,6 @@ import { BankDetailsField } from '@/components/ui/BankDetailsField';
 import { ImportantNotes } from '@/components/ui/ImportantNotes';
 
 export function InternationalSwiftDeposit() {
-
   return (
     <div className='space-y-6'>
       <h2 className='text-xl font-semibold text-gray-900'>International SWIFT Deposit (USD)</h2>

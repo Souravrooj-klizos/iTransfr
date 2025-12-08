@@ -1,27 +1,47 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { supabase } from '@/lib/supabaseClient';
 import { AuthCard } from '@/components/auth/AuthCard';
-import { FormInput } from '@/components/auth/FormInput';
-import { FormCheckbox } from '@/components/auth/FormCheckbox';
-import { OAuthButton } from '@/components/auth/OAuthButton';
 import { Divider } from '@/components/auth/Divider';
+import { FormCheckbox } from '@/components/auth/FormCheckbox';
+import { FormInput } from '@/components/auth/FormInput';
+import { OAuthButton } from '@/components/auth/OAuthButton';
+import { useToast } from '@/components/ui/Toast';
+import { supabase } from '@/lib/supabaseClient';
+import { getFirstError, loginSchema } from '@/lib/validations/auth';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [keepLoggedIn, setKeepLoggedIn] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const router = useRouter();
+  const toast = useToast();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFieldErrors({});
+
+    // Validate with Zod
+    const result = loginSchema.safeParse({ email, password });
+
+    if (!result.success) {
+      const errors: Record<string, string> = {};
+      result.error.errors.forEach(err => {
+        const field = err.path[0] as string;
+        if (!errors[field]) {
+          errors[field] = err.message;
+        }
+      });
+      setFieldErrors(errors);
+      toast.error('Validation Error', getFirstError(result.error));
+      return;
+    }
+
     setLoading(true);
-    setError('');
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -30,14 +50,14 @@ export default function LoginPage() {
       });
 
       if (error) {
-        setError(error.message);
+        toast.error('Login Failed', error.message);
         return;
       }
 
-      // Redirect to dashboard after successful login
+      toast.success('Welcome back!', 'You have been logged in successfully.');
       router.push('/dashboard');
     } catch (error) {
-      setError('An unexpected error occurred');
+      toast.error('Error', 'An unexpected error occurred');
     } finally {
       setLoading(false);
     }
@@ -46,9 +66,6 @@ export default function LoginPage() {
   const handleGoogleLogin = async () => {
     try {
       setLoading(true);
-      setError('');
-
-      console.log('🚀 Starting Google OAuth login...');
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -62,16 +79,11 @@ export default function LoginPage() {
       });
 
       if (error) {
-        console.error('❌ Google OAuth error:', error);
-        setError(`Google login failed: ${error.message}`);
+        toast.error('Google Login Failed', error.message);
         return;
       }
-
-      console.log('✅ Google OAuth initiated, redirecting...');
-      // OAuth will redirect automatically
     } catch (err: any) {
-      console.error('❌ Google login exception:', err);
-      setError('Failed to initiate Google login. Please check console for details.');
+      toast.error('Error', 'Failed to initiate Google login');
     } finally {
       setLoading(false);
     }
@@ -80,24 +92,40 @@ export default function LoginPage() {
   return (
     <AuthCard title='Log in to your Account' subtitle='Welcome back! Select method to log in'>
       {/* Login Form */}
-      <form onSubmit={handleLogin} className='space-y-4'>
-        <FormInput
-          icon='email'
-          type='email'
-          placeholder='Email'
-          value={email}
-          onChange={e => setEmail(e.target.value)}
-          required
-        />
+      <form onSubmit={handleLogin} className='space-y-4' noValidate>
+        <div>
+          <FormInput
+            icon='email'
+            type='email'
+            placeholder='Email'
+            value={email}
+            onChange={e => {
+              setEmail(e.target.value);
+              if (fieldErrors.email) {
+                setFieldErrors(prev => ({ ...prev, email: '' }));
+              }
+            }}
+          />
+          {fieldErrors.email && <p className='mt-1 text-xs text-red-500'>{fieldErrors.email}</p>}
+        </div>
 
-        <FormInput
-          icon='password'
-          type='password'
-          placeholder='Password'
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-          required
-        />
+        <div>
+          <FormInput
+            icon='password'
+            type='password'
+            placeholder='Password'
+            value={password}
+            onChange={e => {
+              setPassword(e.target.value);
+              if (fieldErrors.password) {
+                setFieldErrors(prev => ({ ...prev, password: '' }));
+              }
+            }}
+          />
+          {fieldErrors.password && (
+            <p className='mt-1 text-xs text-red-500'>{fieldErrors.password}</p>
+          )}
+        </div>
 
         <div className='flex items-center justify-between'>
           <FormCheckbox
@@ -108,12 +136,10 @@ export default function LoginPage() {
           />
         </div>
 
-        {error && <div className='rounded-md bg-red-50 p-3 text-sm text-red-600'>{error}</div>}
-
         <button
           type='submit'
           disabled={loading}
-          className='h-11 w-full rounded-md bg-blue-600 font-medium text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
+          className='h-11 w-full cursor-pointer rounded-[10px] bg-gradient-to-b from-[#588CFF] to-[#2462EB] font-medium text-white transition-all hover:opacity-90 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50'
         >
           {loading ? 'Logging in...' : 'Log In'}
         </button>

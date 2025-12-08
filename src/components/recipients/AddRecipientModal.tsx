@@ -1,6 +1,7 @@
 'use client';
 
 import { Modal } from '@/components/ui/Modal';
+import { Select } from '@/components/ui/Select';
 import { Tabs } from '@/components/ui/Tabs';
 import { Globe, Home, Wallet } from 'lucide-react';
 import { useState } from 'react';
@@ -13,6 +14,12 @@ interface AddRecipientModalProps {
 
 export function AddRecipientModal({ isOpen, onClose, onSubmit }: AddRecipientModalProps) {
   const [activeTab, setActiveTab] = useState('domestic');
+  const currencyOptions = [
+    { value: 'USD', label: 'USD - USD Dollar' },
+    { value: 'EUR', label: 'EUR - Euro' },
+    { value: 'GBP', label: 'GBP - British Pound' },
+    { value: 'CAD', label: 'CAD - Canadian Dollar' },
+  ];
   const [formData, setFormData] = useState({
     // Domestic fields
     fullName: '',
@@ -37,9 +44,24 @@ export function AddRecipientModal({ isOpen, onClose, onSubmit }: AddRecipientMod
   });
 
   const tabs = [
-    { id: 'domestic', label: 'Domestic', icon: <Home className='h-4 w-4' /> },
-    { id: 'international', label: 'International', icon: <Globe className='h-4 w-4' /> },
-    { id: 'crypto', label: 'Crypto', icon: <Wallet className='h-4 w-4' /> },
+    {
+      id: 'domestic',
+      label: 'Domestic',
+      icon: <Home className='h-4 w-4' />,
+      activeColor: 'bg-gradient-blue',
+    },
+    {
+      id: 'international',
+      label: 'International',
+      icon: <Globe className='h-4 w-4' />,
+      activeColor: 'bg-gradient-green',
+    },
+    {
+      id: 'crypto',
+      label: 'Crypto',
+      icon: <Wallet className='h-4 w-4' />,
+      activeColor: 'bg-gradient-purple',
+    },
   ];
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -86,31 +108,11 @@ export function AddRecipientModal({ isOpen, onClose, onSubmit }: AddRecipientMod
                   <div>
                     <label className='mb-2 block text-sm font-medium text-gray-700'>Currency</label>
                     <div className='relative'>
-                      <select
+                      <Select
+                        options={currencyOptions}
                         value={formData.currency}
-                        onChange={e => handleChange('currency', e.target.value)}
-                        className='w-full appearance-none rounded-lg border border-gray-300 px-4 py-2.5 pr-10 text-sm text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
-                      >
-                        <option value='USD'>USD - USD Dollar</option>
-                        <option value='EUR'>EUR - Euro</option>
-                        <option value='GBP'>GBP - British Pound</option>
-                        <option value='CAD'>CAD - Canadian Dollar</option>
-                      </select>
-                      <div className='pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500'>
-                        <svg
-                          className='h-4 w-4'
-                          fill='none'
-                          stroke='currentColor'
-                          viewBox='0 0 24 24'
-                        >
-                          <path
-                            strokeLinecap='round'
-                            strokeLinejoin='round'
-                            strokeWidth={2}
-                            d='M19 9l-7 7-7-7'
-                          />
-                        </svg>
-                      </div>
+                        onChange={value => handleChange('currency', value)}
+                      />
                     </div>
                   </div>
                 </div>

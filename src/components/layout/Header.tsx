@@ -1,12 +1,10 @@
 'use client';
 
+import { useUser } from '@/providers/UserProvider';
 import { usePathname } from 'next/navigation';
 
-interface HeaderProps {
-  user: any;
-}
-
-export function Header({ user }: HeaderProps) {
+export function Header() {
+  const { user } = useUser();
   const pathname = usePathname();
 
   const getPageTitle = (path: string) => {

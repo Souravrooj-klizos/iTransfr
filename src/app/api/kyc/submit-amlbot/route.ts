@@ -1,8 +1,8 @@
 import {
-    createApplicant,
-    createVerification,
-    getApplicantByExternalId,
-    type CreateApplicantRequest,
+  createApplicant,
+  createVerification,
+  getApplicantByExternalId,
+  type CreateApplicantRequest,
 } from '@/lib/integrations/amlbot';
 import { supabaseAdmin } from '@/lib/supabaseClient';
 import { NextRequest, NextResponse } from 'next/server';
@@ -30,25 +30,16 @@ export async function POST(request: NextRequest) {
     const { userId } = await request.json();
 
     if (!userId) {
-      return NextResponse.json(
-        { error: 'userId is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'userId is required' }, { status: 400 });
     }
 
     if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: 'Server configuration error' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
     }
 
     // Check if AMLBot API key is configured
     if (!process.env.AML_BOT_API_KEY) {
-      return NextResponse.json(
-        { error: 'AMLBot API key not configured' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'AMLBot API key not configured' }, { status: 500 });
     }
 
     console.log('[Submit AMLBot] Processing for userId:', userId);
@@ -62,10 +53,7 @@ export async function POST(request: NextRequest) {
 
     if (profileError || !profile) {
       console.error('[Submit AMLBot] Profile not found:', profileError);
-      return NextResponse.json(
-        { error: 'User profile not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'User profile not found' }, { status: 404 });
     }
 
     // 2. Check if KYC record exists
@@ -77,14 +65,12 @@ export async function POST(request: NextRequest) {
 
     if (kycError && kycError.code !== 'PGRST116') {
       console.error('[Submit AMLBot] KYC record fetch error:', kycError);
-      return NextResponse.json(
-        { error: 'Failed to fetch KYC record' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Failed to fetch KYC record' }, { status: 500 });
     }
 
     // 3. Prepare applicant data
-    const fullName = profile.full_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
+    const fullName =
+      profile.full_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
     const nameParts = fullName.split(' ');
     const firstName = nameParts[0] || 'Unknown';
     const lastName = nameParts.slice(1).join(' ') || 'Unknown';
@@ -140,14 +126,12 @@ export async function POST(request: NextRequest) {
         .eq('id', kycRecord.id);
     } else {
       // Create KYC record if it doesn't exist
-      await supabaseAdmin
-        .from('kyc_records')
-        .insert({
-          userId: userId,
-          status: 'under_review',
-          amlbotRequestId: verification.id,
-          notes: ['Submitted to AMLBot for verification'],
-        });
+      await supabaseAdmin.from('kyc_records').insert({
+        userId: userId,
+        status: 'under_review',
+        amlbotRequestId: verification.id,
+        notes: ['Submitted to AMLBot for verification'],
+      });
     }
 
     console.log('[Submit AMLBot] ✅ Verification created:', verification.id);
@@ -158,7 +142,6 @@ export async function POST(request: NextRequest) {
       verificationId: verification.id,
       message: 'KYC submitted to AMLBot successfully',
     });
-
   } catch (error: any) {
     console.error('[Submit AMLBot] Error:', error);
     return NextResponse.json(
@@ -180,17 +163,11 @@ export async function GET(request: NextRequest) {
     const userId = searchParams.get('userId');
 
     if (!userId) {
-      return NextResponse.json(
-        { error: 'userId query parameter is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'userId query parameter is required' }, { status: 400 });
     }
 
     if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: 'Server configuration error' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
     }
 
     const { data: kycRecord, error } = await supabaseAdmin
@@ -212,7 +189,6 @@ export async function GET(request: NextRequest) {
       status: kycRecord.status,
       riskScore: kycRecord.riskScore,
     });
-
   } catch (error: any) {
     console.error('[Submit AMLBot GET] Error:', error);
     return NextResponse.json(

@@ -1,7 +1,6 @@
 import { BankDetailsField } from '@/components/ui/BankDetailsField';
 
 export function EurSepaDeposit() {
-
   return (
     <div className='space-y-6'>
       <h2 className='text-xl font-semibold text-gray-900'>EUR SEPA Deposit</h2>

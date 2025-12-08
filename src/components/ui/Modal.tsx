@@ -52,18 +52,20 @@ export function Modal({ isOpen, onClose, title, children, footer, size = 'md' }:
 
       {/* Modal */}
       <div
-        className={`relative z-10 my-8 w-full ${sizeClasses[size]} max-h-[calc(100vh-4rem)] overflow-y-auto rounded-xl bg-white shadow-xl`}
+        className={`relative z-10 w-full ${sizeClasses[size]} max-h-[calc(100vh-4rem)] overflow-y-auto rounded-xl bg-white shadow-xl`}
       >
         {/* Header */}
         {title && (
-          <div className='flex items-center justify-between border-b border-gray-200 px-6 py-4'>
-            <h2 className='text-lg font-semibold text-gray-900'>{title}</h2>
-            <button
-              onClick={onClose}
-              className='rounded-lg p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600'
-            >
-              <X className='h-5 w-5' />
-            </button>
+          <div className='px-6'>
+            <div className='flex items-center justify-between border-b border-gray-200 py-4'>
+              <h2 className='text-lg font-semibold text-gray-900'>{title}</h2>
+              <button
+                onClick={onClose}
+                className='cursor-pointer rounded-lg p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600'
+              >
+                <X className='h-5 w-5' />
+              </button>
+            </div>
           </div>
         )}
 

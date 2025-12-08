@@ -1,9 +1,9 @@
 import {
-    createVerification,
-    getApplicant,
-    getVerification,
-    type AMLBotApplicant,
-    type AMLBotVerification,
+  createVerification,
+  getApplicant,
+  getVerification,
+  type AMLBotApplicant,
+  type AMLBotVerification,
 } from '@/lib/integrations/amlbot';
 import { supabaseAdmin } from '@/lib/supabaseClient';
 import { NextRequest, NextResponse } from 'next/server';
@@ -22,18 +22,12 @@ import { NextRequest, NextResponse } from 'next/server';
  *   }
  * }
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
 
     if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: 'Server configuration error' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
     }
 
     console.log('[Admin AMLBot] Fetching status for KYC record:', id);
@@ -46,10 +40,7 @@ export async function GET(
       .single();
 
     if (kycError || !kycRecord) {
-      return NextResponse.json(
-        { error: 'KYC record not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'KYC record not found' }, { status: 404 });
     }
 
     let amlbotData: {
@@ -83,7 +74,6 @@ export async function GET(
       amlbot: amlbotData,
       hasAmlbotIntegration: !!process.env.AML_BOT_API_KEY,
     });
-
   } catch (error: any) {
     console.error('[Admin AMLBot GET] Error:', error);
     return NextResponse.json(
@@ -103,10 +93,7 @@ export async function GET(
  *   "action": "verify" | "reverify"
  * }
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const { action } = await request.json();
@@ -119,17 +106,11 @@ export async function POST(
     }
 
     if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: 'Server configuration error' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
     }
 
     if (!process.env.AML_BOT_API_KEY) {
-      return NextResponse.json(
-        { error: 'AMLBot API key not configured' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'AMLBot API key not configured' }, { status: 500 });
     }
 
     console.log(`[Admin AMLBot] Action: ${action} for KYC record:`, id);
@@ -137,7 +118,8 @@ export async function POST(
     // Fetch KYC record with user details
     const { data: kycRecord, error: kycError } = await supabaseAdmin
       .from('kyc_records')
-      .select(`
+      .select(
+        `
         *,
         client_profiles:userId (
           id,
@@ -148,23 +130,18 @@ export async function POST(
           mobile,
           country
         )
-      `)
+      `
+      )
       .eq('id', id)
       .single();
 
     if (kycError || !kycRecord) {
-      return NextResponse.json(
-        { error: 'KYC record not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'KYC record not found' }, { status: 404 });
     }
 
     const profile = kycRecord.client_profiles;
     if (!profile) {
-      return NextResponse.json(
-        { error: 'User profile not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'User profile not found' }, { status: 404 });
     }
 
     // For reverification, we need an existing applicant
@@ -193,7 +170,7 @@ export async function POST(
       return NextResponse.json(
         {
           error: 'No AMLBot applicant exists. Use /api/kyc/submit-amlbot instead.',
-          redirect: '/api/kyc/submit-amlbot'
+          redirect: '/api/kyc/submit-amlbot',
         },
         { status: 400 }
       );
@@ -229,7 +206,6 @@ export async function POST(
       verificationId: verification.id,
       message: `AMLBot ${action} triggered successfully`,
     });
-
   } catch (error: any) {
     console.error('[Admin AMLBot POST] Error:', error);
     return NextResponse.json(

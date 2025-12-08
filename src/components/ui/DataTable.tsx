@@ -1,6 +1,8 @@
 'use client';
 
 import CompleteIcon from '@/components/icons/CompleteIcon';
+import FailedIcon from '@/components/icons/FailedIcon';
+import PendingIcon from '@/components/icons/PendingIcon';
 import ProcessingIcon from '@/components/icons/ProcessingIcon';
 import { useState } from 'react';
 
@@ -9,7 +11,7 @@ export interface TableColumn<T> {
   key: string;
   header: string;
   align?: 'left' | 'right' | 'center';
-  render: (row: T) => React.ReactNode;
+  render: (row: T, index?: number) => React.ReactNode;
 }
 
 interface DataTableProps<T> {
@@ -18,6 +20,7 @@ interface DataTableProps<T> {
   getRowId: (row: T) => string;
   showCheckbox?: boolean;
   onSelectionChange?: (selectedIds: Set<string>) => void;
+  selectedIds?: Set<string>;
 }
 
 export function DataTable<T>({
@@ -26,9 +29,35 @@ export function DataTable<T>({
   getRowId,
   showCheckbox = false,
   onSelectionChange,
+  selectedIds: controlledSelectedIds,
 }: DataTableProps<T>) {
-  const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
+  const [internalSelectedRows, setInternalSelectedRows] = useState<Set<string>>(new Set());
+
+  const selectedRows = controlledSelectedIds ?? internalSelectedRows;
+  const setSelectedRows = (newSet: Set<string>) => {
+    if (!controlledSelectedIds) {
+      setInternalSelectedRows(newSet);
+    }
+    onSelectionChange?.(newSet);
+  };
+
   const [selectAll, setSelectAll] = useState(false);
+
+  // Sync selectAll state when selectedRows changes externally for floating action bar
+  // This is a simple check: if all visible rows are selected
+  if (controlledSelectedIds && data.length > 0 && selectedRows.size !== data.length && selectAll) {
+    // If we have controlled IDs and they don't match data length, we might need to uncheck selectAll
+    // However, exact sync is complex with pagination/filters.
+    // For now, let's just ensure if selection is cleared externally, selectAll is cleared.
+    if (selectedRows.size === 0) setSelectAll(false);
+  } else if (
+    controlledSelectedIds &&
+    data.length > 0 &&
+    selectedRows.size === data.length &&
+    !selectAll
+  ) {
+    setSelectAll(true);
+  }
 
   const handleSelectAll = () => {
     if (selectAll) {
@@ -87,12 +116,12 @@ export function DataTable<T>({
             </tr>
           </thead>
           <tbody className='divide-y divide-gray-200 bg-white'>
-            {data.map(row => {
+            {data.map((row, rowIndex) => {
               const rowId = getRowId(row);
               return (
                 <tr key={rowId} className='transition-colors hover:bg-gray-50'>
                   {showCheckbox && (
-                    <td className='px-6 py-4'>
+                    <td className='px-6 py-3'>
                       <input
                         type='checkbox'
                         checked={selectedRows.has(rowId)}
@@ -104,7 +133,7 @@ export function DataTable<T>({
                   {columns.map(column => (
                     <td
                       key={column.key}
-                      className={`px-6 py-4 whitespace-nowrap ${
+                      className={`px-6 py-3 whitespace-nowrap ${
                         column.align === 'right'
                           ? 'text-right'
                           : column.align === 'center'
@@ -112,7 +141,7 @@ export function DataTable<T>({
                             : 'text-left'
                       }`}
                     >
-                      {column.render(row)}
+                      {column.render(row, rowIndex)}
                     </td>
                   ))}
                 </tr>
@@ -127,10 +156,18 @@ export function DataTable<T>({
 
 // Helper function to get status icon
 export const getStatusIcon = (status: string) => {
-  if (status === 'Completed') {
-    return <CompleteIcon />;
+  switch (status) {
+    case 'Completed':
+      return <CompleteIcon />;
+    case 'Processing':
+      return <ProcessingIcon />;
+    case 'Failed':
+      return <FailedIcon />;
+    case 'Pending':
+      return <PendingIcon />;
+    default:
+      return <ProcessingIcon />;
   }
-  return <ProcessingIcon />;
 };
 
 // Helper function to get amount color

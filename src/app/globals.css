@@ -191,13 +191,6 @@
   --color-gray-900: #212121;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
@@ -265,3 +258,13 @@ body {
 .bg-gradient-light-blue {
   background: linear-gradient(to bottom, #58a6ff, #3683db);
 }
+
+.bg-gradient-green {
+  background: linear-gradient(to bottom, #39cd2b, #27861e);
+}
+
+.bg-gradient-purple {
+  background: linear-gradient(to bottom, #b762ff, #8a3bcd);
+}
+
+/* Toast Animations removed in favor of Tailwind transitions */

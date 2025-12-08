@@ -130,9 +130,7 @@ export default function DepositPage() {
       {/* Deposit Details Section */}
       {selectedMethod && (
         <div className='rounded-xl border border-gray-200 bg-white p-4 sm:p-6'>
-          <div className='space-y-6'>
-            {renderDepositDetails()}
-          </div>
+          <div className='space-y-6'>{renderDepositDetails()}</div>
         </div>
       )}
 

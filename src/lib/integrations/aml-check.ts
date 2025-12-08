@@ -37,16 +37,16 @@ export interface TransactionCheckResult {
 
 // Risk thresholds (0-100 scale)
 const RISK_THRESHOLDS = {
-  LOW: 30,      // 0-30: Low risk, auto-approve
-  MEDIUM: 70,   // 31-70: Medium risk, may need review
-  HIGH: 100,    // 71-100: High risk, block
+  LOW: 30, // 0-30: Low risk, auto-approve
+  MEDIUM: 70, // 31-70: Medium risk, may need review
+  HIGH: 100, // 71-100: High risk, block
 };
 
 // Amount thresholds that trigger enhanced checks
 const AMOUNT_THRESHOLDS = {
-  STANDARD: 1000,    // Standard check
-  ENHANCED: 10000,   // Enhanced check required
-  MANUAL: 50000,     // Manual review required
+  STANDARD: 1000, // Standard check
+  ENHANCED: 10000, // Enhanced check required
+  MANUAL: 50000, // Manual review required
 };
 
 // =====================================================
@@ -158,7 +158,6 @@ export async function screenTransaction(
       checkId,
       timestamp,
     };
-
   } catch (error: any) {
     console.error('[AML Check] Error:', error);
 
@@ -230,9 +229,11 @@ async function checkTransactionFrequency(
 /**
  * Get risk score based on destination country
  */
-function getCountryRiskScore(
-  countryCode: string
-): { score: number; flag: boolean; reason: string } {
+function getCountryRiskScore(countryCode: string): {
+  score: number;
+  flag: boolean;
+  reason: string;
+} {
   // High-risk countries (simplified list)
   const highRiskCountries = ['AF', 'KP', 'IR', 'SY', 'YE'];
   const mediumRiskCountries = ['PK', 'MM', 'VE', 'CU'];

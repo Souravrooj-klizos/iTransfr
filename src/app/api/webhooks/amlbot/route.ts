@@ -1,7 +1,7 @@
 import {
-    mapVerificationResultToKycStatus,
-    verifyWebhookSignature,
-    type AMLBotWebhookPayload,
+  mapVerificationResultToKycStatus,
+  verifyWebhookSignature,
+  type AMLBotWebhookPayload,
 } from '@/lib/integrations/amlbot';
 import { supabaseAdmin } from '@/lib/supabaseClient';
 import { NextRequest, NextResponse } from 'next/server';
@@ -38,10 +38,7 @@ export async function POST(request: NextRequest) {
     const signature = request.headers.get('x-amlbot-signature') || '';
     if (!verifyWebhookSignature(rawBody, signature)) {
       console.error('[AMLBot Webhook] ❌ Invalid signature');
-      return NextResponse.json(
-        { error: 'Invalid webhook signature' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Invalid webhook signature' }, { status: 401 });
     }
 
     // Parse the payload
@@ -54,10 +51,7 @@ export async function POST(request: NextRequest) {
 
     if (!supabaseAdmin) {
       console.error('[AMLBot Webhook] Server configuration error');
-      return NextResponse.json(
-        { error: 'Server configuration error' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
     }
 
     // Find KYC record by AMLBot verification ID
@@ -68,7 +62,10 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (findError || !kycRecord) {
-      console.error('[AMLBot Webhook] KYC record not found for verification:', payload.data.verification_id);
+      console.error(
+        '[AMLBot Webhook] KYC record not found for verification:',
+        payload.data.verification_id
+      );
       // Return 200 to acknowledge receipt even if we can't find the record
       // This prevents AMLBot from retrying
       return NextResponse.json({
@@ -147,7 +144,6 @@ export async function POST(request: NextRequest) {
       processed: true,
       verification_id: payload.data.verification_id,
     });
-
   } catch (error: any) {
     console.error('[AMLBot Webhook] Error processing webhook:', error);
 

@@ -60,4 +60,3 @@ export async function getUserFromRequest(): Promise<AppUser | null> {
     return null;
   }
 }
-

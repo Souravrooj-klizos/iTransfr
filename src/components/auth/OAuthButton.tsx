@@ -1,5 +1,5 @@
-import React from 'react';
 import { cn } from '@/lib/utils';
+import React from 'react';
 
 interface OAuthButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   provider?: 'google';
@@ -10,7 +10,7 @@ export function OAuthButton({ provider = 'google', className, ...props }: OAuthB
     <button
       type='button'
       className={cn(
-        'flex h-11 w-full items-center justify-center gap-3',
+        'flex h-11 w-full cursor-pointer items-center justify-center gap-3',
         'rounded-md border border-gray-300 bg-white',
         'text-sm font-medium text-gray-700',
         'hover:border-gray-400 hover:bg-gray-50', // Hover styles

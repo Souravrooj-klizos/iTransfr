@@ -60,7 +60,10 @@ export async function POST(request: NextRequest) {
       }
     );
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
     if (authError || !user) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
@@ -73,10 +76,13 @@ export async function POST(request: NextRequest) {
     // 1. Check if user can transact
     const canTransact = await canUserTransact(user.id);
     if (!canTransact.allowed) {
-      return NextResponse.json({
-        error: canTransact.reason || 'Cannot process transaction',
-        kycRequired: true,
-      }, { status: 403 });
+      return NextResponse.json(
+        {
+          error: canTransact.reason || 'Cannot process transaction',
+          kycRequired: true,
+        },
+        { status: 403 }
+      );
     }
 
     // 2. Check user has sufficient balance (TODO: implement wallet check)
@@ -136,13 +142,16 @@ export async function POST(request: NextRequest) {
 
       console.log('[Payout] ❌ Transaction blocked by AML check');
 
-      return NextResponse.json({
-        success: false,
-        error: 'Payout cannot be processed at this time',
-        message: 'Please contact support for assistance',
-        transactionId: transaction.id,
-        reference,
-      }, { status: 403 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Payout cannot be processed at this time',
+          message: 'Please contact support for assistance',
+          transactionId: transaction.id,
+          reference,
+        },
+        { status: 403 }
+      );
     }
 
     // 7. AML passed - Create payout request record
@@ -207,7 +216,6 @@ export async function POST(request: NextRequest) {
       },
       message: 'Payout request submitted. Admin will process your request shortly.',
     });
-
   } catch (error: any) {
     console.error('[Payout] Error:', error);
     return NextResponse.json(
@@ -242,7 +250,10 @@ export async function GET(request: NextRequest) {
       }
     );
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
     if (authError || !user) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
@@ -251,10 +262,12 @@ export async function GET(request: NextRequest) {
     // Fetch user's payout transactions with payout request details
     const { data: payouts, error } = await supabaseAdmin
       .from('transactions')
-      .select(`
+      .select(
+        `
         *,
         payout_requests (*)
-      `)
+      `
+      )
       .eq('userId', user.id)
       .eq('type', 'payout')
       .order('createdAt', { ascending: false });
@@ -265,7 +278,6 @@ export async function GET(request: NextRequest) {
       payouts: payouts || [],
       count: payouts?.length || 0,
     });
-
   } catch (error: any) {
     console.error('[Payout GET] Error:', error);
     return NextResponse.json(

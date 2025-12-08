@@ -57,7 +57,7 @@ export function DepositMethodCard({ method, isSelected, onSelect }: DepositMetho
       {/* Select Button */}
       <button
         onClick={onSelect}
-        className={`w-full rounded-lg px-4 py-2 text-sm font-medium transition-all ${
+        className={`w-full cursor-pointer rounded-lg px-4 py-2 text-sm font-medium transition-all ${
           isSelected
             ? 'bg-linear-to-b from-[#4D4D4D] to-[#212121] text-white'
             : 'border border-gray-300 bg-white text-gray-500 hover:bg-gray-50'

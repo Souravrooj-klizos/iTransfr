@@ -222,7 +222,7 @@ export default function ClientDashboard() {
         <div className='rounded-xl border border-gray-200 bg-white px-6 py-3 lg:col-span-2'>
           <div className='mb-4 flex items-center justify-between'>
             <h2 className='text-lg font-normal text-gray-500'>Recent Transactions</h2>
-            <div className='flex items-center gap-3 flex-col lg:flex-row'>
+            <div className='flex flex-col items-center gap-3 lg:flex-row'>
               <div className='relative'>
                 <Search className='absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-500' />
                 <input

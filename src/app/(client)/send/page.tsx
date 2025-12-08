@@ -198,7 +198,7 @@ export default function SendMoneyPage() {
               </span>
               <button
                 onClick={() => setShowBalance(!showBalance)}
-                className='text-blue-600 hover:text-blue-700'
+                className='cursor-pointer text-blue-600 hover:text-blue-700'
               >
                 {showBalance ? <Eye className='h-4 w-4' /> : <EyeOff className='h-4 w-4' />}
               </button>
@@ -280,7 +280,7 @@ export default function SendMoneyPage() {
               type='checkbox'
               checked={agreed}
               onChange={e => setAgreed(e.target.checked)}
-              className='h-4 w-4'
+              className='h-4 w-4 cursor-pointer'
             />
             <span className='text-xs text-gray-600'>
               I agree to the terms and conditions and confirm the transfer details are correct
@@ -292,7 +292,7 @@ export default function SendMoneyPage() {
             disabled={!agreed}
             className={`w-full rounded-lg py-3 font-medium transition-colors ${
               agreed
-                ? 'bg-blue-600 text-white hover:bg-blue-700'
+                ? 'bg-gradient-blue cursor-pointer text-white hover:bg-blue-700'
                 : 'cursor-not-allowed bg-gray-200 text-gray-400'
             }`}
           >

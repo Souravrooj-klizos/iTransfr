@@ -20,13 +20,15 @@ export async function GET() {
       count: forms.length,
       hint: 'Use one of these form IDs to generate a KYC form URL for users',
     });
-
   } catch (error: any) {
     console.error('[AMLBot Forms] Error:', error);
-    return NextResponse.json({
-      success: false,
-      error: error.message || 'Failed to fetch forms',
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        error: error.message || 'Failed to fetch forms',
+      },
+      { status: 500 }
+    );
   }
 }
 
@@ -55,15 +57,21 @@ export async function POST(request: NextRequest) {
     const { formId, userId, redirectUrl } = await request.json();
 
     if (!formId || !userId) {
-      return NextResponse.json({
-        error: 'formId and userId are required',
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          error: 'formId and userId are required',
+        },
+        { status: 400 }
+      );
     }
 
     if (!supabaseAdmin) {
-      return NextResponse.json({
-        error: 'Server configuration error',
-      }, { status: 500 });
+      return NextResponse.json(
+        {
+          error: 'Server configuration error',
+        },
+        { status: 500 }
+      );
     }
 
     // Fetch user profile
@@ -74,13 +82,17 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (profileError || !profile) {
-      return NextResponse.json({
-        error: 'User profile not found',
-      }, { status: 404 });
+      return NextResponse.json(
+        {
+          error: 'User profile not found',
+        },
+        { status: 404 }
+      );
     }
 
     // Parse name
-    const fullName = profile.full_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
+    const fullName =
+      profile.full_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
     const nameParts = fullName.split(' ');
     const firstName = nameParts[0] || 'User';
     const lastName = nameParts.slice(1).join(' ') || '';
@@ -114,14 +126,12 @@ export async function POST(request: NextRequest) {
         })
         .eq('id', existingKyc.id);
     } else {
-      await supabaseAdmin
-        .from('kyc_records')
-        .insert({
-          userId: userId,
-          status: 'pending',
-          amlbotRequestId: formUrlResult.verification_id,
-          notes: ['KYC form URL generated'],
-        });
+      await supabaseAdmin.from('kyc_records').insert({
+        userId: userId,
+        status: 'pending',
+        amlbotRequestId: formUrlResult.verification_id,
+        notes: ['KYC form URL generated'],
+      });
     }
 
     return NextResponse.json({
@@ -132,12 +142,14 @@ export async function POST(request: NextRequest) {
       expiresAt: formUrlResult.expires_at,
       message: 'Send this form URL to the user to complete KYC',
     });
-
   } catch (error: any) {
     console.error('[AMLBot Forms] Error:', error);
-    return NextResponse.json({
-      success: false,
-      error: error.message || 'Failed to generate form URL',
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        error: error.message || 'Failed to generate form URL',
+      },
+      { status: 500 }
+    );
   }
 }

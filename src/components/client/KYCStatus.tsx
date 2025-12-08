@@ -1,9 +1,8 @@
-'use client';
-
-import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { CheckCircle, Clock, XCircle, AlertCircle, Upload } from 'lucide-react';
+import { useUser } from '@/providers/UserProvider';
+import { AlertCircle, CheckCircle, Clock, Upload, XCircle } from 'lucide-react';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
 interface KYCRecord {
   status: string;
@@ -12,19 +11,20 @@ interface KYCRecord {
 }
 
 export default function KYCStatus() {
+  const { user, loading: userLoading } = useUser();
   const [kycStatus, setKycStatus] = useState<KYCRecord | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchKYCStatus() {
+      if (userLoading) return;
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
       try {
         const supabase = createClient();
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-
-        if (!user) return;
-
         const { data, error } = await supabase
           .from('kyc_records')
           .select('*')
@@ -44,7 +44,7 @@ export default function KYCStatus() {
     }
 
     fetchKYCStatus();
-  }, []);
+  }, [user, userLoading]);
 
   if (loading) return null;
 
