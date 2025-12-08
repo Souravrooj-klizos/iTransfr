@@ -52,7 +52,16 @@ export async function middleware(request: NextRequest) {
   await supabase.auth.getUser();
 
   // Protect client routes
-  if (request.nextUrl.pathname.startsWith('/(client)')) {
+  const clientRoutes = [
+    '/dashboard',
+    '/balance',
+    '/deposit',
+    '/recipients',
+    '/send',
+    '/team',
+    '/transactions',
+  ];
+  if (clientRoutes.some(route => request.nextUrl.pathname.startsWith(route))) {
     const {
       data: { user },
     } = await supabase.auth.getUser();

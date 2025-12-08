@@ -1,17 +1,16 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { supabase } from '@/lib/supabaseClient';
 import { AuthCard } from '@/components/auth/AuthCard';
+import { Divider } from '@/components/auth/Divider';
+import { OAuthButton } from '@/components/auth/OAuthButton';
 import { Step1PersonalDetails } from '@/components/auth/signup-steps/Step1PersonalDetails';
 import { Step2Verification } from '@/components/auth/signup-steps/Step2Verification';
 import { Step3Password } from '@/components/auth/signup-steps/Step3Password';
 import { Step4CompanyDetails } from '@/components/auth/signup-steps/Step4CompanyDetails';
 import { Step5KYC } from '@/components/auth/signup-steps/Step5KYC';
-import { OAuthButton } from '@/components/auth/OAuthButton';
-import { Divider } from '@/components/auth/Divider';
+import { supabase } from '@/lib/supabaseClient';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -114,7 +113,7 @@ export default function SignupPage() {
     }
   };
 
-  // Step 3 -> 4: Create user account
+  // Step 3 -> 4: Create user account and auto-login
   const handleStep3Next = async () => {
     setLoading(true);
     setError('');
@@ -169,6 +168,18 @@ export default function SignupPage() {
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to create account');
+      }
+
+      // Auto-login the user after account creation
+      const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      });
+
+      if (loginError) {
+        console.error('Auto-login failed:', loginError);
+        // Don't throw error here, continue to next step even if auto-login fails
+        // The user can still manually log in later
       }
 
       setUserId(data.user.id);

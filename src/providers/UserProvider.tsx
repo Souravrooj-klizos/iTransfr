@@ -80,6 +80,27 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     };
   }, [router, supabase]);
 
+  // Redirect unauthenticated users away from protected routes
+  useEffect(() => {
+    if (!loading && !user) {
+      // Check if we're on a client route that requires authentication
+      const clientRoutes = [
+        '/dashboard',
+        '/balance',
+        '/deposit',
+        '/recipients',
+        '/send',
+        '/team',
+        '/transactions',
+      ];
+      const currentPath = window.location.pathname;
+
+      if (clientRoutes.some(route => currentPath.startsWith(route))) {
+        router.push('/login');
+      }
+    }
+  }, [user, loading, router]);
+
   return (
     <UserContext.Provider value={{ user, session, loading, refreshUser: () => fetchUser() }}>
       {children}
