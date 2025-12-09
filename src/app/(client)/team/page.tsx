@@ -2,10 +2,14 @@
 
 import { AllMembersIcon } from '@/components/icons/AllMembersIcon';
 import { CrossIcon } from '@/components/icons/CrossIcon';
+import DeleteIcon from '@/components/icons/DeleteIcon';
+import PenEdit from '@/components/icons/PenEdit';
+import SendIcon from '@/components/icons/SendIcon';
 import { EditRoleModal } from '@/components/team/EditRoleModal';
 import { InviteMemberModal } from '@/components/team/InviteMemberModal';
 import { ViewMemberModal } from '@/components/team/ViewMemberModal';
 import { DataTable, type TableColumn } from '@/components/ui/DataTable';
+import { Pagination } from '@/components/ui/Pagination';
 import { Select } from '@/components/ui/Select';
 import { Tabs } from '@/components/ui/Tabs';
 import {
@@ -20,7 +24,6 @@ import {
   Search,
   Send,
   ShieldIcon,
-  Trash2,
   Users,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -183,6 +186,8 @@ export default function TeamManagementPage() {
   // Filter states
   const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [activePage, setActivePage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState('10');
 
   const tabs = [
     { id: 'all-members', label: 'All Members', icon: <AllMembersIcon className='h-4 w-4' /> },
@@ -222,6 +227,7 @@ export default function TeamManagementPage() {
     setShowActionsMenu(null);
     setSelectedMembers(new Set());
     setSelectedInvitations(new Set());
+    setActivePage(1);
   }, [activeTab]);
 
   const getRoleColor = (role: string) => {
@@ -313,11 +319,11 @@ export default function TeamManagementPage() {
                 View Member
               </button>
               <button className='flex w-full cursor-pointer items-center gap-3 rounded-lg px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100'>
-                <Edit className='h-4 w-4' />
+                <PenEdit />
                 Edit Permissions
               </button>
               <button className='flex w-full cursor-pointer items-center gap-3 rounded-lg px-4 py-2.5 text-left text-sm text-red-600 transition-colors hover:bg-red-50'>
-                <Trash2 className='h-4 w-4' />
+                <DeleteIcon />
                 Remove
               </button>
             </div>
@@ -386,7 +392,7 @@ export default function TeamManagementPage() {
               className={`absolute ${index !== undefined && index < 3 ? 'top-8' : 'bottom-8'} right-0 z-10 w-56 rounded-lg border border-gray-200 bg-white p-2 shadow-lg`}
             >
               <button className='flex w-full cursor-pointer items-center gap-3 rounded-lg px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100'>
-                <Edit className='h-4 w-4' />
+                <PenEdit />
                 Edit Invite
               </button>
               <button className='flex w-full cursor-pointer items-center gap-3 rounded-lg px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100'>
@@ -394,7 +400,7 @@ export default function TeamManagementPage() {
                 Copy Invitation Link
               </button>
               <button className='flex w-full cursor-pointer items-center gap-3 rounded-lg px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100'>
-                <Send className='h-4 w-4' />
+                <SendIcon className='h-4 w-4' />
                 Resend
               </button>
               <button className='flex w-full cursor-pointer items-center gap-3 rounded-lg px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100'>
@@ -402,7 +408,7 @@ export default function TeamManagementPage() {
                 Remind
               </button>
               <button className='flex w-full cursor-pointer items-center gap-3 rounded-lg px-4 py-2.5 text-left text-sm text-red-600 transition-colors hover:bg-red-50'>
-                <Trash2 className='h-4 w-4' />
+                <DeleteIcon />
                 Delete Invite
               </button>
             </div>
@@ -467,7 +473,7 @@ export default function TeamManagementPage() {
                 }}
                 className='flex w-full cursor-pointer items-center gap-3 rounded-lg px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100'
               >
-                <Edit className='h-4 w-4' />
+                <PenEdit />
                 Edit Role
               </button>
               <button className='flex w-full cursor-pointer items-center gap-3 rounded-lg px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100'>
@@ -543,7 +549,7 @@ export default function TeamManagementPage() {
 
                 <div className='flex items-center gap-3 border-l border-gray-600 pl-4'>
                   <button className='flex cursor-pointer items-center gap-2 rounded-lg bg-[#E63D3D] px-3 py-1.5 text-xs font-light text-white transition-colors hover:bg-white/20'>
-                    <Trash2 className='inline h-4 w-4' />
+                    <DeleteIcon />
                     Remove
                   </button>
                   <button className='bg-gradient-blue flex cursor-pointer items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-light text-white transition-colors hover:bg-blue-700'>
@@ -561,30 +567,13 @@ export default function TeamManagementPage() {
             )}
 
             {/* Pagination */}
-            <div className='flex items-center justify-between'>
-              <div className='flex items-center gap-2'>
-                <button className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50'>
-                  &lt;
-                </button>
-                <button className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg bg-blue-600 text-white'>
-                  1
-                </button>
-                <button className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50'>
-                  2
-                </button>
-                <button className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50'>
-                  &gt;
-                </button>
-              </div>
-              <div className='flex items-center gap-2'>
-                <span className='text-sm text-gray-600'>View per Page</span>
-                <select className='cursor-pointer rounded-lg border border-gray-200 px-2 py-1 text-sm text-gray-700'>
-                  <option>10</option>
-                  <option>25</option>
-                  <option>50</option>
-                </select>
-              </div>
-            </div>
+            <Pagination
+              currentPage={activePage}
+              totalPages={10}
+              onPageChange={setActivePage}
+              itemsPerPage={rowsPerPage}
+              onItemsPerPageChange={setRowsPerPage}
+            />
           </div>
         );
 
@@ -660,27 +649,14 @@ export default function TeamManagementPage() {
             )}
 
             {/* Pagination */}
-            <div className='flex items-center justify-between'>
-              <div className='flex items-center gap-2'>
-                <button className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50'>
-                  &lt;
-                </button>
-                <button className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg bg-blue-600 text-white'>
-                  1
-                </button>
-                <button className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50'>
-                  &gt;
-                </button>
-              </div>
-              <div className='flex items-center gap-2'>
-                <span className='text-sm text-gray-600'>View per Page</span>
-                <select className='cursor-pointer rounded-lg border border-gray-200 px-2 py-1 text-sm text-gray-700'>
-                  <option>10</option>
-                  <option>25</option>
-                  <option>50</option>
-                </select>
-              </div>
-            </div>
+            {/* Pagination */}
+            <Pagination
+              currentPage={activePage}
+              totalPages={10}
+              onPageChange={setActivePage}
+              itemsPerPage={rowsPerPage}
+              onItemsPerPageChange={setRowsPerPage}
+            />
           </div>
         );
 
@@ -708,27 +684,14 @@ export default function TeamManagementPage() {
             />
 
             {/* Pagination */}
-            <div className='flex items-center justify-between'>
-              <div className='flex items-center gap-2'>
-                <button className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50'>
-                  &lt;
-                </button>
-                <button className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg bg-blue-600 text-white'>
-                  1
-                </button>
-                <button className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50'>
-                  &gt;
-                </button>
-              </div>
-              <div className='flex items-center gap-2'>
-                <span className='text-sm text-gray-600'>View per Page</span>
-                <select className='cursor-pointer rounded-lg border border-gray-200 px-2 py-1 text-sm text-gray-700'>
-                  <option>10</option>
-                  <option>25</option>
-                  <option>50</option>
-                </select>
-              </div>
-            </div>
+            {/* Pagination */}
+            <Pagination
+              currentPage={activePage}
+              totalPages={10}
+              onPageChange={setActivePage}
+              itemsPerPage={rowsPerPage}
+              onItemsPerPageChange={setRowsPerPage}
+            />
           </div>
         );
 

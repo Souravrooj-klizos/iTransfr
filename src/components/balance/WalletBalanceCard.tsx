@@ -1,5 +1,7 @@
 import { QuickActionButton } from '@/components/dashboard/QuickActionButton';
 import { WalletCard } from '@/components/dashboard/WalletCard';
+import CryptoDeposit from '@/components/icons/CryptoDeposit';
+import CryptoSend from '@/components/icons/CryptoSend';
 import Image from 'next/image';
 
 interface WalletInfo {
@@ -37,13 +39,13 @@ export function WalletBalanceCard({
         {/* Action Buttons */}
         <div className='grid grid-cols-2 gap-3'>
           <QuickActionButton
-            icon={<Image src='/elements.svg' alt='Deposit' width={30} height={30} />}
+            icon={<CryptoDeposit />}
             label='Deposit Crypto'
             variant='primary'
             onClick={onDepositClick}
           />
           <QuickActionButton
-            icon={<Image src='/elements (1).svg' alt='Send' width={30} height={30} />}
+            icon={<CryptoSend />}
             label='Send Crypto'
             onClick={onSendClick}
           />

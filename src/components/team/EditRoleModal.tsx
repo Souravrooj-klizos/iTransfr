@@ -68,6 +68,21 @@ export function EditRoleModal({ isOpen, onClose, role, onSubmit }: EditRoleModal
     setExpandedGroup(expandedGroup === groupName ? '' : groupName);
   };
 
+  const toggleGroupPermissions = (groupPermissions: string[]) => {
+    const newPermissions = new Set(selectedPermissions);
+    const allSelected = groupPermissions.every(p => selectedPermissions.has(p));
+
+    if (allSelected) {
+      // Deselect all permissions in this group
+      groupPermissions.forEach(p => newPermissions.delete(p));
+    } else {
+      // Select all permissions in this group
+      groupPermissions.forEach(p => newPermissions.add(p));
+    }
+
+    setSelectedPermissions(newPermissions);
+  };
+
   const permissionGroups: PermissionGroup[] = [
     {
       name: 'Admin',
@@ -85,16 +100,20 @@ export function EditRoleModal({ isOpen, onClose, role, onSubmit }: EditRoleModal
     },
     {
       name: 'Approver',
-      permissions: ['Approve Transactions', 'View Balances', 'View History', 'Export Data'],
+      permissions: ['Approve Transaction', 'View Balancs', 'Views History', 'Exports Data'],
     },
     {
       name: 'Initiator',
-      permissions: ['Initiate Transactions', 'View Balances', 'View History', 'Add Recipients'],
+      permissions: ['Initiate Transactiions', 'View Balanrces', 'View Histtory', 'Add Reciipients'],
     },
   ];
 
   const getGroupPermissionCount = (groupPermissions: string[]) => {
     return groupPermissions.filter(p => selectedPermissions.has(p)).length;
+  };
+
+  const isGroupFullySelected = (groupPermissions: string[]) => {
+    return groupPermissions.length > 0 && groupPermissions.every(p => selectedPermissions.has(p));
   };
 
   return (
@@ -170,7 +189,22 @@ export function EditRoleModal({ isOpen, onClose, role, onSubmit }: EditRoleModal
                       )}
                       <span className='font-medium text-gray-900'>{group.name}</span>
                     </div>
-                    <span className='text-sm text-gray-500'>0/{totalCount}</span>
+                    <span className='flex items-center gap-2'>
+                      <span className='text-sm text-gray-500'>
+                        {' '}
+                        {selectedCount}/{totalCount}
+                      </span>
+                      <input
+                        type='checkbox'
+                        checked={isGroupFullySelected(group.permissions)}
+                        onChange={e => {
+                          e.stopPropagation();
+                          toggleGroupPermissions(group.permissions);
+                        }}
+                        onClick={e => e.stopPropagation()}
+                        className='h-4 w-4 cursor-pointer rounded border-gray-300 text-blue-600 focus:ring-blue-500'
+                      />
+                    </span>
                   </button>
 
                   {/* Group Permissions */}

@@ -4,8 +4,9 @@ import Receipt from '@/components/icons/Receipt';
 import { TransactionDetailsModal } from '@/components/transactions/TransactionDetailsModal';
 import { DataTable, getStatusIcon, type TableColumn } from '@/components/ui/DataTable';
 import { DatePicker } from '@/components/ui/DatePicker';
+import { Pagination } from '@/components/ui/Pagination';
 import { Select } from '@/components/ui/Select';
-import { Calendar, ChevronDown, Download, Eye, MoreVertical, Search } from 'lucide-react';
+import { Download, Eye, MoreVertical, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface Transaction {
@@ -142,6 +143,7 @@ export default function TransactionsPage() {
   const [recipient, setRecipient] = useState('all');
   const [paymentType, setPaymentType] = useState('all');
   const [dateFilter, setDateFilter] = useState<string>('');
+  const [activePage, setActivePage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState('10');
 
   const handleSelectionChange = (ids: Set<string>) => {
@@ -399,39 +401,13 @@ export default function TransactionsPage() {
         />
 
         {/* Pagination */}
-        <div className='mt-4 flex items-center justify-between'>
-          <div className='flex items-center gap-2'>
-            <button className='flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50'>
-              &lt;
-            </button>
-            <button className='flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white'>
-              1
-            </button>
-            <button className='flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50'>
-              2
-            </button>
-            <button className='flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50'>
-              25
-            </button>
-            <button className='flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50'>
-              &gt;
-            </button>
-          </div>
-
-          <div className='flex items-center gap-2'>
-            <span className='text-sm text-gray-600'>View per Page</span>
-            <Select
-              options={[
-                { value: '10', label: '10' },
-                { value: '25', label: '25' },
-                { value: '50', label: '50' },
-              ]}
-              value={rowsPerPage}
-              onChange={setRowsPerPage}
-              className='w-20'
-            />
-          </div>
-        </div>
+        <Pagination
+          currentPage={activePage}
+          totalPages={25}
+          onPageChange={setActivePage}
+          itemsPerPage={rowsPerPage}
+          onItemsPerPageChange={setRowsPerPage}
+        />
       </div>
 
       {/* Floating Action Bar */}

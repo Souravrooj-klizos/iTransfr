@@ -14,12 +14,35 @@ interface AddRecipientModalProps {
 
 export function AddRecipientModal({ isOpen, onClose, onSubmit }: AddRecipientModalProps) {
   const [activeTab, setActiveTab] = useState('domestic');
-  const currencyOptions = [
-    { value: 'USD', label: 'USD - USD Dollar' },
-    { value: 'EUR', label: 'EUR - Euro' },
-    { value: 'GBP', label: 'GBP - British Pound' },
-    { value: 'CAD', label: 'CAD - Canadian Dollar' },
+
+  const bankOptions = [
+    { value: 'Bank of America', label: 'Bank of America' },
+    { value: 'Chase', label: 'Chase' },
+    { value: 'Wells Fargo', label: 'Wells Fargo' },
+    { value: 'Citibank', label: 'Citibank' },
   ];
+
+  const coinTypeOptions = [
+    { value: 'USDT', label: 'USDT' },
+    { value: 'USDC', label: 'USDC' },
+    { value: 'BTC', label: 'BTC' },
+    { value: 'ETH', label: 'ETH' },
+  ];
+
+  const currencyOptions = [
+    { value: 'USD', label: 'USD' },
+    { value: 'EUR', label: 'EUR' },
+    { value: 'GBP', label: 'GBP' },
+    { value: 'CAD', label: 'CAD' },
+  ];
+
+  const blockchainNetworkOptions = [
+    { value: 'TRC-20', label: 'TRC-20' },
+    { value: 'ERC-20', label: 'ERC-20' },
+    { value: 'BEP-20', label: 'BEP-20' },
+    { value: 'SOL', label: 'SOL' },
+  ];
+
   const [formData, setFormData] = useState({
     // Domestic fields
     fullName: '',
@@ -100,7 +123,7 @@ export function AddRecipientModal({ isOpen, onClose, onSubmit }: AddRecipientMod
                       value={formData.fullName}
                       onChange={e => handleChange('fullName', e.target.value)}
                       placeholder='John Smith'
-                      className='w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
+                      className='w-full rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
                     />
                   </div>
 
@@ -180,12 +203,11 @@ export function AddRecipientModal({ isOpen, onClose, onSubmit }: AddRecipientMod
                     <label className='mb-2 block text-sm font-medium text-gray-700'>
                       Bank Name
                     </label>
-                    <input
-                      type='text'
+                    <Select
+                      options={bankOptions}
                       value={formData.bankName}
-                      onChange={e => handleChange('bankName', e.target.value)}
+                      onChange={value => handleChange('bankName', value)}
                       placeholder='Choose Bank'
-                      className='w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
                     />
                   </div>
 
@@ -199,7 +221,7 @@ export function AddRecipientModal({ isOpen, onClose, onSubmit }: AddRecipientMod
                       value={formData.wireRoutingNumber}
                       onChange={e => handleChange('wireRoutingNumber', e.target.value)}
                       placeholder='021000021'
-                      className='w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
+                      className='w-full rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
                     />
                   </div>
 
@@ -213,7 +235,7 @@ export function AddRecipientModal({ isOpen, onClose, onSubmit }: AddRecipientMod
                       value={formData.accountNumber}
                       onChange={e => handleChange('accountNumber', e.target.value)}
                       placeholder='1234567890'
-                      className='w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
+                      className='w-full rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
                     />
                   </div>
 
@@ -227,7 +249,7 @@ export function AddRecipientModal({ isOpen, onClose, onSubmit }: AddRecipientMod
                       value={formData.bankAddress}
                       onChange={e => handleChange('bankAddress', e.target.value)}
                       placeholder='123 Bank Street City, State 12345'
-                      className='w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
+                      className='w-full rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
                     />
                   </div>
                 </div>
@@ -248,7 +270,7 @@ export function AddRecipientModal({ isOpen, onClose, onSubmit }: AddRecipientMod
                   value={formData.streetAddress}
                   onChange={e => handleChange('streetAddress', e.target.value)}
                   placeholder='123 Main Street'
-                  className='w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
+                  className='w-full rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
                 />
               </div>
 
@@ -261,7 +283,7 @@ export function AddRecipientModal({ isOpen, onClose, onSubmit }: AddRecipientMod
                     value={formData.city}
                     onChange={e => handleChange('city', e.target.value)}
                     placeholder='New York'
-                    className='w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
+                    className='w-full rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
                   />
                 </div>
                 <div>
@@ -271,7 +293,7 @@ export function AddRecipientModal({ isOpen, onClose, onSubmit }: AddRecipientMod
                     value={formData.state}
                     onChange={e => handleChange('state', e.target.value)}
                     placeholder='NY'
-                    className='w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
+                    className='w-full rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
                   />
                 </div>
               </div>
@@ -285,7 +307,7 @@ export function AddRecipientModal({ isOpen, onClose, onSubmit }: AddRecipientMod
                     value={formData.zipCode}
                     onChange={e => handleChange('zipCode', e.target.value)}
                     placeholder='10001'
-                    className='w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
+                    className='w-full rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
                   />
                 </div>
                 <div>
@@ -295,7 +317,7 @@ export function AddRecipientModal({ isOpen, onClose, onSubmit }: AddRecipientMod
                     value={formData.country}
                     onChange={e => handleChange('country', e.target.value)}
                     placeholder='United States'
-                    className='w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
+                    className='w-full rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
                   />
                 </div>
               </div>
@@ -321,7 +343,7 @@ export function AddRecipientModal({ isOpen, onClose, onSubmit }: AddRecipientMod
                       value={formData.fullName}
                       onChange={e => handleChange('fullName', e.target.value)}
                       placeholder='John Smith'
-                      className='w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
+                      className='w-full rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
                     />
                   </div>
 
@@ -329,31 +351,11 @@ export function AddRecipientModal({ isOpen, onClose, onSubmit }: AddRecipientMod
                   <div>
                     <label className='mb-2 block text-sm font-medium text-gray-700'>Currency</label>
                     <div className='relative'>
-                      <select
+                      <Select
+                        options={currencyOptions}
                         value={formData.currency}
-                        onChange={e => handleChange('currency', e.target.value)}
-                        className='w-full appearance-none rounded-lg border border-gray-300 px-4 py-2.5 pr-10 text-sm text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
-                      >
-                        <option value='EUR'>EUR - Euro</option>
-                        <option value='USD'>USD - USD Dollar</option>
-                        <option value='GBP'>GBP - British Pound</option>
-                        <option value='CAD'>CAD - Canadian Dollar</option>
-                      </select>
-                      <div className='pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500'>
-                        <svg
-                          className='h-4 w-4'
-                          fill='none'
-                          stroke='currentColor'
-                          viewBox='0 0 24 24'
-                        >
-                          <path
-                            strokeLinecap='round'
-                            strokeLinejoin='round'
-                            strokeWidth={2}
-                            d='M19 9l-7 7-7-7'
-                          />
-                        </svg>
-                      </div>
+                        onChange={value => handleChange('currency', value)}
+                      />
                     </div>
                   </div>
                 </div>
@@ -422,12 +424,11 @@ export function AddRecipientModal({ isOpen, onClose, onSubmit }: AddRecipientMod
                     <label className='mb-2 block text-sm font-medium text-gray-700'>
                       Bank Name
                     </label>
-                    <input
-                      type='text'
+                    <Select
+                      options={bankOptions}
                       value={formData.bankName}
-                      onChange={e => handleChange('bankName', e.target.value)}
+                      onChange={value => handleChange('bankName', value)}
                       placeholder='Choose Bank'
-                      className='w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
                     />
                   </div>
 
@@ -441,7 +442,7 @@ export function AddRecipientModal({ isOpen, onClose, onSubmit }: AddRecipientMod
                       value={formData.swiftCode}
                       onChange={e => handleChange('swiftCode', e.target.value)}
                       placeholder='HBUKGB4B'
-                      className='w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
+                      className='w-full rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
                     />
                   </div>
 
@@ -453,7 +454,7 @@ export function AddRecipientModal({ isOpen, onClose, onSubmit }: AddRecipientMod
                       value={formData.iban}
                       onChange={e => handleChange('iban', e.target.value)}
                       placeholder='GB29 NWBK 6016 1331 9268 19'
-                      className='w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
+                      className='w-full rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
                     />
                   </div>
 
@@ -467,7 +468,7 @@ export function AddRecipientModal({ isOpen, onClose, onSubmit }: AddRecipientMod
                       value={formData.accountNumber}
                       onChange={e => handleChange('accountNumber', e.target.value)}
                       placeholder='1234567890'
-                      className='w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
+                      className='w-full rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
                     />
                   </div>
 
@@ -481,7 +482,7 @@ export function AddRecipientModal({ isOpen, onClose, onSubmit }: AddRecipientMod
                       value={formData.bankAddress}
                       onChange={e => handleChange('bankAddress', e.target.value)}
                       placeholder='123 Bank Street City, State 12345'
-                      className='w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
+                      className='w-full rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
                     />
                   </div>
                 </div>
@@ -502,7 +503,7 @@ export function AddRecipientModal({ isOpen, onClose, onSubmit }: AddRecipientMod
                   value={formData.streetAddress}
                   onChange={e => handleChange('streetAddress', e.target.value)}
                   placeholder='123 Main Street'
-                  className='w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
+                  className='w-full rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
                 />
               </div>
 
@@ -515,7 +516,7 @@ export function AddRecipientModal({ isOpen, onClose, onSubmit }: AddRecipientMod
                     value={formData.city}
                     onChange={e => handleChange('city', e.target.value)}
                     placeholder='New York'
-                    className='w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
+                    className='w-full rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
                   />
                 </div>
                 <div>
@@ -525,7 +526,7 @@ export function AddRecipientModal({ isOpen, onClose, onSubmit }: AddRecipientMod
                     value={formData.state}
                     onChange={e => handleChange('state', e.target.value)}
                     placeholder='NY'
-                    className='w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
+                    className='w-full rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
                   />
                 </div>
               </div>
@@ -539,7 +540,7 @@ export function AddRecipientModal({ isOpen, onClose, onSubmit }: AddRecipientMod
                     value={formData.zipCode}
                     onChange={e => handleChange('zipCode', e.target.value)}
                     placeholder='10001'
-                    className='w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
+                    className='w-full rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
                   />
                 </div>
                 <div>
@@ -549,7 +550,7 @@ export function AddRecipientModal({ isOpen, onClose, onSubmit }: AddRecipientMod
                     value={formData.country}
                     onChange={e => handleChange('country', e.target.value)}
                     placeholder='United States'
-                    className='w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
+                    className='w-full rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
                   />
                 </div>
               </div>
@@ -572,7 +573,7 @@ export function AddRecipientModal({ isOpen, onClose, onSubmit }: AddRecipientMod
                     value={formData.fullName}
                     onChange={e => handleChange('fullName', e.target.value)}
                     placeholder='John Smith'
-                    className='w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
+                    className='w-full rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
                   />
                 </div>
 
@@ -638,31 +639,12 @@ export function AddRecipientModal({ isOpen, onClose, onSubmit }: AddRecipientMod
                 <div>
                   <label className='mb-2 block text-sm font-medium text-gray-700'>Coin Type</label>
                   <div className='relative'>
-                    <select
+                    <Select
+                      options={coinTypeOptions}
                       value={formData.coinType}
-                      onChange={e => handleChange('coinType', e.target.value)}
-                      className='w-full appearance-none rounded-lg border border-gray-300 px-4 py-2.5 pr-10 text-sm text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
-                    >
-                      <option value='USDT'>USDT</option>
-                      <option value='USDC'>USDC</option>
-                      <option value='BTC'>BTC</option>
-                      <option value='ETH'>ETH</option>
-                    </select>
-                    <div className='pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500'>
-                      <svg
-                        className='h-4 w-4'
-                        fill='none'
-                        stroke='currentColor'
-                        viewBox='0 0 24 24'
-                      >
-                        <path
-                          strokeLinecap='round'
-                          strokeLinejoin='round'
-                          strokeWidth={2}
-                          d='M19 9l-7 7-7-7'
-                        />
-                      </svg>
-                    </div>
+                      onChange={value => handleChange('coinType', value)}
+                      placeholder='Choose Coin Type'
+                    />
                   </div>
                 </div>
 
@@ -672,30 +654,12 @@ export function AddRecipientModal({ isOpen, onClose, onSubmit }: AddRecipientMod
                     Blockchain Network
                   </label>
                   <div className='relative'>
-                    <select
+                    <Select
+                      options={blockchainNetworkOptions}
                       value={formData.blockchainNetwork}
-                      onChange={e => handleChange('blockchainNetwork', e.target.value)}
-                      className='w-full appearance-none rounded-lg border border-gray-300 px-4 py-2.5 pr-10 text-sm text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
-                    >
-                      <option value='TRC-20'>TRC-20 (Tron Network)</option>
-                      <option value='ERC-20'>ERC-20 (Ethereum Network)</option>
-                      <option value='BEP-20'>BEP-20 (BSC Network)</option>
-                    </select>
-                    <div className='pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500'>
-                      <svg
-                        className='h-4 w-4'
-                        fill='none'
-                        stroke='currentColor'
-                        viewBox='0 0 24 24'
-                      >
-                        <path
-                          strokeLinecap='round'
-                          strokeLinejoin='round'
-                          strokeWidth={2}
-                          d='M19 9l-7 7-7-7'
-                        />
-                      </svg>
-                    </div>
+                      onChange={value => handleChange('blockchainNetwork', value)}
+                      placeholder='Choose Blockchain Network'
+                    />
                   </div>
                 </div>
 
@@ -709,7 +673,7 @@ export function AddRecipientModal({ isOpen, onClose, onSubmit }: AddRecipientMod
                     value={formData.walletAddress}
                     onChange={e => handleChange('walletAddress', e.target.value)}
                     placeholder='TLFmgA1vevqB5X9DoccmsLYEsWR28ooLe'
-                    className='w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
+                    className='w-full rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none'
                   />
                 </div>
               </div>

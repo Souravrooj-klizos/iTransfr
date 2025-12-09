@@ -79,54 +79,114 @@ TURNKEY_BASE_URL=https://api.turnkey.com
 Infinitus (InfinitusPay) is a **global payout provider** that handles:
 - Sending money to bank accounts in 150+ countries
 - Processing international wire transfers
-- Handling local payment rails (SPEI in Mexico, UPI in India, etc.)
-- Currency settlement
+- Handling local payment rails (SPEI in Mexico, UPI in India, ACH in Colombia, etc.)
+- Currency settlement and FX
 
 ## How iTransfr Uses Infinitus:
 ```
 User requests payout → System calls Infinitus → Infinitus sends to recipient bank → Recipient receives funds
 ```
 
-## Credentials Needed:
+## ⚠️ Important Finding:
 
-### Required from Infinitus (Contact: support@infinituspay.com):
+**Infinitus API access is NOT self-service.** Unlike Bitso or Turnkey, you cannot:
+- Sign up online and get API keys immediately
+- Access public API documentation
+- Use a sandbox without business verification
+
+**Their API portal is private** - you must contact them directly.
+
+## How to Get Infinitus Credentials:
+
+### Step 1: Contact Infinitus Sales
+```
+Email: support@infinituspay.com
+       kipp@infinituspay.com
+Phone: +1 (908) 872-9135
+
+Subject: API Access Request for Remittance Platform
+```
+
+### Step 2: Request Template
+
+```
+Subject: API Access Request - iTransfr Remittance Platform
+
+Hello,
+
+We are building a remittance platform (iTransfr) and would like to integrate
+InfinitusPay for international bank payouts.
+
+Our use case:
+- Cross-border remittances from USA to Mexico, Colombia, India
+- Automated payout processing via API
+- Target volume: [specify expected volume]
+
+We need:
+1. API Documentation / Developer Portal access
+2. Sandbox/Testing environment credentials
+3. API Key and Secret
+4. Webhook configuration details
+
+Company: [Your company name]
+Contact: [Name]
+Email: [Email]
+Phone: [Phone]
+
+Thank you,
+[Your name]
+```
+
+### Step 3: What to Expect
+
+Based on research, Infinitus will likely need:
+- Business verification documents
+- Compliance/AML documentation
+- Expected transaction volumes
+- Use case explanation
+
+They may schedule a call before providing API access.
+
+## Credentials Expected (Based on Similar Fintech APIs):
 
 | Credential | Description |
 |------------|-------------|
-| **API Key** | Your Infinitus API authentication key |
-| **API Secret** | Secret for signing requests |
-| **Merchant ID** | Your merchant/business identifier |
-| **Webhook Secret** | For verifying payout status callbacks |
+| **API Key** | Authentication identifier |
+| **API Secret** | For request signing |
+| **Merchant ID** | Business identifier |
+| **Webhook URL** | For payout status updates |
+| **Sandbox URL** | Testing environment |
+| **Production URL** | Live environment |
 
-### Environment Variables Format:
+## Environment Variables Format (Expected):
 ```env
-# Infinitus Credentials
+# Infinitus Credentials (to be provided by Infinitus)
 INFINITUS_API_KEY=your-api-key-here
 INFINITUS_API_SECRET=your-api-secret-here
 INFINITUS_MERCHANT_ID=your-merchant-id-here
 INFINITUS_WEBHOOK_SECRET=your-webhook-secret-here
-INFINITUS_BASE_URL=https://api.infinituspay.com
+INFINITUS_BASE_URL=https://[to-be-provided].infinituspay.com
 ```
 
-### How to Get Infinitus Credentials:
+## Alternative: Create Mock Integration
 
-1. **Contact Sales**: Email support@infinituspay.com or call +1 (908) 872-9135
-2. **Complete Business Verification**:
-   - Provide company documents
-   - Explain use case (remittance platform)
-3. **Request API Access**:
-   - Ask for Developer/Sandbox account
-   - Request API documentation
-4. **Receive Credentials**:
-   - API Key
-   - API Secret
-   - Merchant ID
-   - Webhook Secret (if using callbacks)
+While waiting for Infinitus credentials, I can create a **mock integration** that:
+- Has the same function signatures as the real API
+- Returns realistic mock responses
+- Allows testing the full payout flow
+- Can be swapped with real API when credentials arrive
 
-### Important Notes:
-- Infinitus may require business verification before providing API access
-- Ask for **sandbox/testing environment** first
-- Request their API documentation PDF
+---
+
+## Contact Information Summary
+
+| Contact | Details |
+|---------|---------|
+| Email (Support) | support@infinituspay.com |
+| Email (Sales) | kipp@infinituspay.com |
+| Phone | +1 (908) 872-9135 |
+| Website | https://infinituspay.com |
+
 
 ---
 

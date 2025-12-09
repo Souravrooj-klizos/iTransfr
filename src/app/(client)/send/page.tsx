@@ -112,194 +112,198 @@ export default function SendMoneyPage() {
   const sourceCurrency = selectedMethod === 'international' ? 'USDT' : 'USDC';
 
   return (
-    <div className='grid grid-cols-1 gap-4 lg:grid-cols-3'>
-      {/* LEFT SIDE - Transfer Method Cards + Form */}
-      <div className='space-y-6 lg:col-span-2'>
-        {/* Transfer Method Selection - Responsive Grid */}
-        <div className='grid grid-cols-1 gap-4 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3'>
-          {TRANSFER_METHODS.map(method => (
-            <TransferMethodCard
-              key={method.id}
-              id={method.id}
-              icon={method.icon}
-              title={method.title}
-              subtitle={method.subtitle}
-              timing={method.timing}
-              iconBgColor={method.iconBgColor}
-              description={method.description}
-              isSelected={selectedMethod === method.id}
-              onClick={() => setSelectedMethod(method.id)}
-            />
-          ))}
-        </div>
-
-        {/* Transfer Details Form */}
-        <div className='rounded-lg border border-gray-200 bg-white p-6'>
-          <h2 className='mb-6 text-lg font-semibold text-gray-900'>Transfer Details</h2>
-
-          <div className='space-y-3'>
-            {/* Send To */}
-            <FormSelect
-              label='Send to'
-              value={`${recipientData.name} | ${recipientData.bank}`}
-              options={[
-                {
-                  value: `${recipientData.name} | ${recipientData.bank}`,
-                  label: `${recipientData.name} | ${recipientData.bank}`,
-                },
-              ]}
-              required
-            />
-
-            {/* Amount, Source Currency, and Output Currency */}
-            <div
-              className={`grid grid-cols-1 ${showOutputCurrency ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4`}
-            >
-              <FormInput
-                label='Amount'
-                type='number'
-                value={amount}
-                onChange={setAmount}
-                placeholder='55.00'
-                showMax
-                required
+    <>
+      <div className='grid grid-cols-1 gap-4 lg:grid-cols-3'>
+        {/* LEFT SIDE - Transfer Method Cards + Form */}
+        <div className='space-y-6 lg:col-span-2'>
+          {/* Transfer Method Selection - Responsive Grid */}
+          <div className='grid grid-cols-1 gap-4 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3'>
+            {TRANSFER_METHODS.map(method => (
+              <TransferMethodCard
+                key={method.id}
+                id={method.id}
+                icon={method.icon}
+                title={method.title}
+                subtitle={method.subtitle}
+                timing={method.timing}
+                iconBgColor={method.iconBgColor}
+                description={method.description}
+                isSelected={selectedMethod === method.id}
+                onClick={() => setSelectedMethod(method.id)}
               />
+            ))}
+          </div>
 
+          {/* Transfer Details Form */}
+          <div className='rounded-lg border border-gray-200 bg-white p-6'>
+            <h2 className='mb-6 text-lg font-semibold text-gray-900'>Transfer Details</h2>
+
+            <div className='space-y-3'>
+              {/* Send To */}
               <FormSelect
-                label='Source Currency'
-                value={sourceCurrency}
+                label='Send to'
+                value={`${recipientData.name} | ${recipientData.bank}`}
                 options={[
-                  { value: 'USDC', label: '💵 USDC' },
-                  { value: 'USDT', label: '💵 USDT' },
-                  { value: 'USD', label: '💵 USD' },
+                  {
+                    value: `${recipientData.name} | ${recipientData.bank}`,
+                    label: `${recipientData.name} | ${recipientData.bank}`,
+                  },
                 ]}
                 required
               />
 
-              {showOutputCurrency && (
+              {/* Amount, Source Currency, and Output Currency */}
+              <div
+                className={`grid grid-cols-1 ${showOutputCurrency ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4`}
+              >
+                <FormInput
+                  label='Amount'
+                  type='number'
+                  value={amount}
+                  onChange={setAmount}
+                  placeholder='55.00'
+                  showMax
+                  required
+                />
+
                 <FormSelect
-                  label='Output Currency'
-                  value='EUR'
+                  label='Source Currency'
+                  value={sourceCurrency}
                   options={[
-                    { value: 'EUR', label: 'EUR' },
-                    { value: 'GBP', label: 'GBP' },
-                    { value: 'USD', label: 'USD' },
+                    { value: 'USDC', label: '💵 USDC' },
+                    { value: 'USDT', label: '💵 USDT' },
+                    { value: 'USD', label: '💵 USD' },
                   ]}
                   required
                 />
-              )}
-            </div>
 
-            {/* Available Balance */}
-            <div className='flex items-center gap-2 text-sm'>
-              <span className='text-gray-600'>Available Balance:</span>
-              <span className='font-semibold' style={{ color: 'var(--color-gray-900)' }}>
-                {showBalance ? '1,234.56 USDT' : '••••••••• USDT'}
-              </span>
-              <button
-                onClick={() => setShowBalance(!showBalance)}
-                className='cursor-pointer text-blue-600 hover:text-blue-700'
-              >
-                {showBalance ? <Eye className='h-4 w-4' /> : <EyeOff className='h-4 w-4' />}
-              </button>
-            </div>
+                {showOutputCurrency && (
+                  <FormSelect
+                    label='Output Currency'
+                    value='EUR'
+                    options={[
+                      { value: 'EUR', label: 'EUR' },
+                      { value: 'GBP', label: 'GBP' },
+                      { value: 'USD', label: 'USD' },
+                    ]}
+                    required
+                  />
+                )}
+              </div>
 
-            {/* Note */}
-            <div>
-              <label className='mb-2 block text-sm font-medium text-gray-700'>
-                Note (Optional)
-              </label>
-              <textarea
-                rows={5}
-                className='w-full resize-none rounded-lg border border-gray-300 px-4 py-3 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none'
-                placeholder='Payment reference or note'
-              />
+              {/* Available Balance */}
+              <div className='flex items-center gap-2 text-sm'>
+                <span className='text-gray-600'>Available Balance:</span>
+                <span className='font-semibold' style={{ color: 'var(--color-gray-900)' }}>
+                  {showBalance ? '1,234.56 USDT' : '••••••••• USDT'}
+                </span>
+                <button
+                  onClick={() => setShowBalance(!showBalance)}
+                  className='cursor-pointer text-blue-600 hover:text-blue-700'
+                >
+                  {showBalance ? <Eye className='h-4 w-4' /> : <EyeOff className='h-4 w-4' />}
+                </button>
+              </div>
+
+              {/* Note */}
+              <div>
+                <label className='mb-2 block text-sm font-medium text-gray-700'>
+                  Note (Optional)
+                </label>
+                <textarea
+                  rows={5}
+                  className='w-full resize-none rounded-lg border border-gray-300 px-4 py-3 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                  placeholder='Payment reference or note'
+                />
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Info Banner */}
-        <InfoBanner message={infoBanner} variant='warning' />
-      </div>
+        {/* RIGHT SIDE - Transfer Summary */}
+        <div className='lg:col-span-1'>
+          <div className='sticky rounded-lg border border-gray-200 bg-white p-6'>
+            <h2 className='mb-5 text-lg font-semibold text-gray-900'>Transfer Summary</h2>
 
-      {/* RIGHT SIDE - Transfer Summary */}
-      <div className='lg:col-span-1'>
-        <div className='sticky top-6 rounded-lg border border-gray-200 bg-white p-6'>
-          <h2 className='mb-6 text-lg font-semibold text-gray-900'>Transfer Summary</h2>
-
-          <SummaryItem
-            label='Transfer Method'
-            value={TRANSFER_METHODS.find(m => m.id === selectedMethod)?.title || ''}
-            icon={TRANSFER_METHODS.find(m => m.id === selectedMethod)?.icon}
-          />
-          <hr className='my-4' />
-
-          <SummaryItem
-            label='Recipient'
-            value={recipientData.name}
-            subtext={[recipientData.bank, recipientData.address]}
-          />
-          <hr className='my-4' />
-          <SummaryItem
-            label='Source Currency'
-            value={`${sourceCurrency} ${amount}`}
-            valueStyle={{ fontWeight: 600 }}
-          />
-          <hr className='my-4' />
-          <SummaryItem
-            label='Recipient Gets'
-            value={feesData.recipientGets}
-            subtext={`Rate: ${feesData.rate}`}
-            valueStyle={{
-              fontSize: '1.125rem',
-              fontWeight: 700,
-              color: 'var(--color-success-green)',
-            }}
-          />
-
-          {/* Fees */}
-          {feesData.showFees && (
-            <FeeBreakdown
-              quotedRate={feesData.quotedRate}
-              fxFee={feesData.fxFee}
-              wireFeeLabel={feesData.wireFeeLabel}
-              wireFee={feesData.wireFee}
-              totalFees={feesData.totalFees}
+            <SummaryItem
+              label='Transfer Method'
+              value={TRANSFER_METHODS.find(m => m.id === selectedMethod)?.title || ''}
+              icon={TRANSFER_METHODS.find(m => m.id === selectedMethod)?.icon}
             />
-          )}
+            <hr className='my-4' />
 
-          {!feesData.showFees && (
-            <div className='mb-6 border-t border-gray-200 pt-4'>
-              <p className='text-sm text-gray-600 italic'>No fees for crypto transfers</p>
-            </div>
-          )}
-
-          {/* Terms Checkbox */}
-          <label className='mb-4 flex cursor-pointer items-center gap-2'>
-            <input
-              type='checkbox'
-              checked={agreed}
-              onChange={e => setAgreed(e.target.checked)}
-              className='h-4 w-4 cursor-pointer'
+            <SummaryItem
+              label='Recipient'
+              value={recipientData.name}
+              subtext={[recipientData.bank, recipientData.address]}
             />
-            <span className='text-xs text-gray-600'>
-              I agree to the terms and conditions and confirm the transfer details are correct
-            </span>
-          </label>
+            <hr className='my-4' />
+            <SummaryItem
+              label='Source Currency'
+              value={`${sourceCurrency} ${amount}`}
+              valueStyle={{ fontWeight: 600 }}
+            />
+            <hr className='my-4' />
+            <SummaryItem
+              label='Recipient Gets'
+              value={feesData.recipientGets}
+              subtext={`Rate: ${feesData.rate}`}
+              valueStyle={{
+                fontSize: '1.125rem',
+                fontWeight: 700,
+                color: 'var(--color-success-green)',
+              }}
+            />
 
-          {/* Continue Button */}
-          <button
-            disabled={!agreed}
-            className={`w-full rounded-lg py-3 font-medium transition-colors ${
-              agreed
-                ? 'bg-gradient-blue cursor-pointer text-white hover:bg-blue-700'
-                : 'cursor-not-allowed bg-gray-200 text-gray-400'
-            }`}
-          >
-            Continue
-          </button>
+            {/* Fees */}
+            {feesData.showFees && (
+              <FeeBreakdown
+                quotedRate={feesData.quotedRate}
+                fxFee={feesData.fxFee}
+                wireFeeLabel={feesData.wireFeeLabel}
+                wireFee={feesData.wireFee}
+                totalFees={feesData.totalFees}
+              />
+            )}
+
+            {!feesData.showFees && (
+              <div className='mb-6 border-t border-gray-200 pt-4'>
+                <p className='text-sm text-gray-600 italic'>No fees for crypto transfers</p>
+              </div>
+            )}
+
+            {/* Terms Checkbox */}
+            <label className='mb-4 flex cursor-pointer items-center gap-2'>
+              <input
+                type='checkbox'
+                checked={agreed}
+                onChange={e => setAgreed(e.target.checked)}
+                className='h-4 w-4 cursor-pointer'
+              />
+              <span className='text-xs text-gray-600'>
+                I agree to the terms and conditions and confirm the transfer details are correct
+              </span>
+            </label>
+
+            {/* Continue Button */}
+            <button
+              disabled={!agreed}
+              className={`w-full rounded-lg py-3 font-medium transition-colors ${
+                agreed
+                  ? 'bg-gradient-blue cursor-pointer text-white hover:bg-blue-700'
+                  : 'cursor-not-allowed bg-gray-200 text-gray-400'
+              }`}
+            >
+              Continue
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Info Banner */}
+      <div className='mt-6'>
+        <InfoBanner message={infoBanner} variant='warning' />
+      </div>
+    </>
   );
 }

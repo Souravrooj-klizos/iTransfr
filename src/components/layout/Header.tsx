@@ -27,6 +27,8 @@ export function Header() {
         return 'Settings';
       case '/help':
         return 'Help Center';
+      case '/profile':
+        return 'Profile';
       default:
         return 'Dashboard';
     }
@@ -51,7 +53,7 @@ export function Header() {
               </svg>
               <span className='absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500'></span>
             </button>
-            <div className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-blue-600'>
+            <div className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-gradient-blue'>
               <span className='text-sm font-medium text-white'>
                 {user?.email?.charAt(0).toUpperCase() || 'U'}
               </span>

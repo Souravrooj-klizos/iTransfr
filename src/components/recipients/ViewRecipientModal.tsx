@@ -1,5 +1,6 @@
 'use client';
 
+import DeleteIcon from '@/components/icons/DeleteIcon';
 import PenEdit from '@/components/icons/PenEdit';
 import { Modal } from '@/components/ui/Modal';
 import Image from 'next/image';
@@ -147,15 +148,15 @@ export function ViewRecipientModal({
         <div className='flex flex-col gap-3 border-t border-gray-200 pt-6 sm:flex-row'>
           <button
             type='button'
-            className='flex flex-1 items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700 transition-colors hover:bg-red-50'
+            className='flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700 transition-colors hover:bg-red-50'
           >
-            <Image src='/delete.svg' alt='delete' width={20} height={20} className='h-4 w-4' />
+            <DeleteIcon />
             Remove
           </button>
           <button
             type='button'
             onClick={onEdit}
-            className='bg-gradient-blue flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm text-white transition-colors hover:bg-blue-700'
+            className='bg-gradient-blue flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm text-white transition-colors hover:bg-blue-700'
           >
             <PenEdit />
             Edit

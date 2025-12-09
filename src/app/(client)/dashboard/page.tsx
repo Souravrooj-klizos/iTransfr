@@ -176,6 +176,10 @@ const analyticsData = [
 ];
 
 import KYCStatus from '@/components/client/KYCStatus';
+import CryptoDeposit from '@/components/icons/CryptoDeposit';
+import CryptoSend from '@/components/icons/CryptoSend';
+import DepositMoney from '@/components/icons/DepositMoney';
+import SendMoney from '@/components/icons/SendMoney';
 
 export default function ClientDashboard() {
   return (
@@ -196,20 +200,20 @@ export default function ClientDashboard() {
         <div className='flex flex-col rounded-xl border border-gray-200 bg-white px-6 py-4 transition-shadow hover:shadow-md lg:col-span-1 xl:col-span-2'>
           <div className='grid flex-1 grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4'>
             <QuickActionButton
-              icon={<Image src='/elements.svg' alt='Deposit Crypto' width={30} height={30} />}
+              icon={<CryptoDeposit />}
               label='Deposit Crypto'
               variant='primary'
             />
             <QuickActionButton
-              icon={<Image src='/elements (1).svg' alt='Deposit Crypto' width={30} height={30} />}
+              icon={<CryptoSend />}
               label='Send Crypto'
             />
             <QuickActionButton
-              icon={<Image src='/elements (2).svg' alt='Deposit Crypto' width={30} height={30} />}
+              icon={<DepositMoney />}
               label='Deposit Money'
             />
             <QuickActionButton
-              icon={<Image src='/elements (3).svg' alt='Deposit Crypto' width={30} height={30} />}
+              icon={<SendMoney />}
               label='Send Money'
             />
           </div>

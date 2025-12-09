@@ -1,13 +1,24 @@
 'use client';
 
+import DeleteIcon from '@/components/icons/DeleteIcon';
+import PenEdit from '@/components/icons/PenEdit';
+import TransacionIcon from '@/components/icons/TransacionIcon';
 import { AddRecipientModal } from '@/components/recipients/AddRecipientModal';
 import { ViewRecipientModal } from '@/components/recipients/ViewRecipientModal';
 import { DataTable, type TableColumn } from '@/components/ui/DataTable';
 import { Tabs } from '@/components/ui/Tabs';
-import { Filter, Globe, Home, Plus, Search, Users, Wallet } from 'lucide-react';
-import { useState } from 'react';
-// import { toast, ToastContainer } from 'react-toastify';
-// import 'react-toastify/dist/ReactToastify.css';
+import { useToast } from '@/components/ui/Toast';
+import {
+  Filter,
+  Globe,
+  Home,
+  MoreVertical,
+  Plus,
+  Search,
+  Users,
+  Wallet,
+} from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 interface Recipient {
   id: string;
@@ -114,6 +125,8 @@ export default function RecipientsPage() {
   const [selectedRecipient, setSelectedRecipient] = useState<Recipient | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [showActionsMenu, setShowActionsMenu] = useState<string | null>(null);
+  const toast = useToast();
 
   const tabs = [
     { id: 'all', label: 'All Recipients', icon: <Users className='h-4 w-4' /> },
@@ -187,38 +200,67 @@ export default function RecipientsPage() {
       key: 'actions',
       header: 'Actions',
       align: 'right',
-      render: row => (
-        <button
-          onClick={() => {
-            setSelectedRecipient(row);
-            setIsViewModalOpen(true);
-          }}
-          className='text-gray-400 hover:text-gray-600'
-        >
-          <svg className='h-5 w-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-            <path
-              strokeLinecap='round'
-              strokeLinejoin='round'
-              strokeWidth={2}
-              d='M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z'
-            />
-          </svg>
-        </button>
+      render: (row, index) => (
+        <div className='relative'>
+          <button
+            onClick={() => setShowActionsMenu(showActionsMenu === row.id ? null : row.id)}
+            className='cursor-pointer rounded-lg p-1 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-600'
+          >
+            <MoreVertical className='h-5 w-5' />
+          </button>
+          {showActionsMenu === row.id && (
+            <div
+              className={`absolute ${index !== undefined && index < 3 ? 'top-8' : 'bottom-8'} right-0 z-10 w-48 rounded-lg border border-gray-200 bg-white p-2 shadow-lg`}
+            >
+              <button
+                onClick={() => {
+                  setSelectedRecipient(row);
+                  setIsViewModalOpen(true);
+                  setShowActionsMenu(null);
+                }}
+                className='flex w-full cursor-pointer items-center gap-3 rounded-lg px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100'
+              >
+                <TransacionIcon />
+                View Transactions
+              </button>
+              <button className='flex w-full cursor-pointer items-center gap-3 rounded-lg px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100'>
+                <PenEdit />
+                Edit
+              </button>
+              <button className='flex w-full cursor-pointer items-center gap-3 rounded-lg px-4 py-2.5 text-left text-sm text-red-500 transition-colors hover:bg-gray-100'>
+                <DeleteIcon />
+                Remove
+              </button>
+            </div>
+          )}
+        </div>
       ),
     },
   ];
 
   const handleAddRecipient = (data: any) => {
     console.log('Adding recipient:', data);
-    // toast.success('New Domestic Recipient Successfully Added!', {
-    //   position: 'bottom-right',
-    //   autoClose: 3000,
-    //   hideProgressBar: false,
-    //   closeOnClick: true,
-    //   pauseOnHover: true,
-    //   draggable: true,
-    // });
+    toast.success('New Domestic Recipient Successfully Added!');
   };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      // Check if click is outside dropdown menu
+      if (showActionsMenu && !target.closest('.relative')) {
+        setShowActionsMenu(null);
+      }
+    };
+
+    if (showActionsMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showActionsMenu]);
 
   return (
     <div className='space-y-6'>

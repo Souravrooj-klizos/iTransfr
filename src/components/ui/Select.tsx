@@ -14,6 +14,8 @@ interface SelectProps {
   options: SelectOption[];
   placeholder?: string;
   className?: string;
+  dropdownClassName?: string;
+  direction?: 'up' | 'down';
 }
 
 export function Select({
@@ -22,6 +24,8 @@ export function Select({
   options,
   placeholder = 'Select option',
   className = '',
+  dropdownClassName,
+  direction = 'down',
 }: SelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -64,7 +68,11 @@ export function Select({
       </button>
 
       {isOpen && (
-        <div className='animate-in fade-in zoom-in-95 absolute top-full left-0 z-50 mt-1.5 w-full min-w-[180px] overflow-hidden rounded-lg border border-gray-200 bg-white p-1 shadow-lg duration-100'>
+        <div
+          className={`animate-in fade-in zoom-in-95 absolute left-0 z-50 w-full overflow-hidden rounded-lg border border-gray-200 bg-white p-1 shadow-lg duration-100 ${
+            direction === 'up' ? 'bottom-full mb-1.5' : 'top-full mt-1.5'
+          } ${dropdownClassName ?? 'min-w-[180px]'}`}
+        >
           <div className='max-h-60 overflow-y-auto'>
             {options.map(option => (
               <button

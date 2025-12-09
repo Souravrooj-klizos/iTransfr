@@ -5,6 +5,7 @@ import { Check, ChevronDown, Copy } from 'lucide-react';
 import Image from 'next/image';
 import { BankDetailsField } from '@/components/ui/BankDetailsField';
 import { Button } from '@/components/ui/Button';
+import ShareIcon from '@/components/icons/ShareIcon';
 
 const cryptocurrencies = [
   { id: 'usdt-trc20', name: 'USDT (TRC-20) Tron Network', network: 'Tron Network' },
@@ -122,7 +123,7 @@ export function CryptocurrencyDeposit() {
               onClick={handleOpenPaymentPage}
               className='flex shrink-0 cursor-pointer items-center gap-2 bg-[#B762FF] px-6 py-2.5 text-white hover:bg-[#B762FF]/90'
             >
-              <Image src='/share.svg' alt='Share' width={16} height={16} />
+              <ShareIcon />
               Open Payment Page
             </Button>
           </div>
