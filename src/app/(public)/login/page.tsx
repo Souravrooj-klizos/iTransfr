@@ -9,8 +9,8 @@ import { useToast } from '@/components/ui/Toast';
 import { supabase } from '@/lib/supabaseClient';
 import { getFirstError, loginSchema } from '@/lib/validations/auth';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -19,7 +19,31 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const router = useRouter();
+  const searchParams = useSearchParams();
   const toast = useToast();
+
+  /* useRef imported above */
+  const toastShownRef = useRef(false);
+
+  useEffect(() => {
+    // Check for error in URL params
+    const error = searchParams.get('error');
+    if (error && !toastShownRef.current) {
+      toastShownRef.current = true;
+      // Show error toast
+      // Small delay to ensure UI is ready
+      setTimeout(() => {
+          toast.error('Login Failed', error);
+      }, 500);
+
+      // Optional: remove the error from URL after a longer delay (e.g. 5 seconds) to keep the static alert visible for a bit
+      setTimeout(() => {
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.delete('error');
+        window.history.replaceState({}, '', newUrl.toString());
+      }, 5000);
+    }
+  }, [searchParams, toast]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,7 +94,7 @@ export default function LoginPage() {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/dashboard`,
+          redirectTo: `${window.location.origin}/api/auth/oauth-callback?flow=login`,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
@@ -91,6 +115,13 @@ export default function LoginPage() {
 
   return (
     <AuthCard title='Log in to your Account' subtitle='Welcome back! Select method to log in'>
+      {/* Error Alert Fallback */}
+      {searchParams.get('error') && (
+        <div className='mb-4 rounded-md bg-red-50 p-3 text-sm text-red-600 ring-1 ring-red-200'>
+          {searchParams.get('error')}
+        </div>
+      )}
+
       {/* Login Form */}
       <form onSubmit={handleLogin} className='space-y-4' noValidate>
         <div>

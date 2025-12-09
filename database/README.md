@@ -8,11 +8,19 @@ Run in Supabase SQL Editor:
 PRODUCTION_SETUP.sql
 ```
 
-### Step 2: Create Admin (after signing up)
+### Step 2: Create Admin
+Choose one of these options:
+
+**Option A: Direct Admin Creation** (Recommended)
 Run in Supabase SQL Editor:
 ```
-CREATE_ADMIN.sql
+CREATE_ADMIN_DIRECT.sql
 ```
+This creates admin@klizos.com with password Password12@
+
+**Option B: Manual Process**
+- Sign up with admin email via the app
+- Then run CREATE_ADMIN.sql to promote to super_admin
 
 ---
 
@@ -21,7 +29,8 @@ CREATE_ADMIN.sql
 | File | Purpose | When to Run |
 |------|---------|-------------|
 | `PRODUCTION_SETUP.sql` | Creates all 11 tables | First, once |
-| `CREATE_ADMIN.sql` | Promotes user to super_admin | After user signs up |
+| `CREATE_ADMIN_DIRECT.sql` | Creates admin user directly | After tables are created |
+| `CREATE_ADMIN.sql` | Promotes existing user to super_admin | After user signs up |
 
 ---
 
@@ -59,13 +68,17 @@ CREATE_ADMIN.sql
    SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
    ```
 
-4. **Sign Up Admin User**
-   - Go to your app signup page
-   - Sign up with admin email (e.g., sourav.rooj@klizos.com)
+4. **Create Admin User**
+   Choose one option:
 
-5. **Promote to Super Admin**
+   **Quick Setup (Recommended):**
    - Go to SQL Editor
-   - Edit `CREATE_ADMIN.sql` if needed (change email)
-   - Run the script
+   - Run `CREATE_ADMIN_DIRECT.sql`
+   - Admin: `admin@klizos.com` / `Password12@`
 
-6. **Done!** Admin can now access `/admin/*` pages
+   **Manual Setup:**
+   - Go to your app signup page
+   - Sign up with admin email
+   - Go to SQL Editor and run `CREATE_ADMIN.sql`
+
+5. **Done!** Admin can now access `/admin/*` pages
