@@ -83,17 +83,7 @@ export default function KYCReviewPage() {
   };
 
   return (
-    <div className='p-8'>
-      <div className='mb-8 flex items-center justify-between'>
-        <h1 className='text-3xl font-bold text-gray-900'>KYC Review</h1>
-        <button
-          onClick={fetchKYCRecords}
-          className='rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50'
-        >
-          Refresh List
-        </button>
-      </div>
-
+    <div>
       {loading ? (
         <div className='py-12 text-center'>
           <div className='mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600'></div>
@@ -134,7 +124,7 @@ export default function KYCReviewPage() {
                 <tr key={record.id} className='hover:bg-gray-50'>
                   <td className='px-6 py-4 whitespace-nowrap'>
                     <div className='flex items-center'>
-                      <div className='flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gray-100 font-bold text-gray-500'>
+                      <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100 font-bold text-gray-500'>
                         {record.client_profiles?.first_name?.charAt(0) || '?'}
                       </div>
                       <div className='ml-4'>
@@ -211,7 +201,7 @@ export default function KYCReviewPage() {
                         Open Original
                       </a>
                     </div>
-                    <div className='relative flex aspect-[3/4] items-center justify-center bg-gray-100'>
+                    <div className='relative flex aspect-3/4 items-center justify-center bg-gray-100'>
                       {doc.fileName.toLowerCase().endsWith('.pdf') ? (
                         <div className='p-4 text-center'>
                           <FileText className='mx-auto mb-2 h-16 w-16 text-gray-400' />

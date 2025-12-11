@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -27,6 +27,8 @@
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "react-phone-number-input": "^3.4.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-react": "^5.30.3",
     "tailwind-merge": "^2.2.0",
     "zod": "^3.25.76"
   },
@@ -35,6 +37,8 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-react": "^5.18.0",
     "eslint": "^9",
     "eslint-config-next": "16.0.6",
     "prettier": "^3.3.3",

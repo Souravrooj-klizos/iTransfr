@@ -1,37 +1,25 @@
 'use client';
 
 import { useSidebar } from '@/providers/SidebarProvider';
-import { useUser } from '@/providers/UserProvider';
 import { Menu } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 
 export function Header() {
-  const { user } = useUser();
   const { isCollapsed, toggleSidebar, toggleMobileSidebar } = useSidebar();
   const pathname = usePathname();
 
   const getPageTitle = (path: string) => {
     switch (path) {
-      case '/dashboard':
-        return 'Overview';
-      case '/balance':
-        return 'Balance';
-      case '/deposit':
-        return 'Deposit';
-      case '/send':
-        return 'Send Money';
-      case '/recipients':
-        return 'Recipients';
-      case '/transactions':
+      case '/admin/dashboard':
+        return 'Admin Dashboard';
+      case '/admin/kyc-review':
+        return 'KYC Review';
+      case '/admin/transactions':
         return 'Transactions';
-      case '/team':
-        return 'Team';
-      case '/settings':
-        return 'Settings';
-      case '/help':
-        return 'Help Center';
-      case '/profile':
-        return 'Profile';
+      case '/admin/payouts':
+        return 'Payouts';
+      case '/admin/transactions':
+        return 'Transactions';
       default:
         return 'Dashboard';
     }
@@ -41,14 +29,14 @@ export function Header() {
 
   return (
     <header
-      className={`fixed top-0 right-0 z-40 my-3 mr-5 ml-2 rounded-lg border border-gray-200 bg-white transition-all duration-300 left-0 ${isCollapsed ? 'md:left-25' : 'md:left-64'} `}
+      className={`fixed top-0 right-0 left-0 z-40 my-3 mr-5 ml-2 rounded-lg border border-gray-200 bg-white transition-all duration-300 ${isCollapsed ? 'md:left-25' : 'md:left-64'} `}
     >
       <div className='px-5 py-2'>
         <div className='flex items-center justify-between'>
           {/* Left: burger + title */}
           <div className='flex items-center gap-3'>
             <button
-              className='rounded-lg p-1 text-gray-600 hover:bg-gray-100 cursor-pointer'
+              className='cursor-pointer rounded-lg p-1 text-gray-600 hover:bg-gray-100'
               onClick={() => {
                 if (window.innerWidth < 768) toggleMobileSidebar();
                 else toggleSidebar();
@@ -74,11 +62,11 @@ export function Header() {
               <span className='absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500'></span>
             </button>
 
-            <div className='bg-gradient-blue flex h-8 w-8 cursor-pointer items-center justify-center rounded-full'>
+            {/* <div className='bg-gradient-blue flex h-8 w-8 cursor-pointer items-center justify-center rounded-full'>
               <span className='text-sm font-medium text-white'>
                 {user?.email?.charAt(0).toUpperCase() || 'U'}
               </span>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

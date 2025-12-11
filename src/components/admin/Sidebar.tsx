@@ -1,43 +1,60 @@
-import BalanceIcon from '@/components/icons/BalanceIcon';
 import DashboardIcon from '@/components/icons/DashboardIcon';
-import Deposit from '@/components/icons/Deposit';
 import HelpIcon from '@/components/icons/HelpIcon';
 import ItransfrLogo from '@/components/icons/ItransfrLogo';
 import ItransfrText from '@/components/icons/ItransfrText';
-import RecipientsIcon from '@/components/icons/RecipientsIcon';
-import SendIcon from '@/components/icons/SendIcon';
-import TeamIcon from '@/components/icons/TeamIcon';
+import kycReviewIcon from '@/components/icons/kycReviewIcon';
 import TransacionIcon from '@/components/icons/TransacionIcon';
 import { supabase } from '@/lib/supabaseClient';
 import { useSidebar } from '@/providers/SidebarProvider';
-import { useUser } from '@/providers/UserProvider';
-import { ChevronDown, LogOut, Settings, X } from 'lucide-react';
+import {
+  ChevronDown,
+  CreditCard,
+  LogOut,
+  Settings,
+  X,
+} from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 export function Sidebar() {
-  const { user } = useUser();
+  const [user, setUser] = useState<any>(null);
   const { isCollapsed, isMobileOpen, closeMobileSidebar } = useSidebar();
   const pathname = usePathname();
   const router = useRouter();
 
+  useEffect(() => {
+      const getUser = async () => {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        setUser(user);
+      };
+
+      getUser();
+
+      const {
+        data: { subscription },
+      } = supabase.auth.onAuthStateChange((event, session) => {
+        setUser(session?.user ?? null);
+        if (!session) {
+          router.push('/login');
+        }
+      });
+
+      return () => subscription.unsubscribe();
+    }, [router]);
+
   const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-      router.push('/login');
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
+    await supabase.auth.signOut();
+    router.push('/login');
   };
 
   const navigation = [
-    { name: 'Overview', href: '/dashboard', icon: DashboardIcon },
-    { name: 'Balance', href: '/balance', icon: BalanceIcon },
-    { name: 'Deposit', href: '/deposit', icon: Deposit },
-    { name: 'Send', href: '/send', icon: SendIcon },
-    { name: 'Recipients', href: '/recipients', icon: RecipientsIcon },
-    { name: 'Transactions', href: '/transactions', icon: TransacionIcon },
-    { name: 'Team', href: '/team', icon: TeamIcon },
+    { name: 'Dashboard', href: '/admin/dashboard', icon: DashboardIcon },
+    { name: 'KYC Review', href: '/admin/kyc-review', icon: kycReviewIcon },
+    { name: 'Transactions', href: '/admin/transactions', icon: TransacionIcon },
+    { name: 'Payouts', href: '/admin/payouts', icon: CreditCard },
   ];
 
   const bottomNavigation = [
@@ -89,14 +106,14 @@ export function Sidebar() {
           <div
             className={`border-b border-gray-200 py-4 ${isEffectiveCollapsed ? 'px-1' : 'px-2'}`}
           >
-            <Link href='/profile' onClick={closeMobileSidebar}>
+            <Link href='#' onClick={closeMobileSidebar}>
               <div
                 className={`flex cursor-pointer items-center rounded-lg bg-gray-50 p-3 transition-colors hover:bg-gray-100 ${
                   isEffectiveCollapsed ? 'justify-center' : 'justify-between'
                 }`}
               >
                 <div className='flex items-center gap-3'>
-                  <div className='bg-gradient-blue flex h-8 w-8 shrink-0 items-center justify-center rounded-full'>
+                  <div className='bg-gradient-dark flex h-8 w-8 shrink-0 items-center justify-center rounded-full'>
                     <span className='text-sm font-medium text-white'>
                       {user?.email?.charAt(0).toUpperCase() || 'U'}
                     </span>
@@ -126,7 +143,7 @@ export function Sidebar() {
                   onClick={closeMobileSidebar}
                   title={isEffectiveCollapsed ? item.name : ''}
                   className={`group flex items-center rounded-lg py-2.5 text-sm font-medium transition-colors ${
-                    isActive ? 'bg-gradient-blue text-white' : 'text-gray-700 hover:bg-gray-100'
+                    isActive ? 'bg-gradient-dark text-white' : 'text-gray-700 hover:bg-gray-100'
                   } ${isEffectiveCollapsed ? 'justify-center px-[10px]' : 'px-3'}`}
                 >
                   <item.icon
@@ -151,9 +168,7 @@ export function Sidebar() {
                   onClick={closeMobileSidebar}
                   title={isEffectiveCollapsed ? item.name : ''}
                   className={`group flex items-center rounded-lg py-2.5 text-sm font-medium transition-colors ${
-                    isActive
-                      ? 'bg-gradient-blue text-white'
-                      : 'text-gray-700 hover:bg-gray-100'
+                    isActive ? 'bg-gradient-dark text-white' : 'text-gray-700 hover:bg-gray-100'
                   } ${isEffectiveCollapsed ? 'justify-center px-[10px]' : 'px-3'}`}
                 >
                   <item.icon

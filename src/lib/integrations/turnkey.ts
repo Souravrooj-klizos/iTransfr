@@ -141,28 +141,62 @@ async function turnkeyRequest<T>(endpoint: string, body: object): Promise<T> {
 // API FUNCTIONS
 // =====================================================
 
+// Supported chains as per guidelines
+export type SupportedChain = 'ETHEREUM' | 'SOLANA' | 'TRON';
+
+// Chain configuration for wallet creation
+const CHAIN_WALLET_CONFIG: Record<SupportedChain, {
+  curve: string;
+  path: string;
+  addressFormat: string;
+}> = {
+  ETHEREUM: {
+    curve: 'CURVE_SECP256K1',
+    path: "m/44'/60'/0'/0/0",
+    addressFormat: 'ADDRESS_FORMAT_ETHEREUM',
+  },
+  SOLANA: {
+    curve: 'CURVE_ED25519',
+    path: "m/44'/501'/0'/0'",
+    addressFormat: 'ADDRESS_FORMAT_SOLANA',
+  },
+  TRON: {
+    curve: 'CURVE_SECP256K1',
+    path: "m/44'/195'/0'/0/0",
+    addressFormat: 'ADDRESS_FORMAT_TRON', // Uses same as Ethereum but with Tron prefix
+  },
+};
+
 /**
- * Create a new wallet for a user
+ * Create a new wallet for a user with addresses for all supported chains
+ * Supports: Ethereum (ERC-20), Solana (SPL), Tron (TRC-20)
+ * For USDT, USDC, USDG stablecoins
  */
-export async function createWallet(walletName: string, userId?: string): Promise<TurnkeyWallet> {
+export async function createWallet(
+  walletName: string,
+  userId?: string,
+  chains: SupportedChain[] = ['ETHEREUM', 'SOLANA', 'TRON']
+): Promise<TurnkeyWallet> {
+  // Create account configs for each requested chain
+  const accounts = chains.map(chain => ({
+    curve: CHAIN_WALLET_CONFIG[chain].curve,
+    pathFormat: 'PATH_FORMAT_BIP32',
+    path: CHAIN_WALLET_CONFIG[chain].path,
+    addressFormat: CHAIN_WALLET_CONFIG[chain].addressFormat,
+  }));
+
   const response = await turnkeyRequest<any>('/public/v1/submit/create_wallet', {
     type: 'ACTIVITY_TYPE_CREATE_WALLET',
     timestampMs: Date.now().toString(),
     organizationId: getOrganizationId(),
     parameters: {
       walletName: walletName,
-      accounts: [
-        {
-          curve: 'CURVE_SECP256K1', // For Ethereum/EVM
-          pathFormat: 'PATH_FORMAT_BIP32',
-          path: "m/44'/60'/0'/0/0",
-          addressFormat: 'ADDRESS_FORMAT_ETHEREUM',
-        },
-      ],
+      accounts: accounts,
     },
   });
 
   console.log('[Turnkey] Wallet created:', response.activity?.result?.walletId);
+  console.log('[Turnkey] Chains:', chains.join(', '));
 
   return {
     walletId: response.activity?.result?.walletId,

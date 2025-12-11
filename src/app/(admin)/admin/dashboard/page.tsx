@@ -1,16 +1,25 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { supabaseAdmin } from '@/lib/supabaseClient';
+import BankCard from '@/components/icons/BankCard';
+import ChartIcon from '@/components/icons/ChartIcon';
+import ClientsIcons from '@/components/icons/ClientsIcons';
+import DepositMoney from '@/components/icons/DepositMoney';
+import KycApplication from '@/components/icons/KycApplication';
+import KycReviewIcon from '@/components/icons/kycReviewIcon';
+import SendMoney from '@/components/icons/SendMoney';
+import SwapIcon from '@/components/icons/SwapIcon';
+import SwapLineIcon from '@/components/icons/SwapLineIcon';
+import TransacionIcon from '@/components/icons/TransacionIcon';
+import WarningIcon from '@/components/icons/WarningIcon';
 import {
-  Users,
-  FileCheck,
-  Clock,
-  CheckCircle,
-  XCircle,
-  TrendingUp,
   AlertCircle,
+  ArrowDownLeft,
+  ArrowUpRight,
+  FileCheck,
+  TrendingUp,
 } from 'lucide-react';
+
+import { useEffect, useState } from 'react';
 
 interface DashboardStats {
   totalClients: number;
@@ -66,10 +75,34 @@ export default function AdminDashboard() {
   }
 
   const statCards = [
-    { label: 'Total Clients', value: stats.totalClients, icon: Users, color: 'bg-blue-500' },
-    { label: 'Pending KYC', value: stats.pendingKYC, icon: Clock, color: 'bg-yellow-500' },
-    { label: 'Approved KYC', value: stats.approvedKYC, icon: CheckCircle, color: 'bg-green-500' },
-    { label: 'Rejected KYC', value: stats.rejectedKYC, icon: XCircle, color: 'bg-red-500' },
+    {
+      label: 'Total Clients',
+      value: stats.totalClients,
+      icon: BankCard,
+      bgColor: 'bg-blue-100',
+      subLabel: 'Last 30 Days',
+    },
+    {
+      label: 'Pending KYC',
+      value: stats.pendingKYC,
+      icon: KycApplication,
+      bgColor: 'bg-purple-100',
+      subLabel: 'Last 30 Days',
+    },
+    {
+      label: 'Approved KYC',
+      value: stats.approvedKYC,
+      icon: ChartIcon,
+      bgColor: 'bg-green-100',
+      subLabel: 'Last 30 Days',
+    },
+    {
+      label: 'Rejected KYC',
+      value: stats.rejectedKYC,
+      icon: ClientsIcons,
+      bgColor: 'bg-orange-100',
+      subLabel: 'Last 30 Days',
+    },
   ];
 
   if (loading) {
@@ -82,27 +115,27 @@ export default function AdminDashboard() {
 
   return (
     <div>
-      <h1 className='mb-6 text-2xl font-bold text-gray-900'>Admin Dashboard</h1>
-
       {/* Stats Grid */}
-      <div className='mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4'>
+      <div className='mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4'>
         {statCards.map(stat => (
-          <div key={stat.label} className='rounded-lg border border-gray-200 bg-white p-6 shadow'>
-            <div className='flex items-center'>
-              <div className={`${stat.color} rounded-lg p-3`}>
-                <stat.icon className='h-6 w-6 text-white' />
+          <div key={stat.label} className='rounded-xl border border-gray-200 bg-white p-4'>
+            <div className='flex items-center justify-between'>
+              <h3 className='text-base font-medium text-gray-800'>{stat.label}</h3>
+              <div className={`${stat.bgColor} rounded-md p-2.5`}>
+                <stat.icon className={`h-6 w-6`} />
               </div>
-              <div className='ml-4'>
-                <p className='text-sm font-medium text-gray-500'>{stat.label}</p>
-                <p className='text-2xl font-semibold text-gray-900'>{stat.value}</p>
-              </div>
+            </div>
+            <div className='mt-1'>
+              <p className='text-3xl font-bold text-gray-900'>{stat.value}</p>
+              <p className='mt-2 text-sm text-gray-500'>{stat.subLabel}</p>
             </div>
           </div>
         ))}
       </div>
 
+
       {/* Recent KYC Requests */}
-      <div className='rounded-lg border border-gray-200 bg-white shadow'>
+      <div className='rounded-lg border border-gray-200 bg-white mb-4'>
         <div className='flex items-center justify-between border-b border-gray-200 px-6 py-4'>
           <h2 className='text-lg font-semibold text-gray-900'>Recent KYC Requests</h2>
           <a href='/admin/kyc-review' className='text-sm text-blue-600 hover:text-blue-800'>
@@ -161,32 +194,160 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className='mt-8 grid grid-cols-1 gap-6 md:grid-cols-3'>
-        <a
-          href='/admin/kyc-review'
-          className='rounded-lg border border-gray-200 bg-white p-6 shadow transition-shadow hover:shadow-md'
-        >
-          <FileCheck className='mb-3 h-8 w-8 text-blue-600' />
-          <h3 className='text-lg font-semibold text-gray-900'>Review KYC</h3>
-          <p className='mt-1 text-sm text-gray-500'>Approve or reject pending verifications</p>
-        </a>
-        <a
-          href='/admin/transactions'
-          className='rounded-lg border border-gray-200 bg-white p-6 shadow transition-shadow hover:shadow-md'
-        >
-          <TrendingUp className='mb-3 h-8 w-8 text-green-600' />
-          <h3 className='text-lg font-semibold text-gray-900'>Transactions</h3>
-          <p className='mt-1 text-sm text-gray-500'>Manage deposits, swaps, and payouts</p>
-        </a>
-        <a
-          href='/admin/payouts'
-          className='rounded-lg border border-gray-200 bg-white p-6 shadow transition-shadow hover:shadow-md'
-        >
-          <AlertCircle className='mb-3 h-8 w-8 text-orange-600' />
-          <h3 className='text-lg font-semibold text-gray-900'>Pending Payouts</h3>
-          <p className='mt-1 text-sm text-gray-500'>Process and send payouts</p>
-        </a>
+      {/* 3-Column Layout: Recent Activity, Alerts, Quick Actions */}
+      <div className='grid grid-cols-1 gap-4 xl:grid-cols-3'>
+        {/* Recent Activity */}
+        <div className='rounded-lg border border-gray-200 bg-white py-4 px-6'>
+          <h2 className='mb-5 text-lg font-normal text-gray-700'>Recent Activity</h2>
+          <div className='space-y-6'>
+            {[
+              {
+                icon: ArrowUpRight,
+                color: 'text-green-600',
+                bg: 'bg-green-100',
+                title: 'KYC Approved',
+                subtitle: 'Acme Corp Inc.',
+                time: '2 minutes ago',
+              },
+              {
+                icon: TrendingUp,
+                color: 'text-blue-600',
+                bg: 'bg-blue-100',
+                title: 'Swap Executed',
+                subtitle: 'Acme Corp Inc.',
+                time: '5 minutes ago',
+              },
+              {
+                icon: AlertCircle,
+                color: 'text-red-600',
+                bg: 'bg-red-100',
+                title: 'KYC Rejected',
+                subtitle: 'Acme Corp Inc.',
+                time: '2 hours ago',
+              },
+              {
+                icon: ArrowUpRight,
+                color: 'text-blue-600',
+                bg: 'bg-blue-100',
+                title: 'Payout Sent',
+                subtitle: 'Acme Corp Inc.',
+                time: '3 hours ago',
+              },
+              {
+                icon: ArrowDownLeft,
+                color: 'text-green-600',
+                bg: 'bg-green-100',
+                title: 'Deposit Received',
+                subtitle: 'Acme Corp Inc.',
+                time: '3 hours ago',
+              },
+            ].map((activity, index) => (
+              <div key={index} className='flex items-center justify-between'>
+                <div className='flex items-center gap-3'>
+                  <div className={`rounded-lg p-2 ${activity.bg}`}>
+                    <activity.icon className={`h-5 w-5 ${activity.color}`} />
+                  </div>
+                  <div>
+                    <p className='text-sm font-medium text-gray-700'>{activity.title}</p>
+                    <p className='text-xs text-gray-500'>{activity.subtitle}</p>
+                  </div>
+                </div>
+                <span className='text-xs text-gray-600'>{activity.time}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Alert & Notification */}
+        <div className='rounded-lg border border-gray-200 bg-white py-4 px-6'>
+          <h2 className='mb-5 text-lg font-normal text-gray-700'>Alert & Notification</h2>
+          <div className='space-y-6'>
+            {[
+              {
+                icon: KycReviewIcon,
+                bg: 'bg-orange-100',
+                color: 'text-orange-600',
+                text: 'KYC Pending (3)',
+                action: 'Review KYC',
+              },
+              {
+                icon: DepositMoney,
+                bg: 'bg-green-100',
+                color: 'text-green-600',
+                text: 'Deposit waiting (6)',
+                action: 'Mark Received',
+              },
+              {
+                icon: WarningIcon,
+                bg: 'bg-red-100',
+                color: 'text-red-500',
+                text: 'High-risk KYC flagged by AML (1)',
+                action: 'Open KYC',
+              },
+              {
+                icon: SwapIcon,
+                bg: 'bg-red-100',
+                color: 'text-red-500',
+                text: 'Swap failed (2)',
+                action: 'Retry Swap',
+              },
+              {
+                icon: DepositMoney,
+                bg: 'bg-green-100',
+                color: 'text-green-600',
+                text: 'Deposit Received (124)',
+                action: 'View Deposit',
+              },
+            ].map((alert, index) => (
+              <div key={index} className='flex items-center justify-between'>
+                <div className='flex items-center gap-3'>
+                  <div className={`rounded-lg p-2 ${alert.bg}`}>
+                    <alert.icon className={`h-5 w-5 ${alert.color}`} />
+                  </div>
+                  <span className='text-sm text-gray-700'>{alert.text}</span>
+                </div>
+                <button className='flex w-[120px] items-center justify-center rounded border border-gray-200 px-3 py-1 text-xs font-normal text-gray-700 hover:bg-gray-50'>
+                  {alert.action}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div className='grid grid-rows-[auto_1fr] rounded-lg border border-gray-200 bg-white py-4 px-6'>
+          <h2 className='mb-5 text-lg font-normal text-gray-700'>Quick Actions</h2>
+          <div className='grid grid-cols-2 gap-4'>
+            <a
+              href='/admin/kyc-review'
+              className='flex flex-col items-center justify-center rounded-lg border border-gray-100 py-2 px-4 text-center hover:bg-gray-50'
+            >
+              <KycReviewIcon className='mb-2 h-8 w-8 text-gray-400' />
+              <span className='text-xs font-medium text-gray-600'>Review KYC Applications</span>
+            </a>
+            <a
+              href='/admin/transactions'
+              className='flex flex-col items-center justify-center rounded-lg border border-gray-100 py-2 px-4 text-center hover:bg-gray-50'
+            >
+              <TransacionIcon className='mb-2 h-8 w-8 text-gray-400' />
+              <span className='text-xs font-medium text-gray-600'>View Pending Transactions</span>
+            </a>
+            <a
+              href='/admin/swaps'
+              className='flex flex-col items-center justify-center rounded-lg border border-gray-100 py-2 px-4 text-center hover:bg-gray-50'
+            >
+              <SwapLineIcon className='mb-2 h-8 w-8 text-gray-400' />
+              <span className='text-xs font-medium text-gray-600'>Execute Swaps Queue</span>
+            </a>
+            <a
+              href='/admin/payouts'
+              className='flex flex-col items-center justify-center rounded-lg border border-gray-100 py-2 px-4 text-center hover:bg-gray-50'
+            >
+              <SendMoney className='mb-2 h-8 w-8 text-gray-400' />
+              <span className='text-xs font-medium text-gray-600'>Send Payouts Queue</span>
+            </a>
+          </div>
+        </div>
       </div>
     </div>
   );

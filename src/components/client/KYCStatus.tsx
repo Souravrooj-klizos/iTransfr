@@ -63,7 +63,7 @@ export default function KYCStatus() {
             </p>
             <Link
               href='/signup'
-              className='inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700'
+              className='inline-flex items-center rounded-md bg-gradient-blue px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700'
             >
               Upload Documents
             </Link>
@@ -134,7 +134,7 @@ export default function KYCStatus() {
   return (
     <div className={`rounded-lg border ${config.borderColor} ${config.bgColor} mb-6 p-4`}>
       <div className='flex items-start gap-4'>
-        <Icon className={`h-6 w-6 ${config.color} mt-1 flex-shrink-0`} />
+        <Icon className={`h-6 w-6 ${config.color} mt-1 shrink-0`} />
         <div className='flex-1'>
           <h3 className={`text-base font-semibold ${config.color}`}>{config.label}</h3>
           <p className='mt-1 text-sm text-gray-700'>{config.message}</p>
