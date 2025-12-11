@@ -1,271 +1,431 @@
 'use client';
 
+import Receipt from '@/components/icons/Receipt';
+import { DataTable, getStatusIcon, type TableColumn } from '@/components/ui/DataTable';
+import { DatePicker } from '@/components/ui/DatePicker';
+import { Pagination } from '@/components/ui/Pagination';
+import { Select } from '@/components/ui/Select';
+import { Download, Eye, MoreVertical, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import {
-  ArrowUpRight,
-  ArrowDownLeft,
-  RefreshCw,
-  Clock,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
-} from 'lucide-react';
 
 interface Transaction {
   id: string;
-  userId: string;
-  type: 'deposit' | 'swap' | 'payout';
-  status: string;
-  amount: number;
-  currency: string;
-  referenceNumber: string;
-  createdAt: string;
-  client_profiles?: {
-    first_name: string;
-    last_name: string;
-    company_name: string;
-  };
+  date: string;
+  time: string;
+  recipient: string;
+  transactionType: 'Deposit' | 'Withdrawal' | 'Bank Payment';
+  paymentMethod: 'Crypto' | 'Fedwire' | 'SWIFT';
+  status: 'Completed' | 'Processing' | 'Failed' | 'Pending';
+  amount: string;
+  fromAmount?: string;
 }
 
+// Mock data
+const mockTransactions: Transaction[] = [
+  {
+    id: '1',
+    date: 'Dec 28, 2025',
+    time: '14:32 UTC',
+    recipient: 'Global Industries',
+    transactionType: 'Deposit',
+    paymentMethod: 'Crypto',
+    status: 'Completed',
+    amount: '16,750 USDT',
+  },
+  {
+    id: '2',
+    date: 'Dec 27, 2025',
+    time: '09:15 CST',
+    recipient: 'OmniCorp Logistics',
+    transactionType: 'Withdrawal',
+    paymentMethod: 'Fedwire',
+    status: 'Processing',
+    amount: '$44,775',
+    fromAmount: 'From: 45,000 USDT',
+  },
+  {
+    id: '3',
+    date: 'Dec 23, 2025',
+    time: '16:45 CST',
+    recipient: 'StellarTech Enterprises',
+    transactionType: 'Bank Payment',
+    paymentMethod: 'SWIFT',
+    status: 'Processing',
+    amount: '820,000 MXN',
+    fromAmount: 'From: $32,000',
+  },
+  {
+    id: '4',
+    date: 'Dec 23, 2025',
+    time: '10:45 CST',
+    recipient: 'NovaTech Solutions',
+    transactionType: 'Withdrawal',
+    paymentMethod: 'Crypto',
+    status: 'Completed',
+    amount: '70,000 USDT',
+  },
+  {
+    id: '5',
+    date: 'Dec 23, 2025',
+    time: '10:45 CST',
+    recipient: 'Apex Dynamic Systems',
+    transactionType: 'Bank Payment',
+    paymentMethod: 'Fedwire',
+    status: 'Completed',
+    amount: '$25,000',
+  },
+  {
+    id: '6',
+    date: 'Dec 23, 2025',
+    time: '16:45 CST',
+    recipient: 'Zenith Global Group',
+    transactionType: 'Deposit',
+    paymentMethod: 'Crypto',
+    status: 'Processing',
+    amount: '15.75',
+  },
+  {
+    id: '7',
+    date: 'Dec 23, 2025',
+    time: '16:45 CST',
+    recipient: 'VanGuard Dynamics',
+    transactionType: 'Bank Payment',
+    paymentMethod: 'SWIFT',
+    status: 'Completed',
+    amount: '8,000',
+    fromAmount: 'From: $8,000',
+  },
+  {
+    id: '10',
+    date: 'Dec 27, 2025',
+    time: '09:15 CST',
+    recipient: 'InnoVision Creations',
+    transactionType: 'Withdrawal',
+    paymentMethod: 'Fedwire',
+    status: 'Processing',
+    amount: '$44,775',
+    fromAmount: 'From: 45,000 USDT',
+  },
+  {
+    id: '11',
+    date: 'Dec 26, 2025',
+    time: '11:20 UTC',
+    recipient: 'Quantum Solutions Ltd',
+    transactionType: 'Deposit',
+    paymentMethod: 'Crypto',
+    status: 'Failed',
+    amount: '5,000 USDT',
+  },
+  {
+    id: '12',
+    date: 'Dec 25, 2025',
+    time: '15:45 CST',
+    recipient: 'Nexus Enterprises',
+    transactionType: 'Bank Payment',
+    paymentMethod: 'SWIFT',
+    status: 'Pending',
+    amount: '12,500 EUR',
+    fromAmount: 'From: $13,200',
+  },
+];
+
 export default function TransactionsPage() {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'deposit' | 'swap' | 'payout'>('all');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'completed'>('all');
+  const [showActionsMenu, setShowActionsMenu] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
+  // Filter states
+  const [filter, setFilter] = useState('all');
+  const [currency, setCurrency] = useState('all');
+  const [status, setStatus] = useState('all');
+  const [client, setClient] = useState('all');
+  const [paymentType, setPaymentType] = useState('all');
+  const [dateFilter, setDateFilter] = useState<string>('');
+  const [activePage, setActivePage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState('10');
+
+  const handleSelectionChange = (ids: Set<string>) => {
+    setSelectedIds(ids);
+  };
+
+  const handleDeselectAll = () => {
+    setSelectedIds(new Set());
+  };
+
+  // Close dropdown when clicking outside
   useEffect(() => {
-    fetchTransactions();
-  }, []);
-
-  async function fetchTransactions() {
-    try {
-      const response = await fetch('/api/admin/transactions/list');
-      if (response.ok) {
-        const data = await response.json();
-        setTransactions(data.transactions || []);
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      // Check if click is outside dropdown menu
+      if (showActionsMenu && !target.closest('.relative')) {
+        setShowActionsMenu(null);
       }
-    } catch (error) {
-      console.error('Error fetching transactions:', error);
-    } finally {
-      setLoading(false);
+    };
+
+    if (showActionsMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
     }
-  }
 
-  async function updateTransactionStatus(id: string, action: string) {
-    if (!confirm(`Are you sure you want to ${action} this transaction?`)) return;
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showActionsMenu]);
 
-    try {
-      const response = await fetch(`/api/admin/transactions/${id}/update`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action }),
-      });
-
-      if (response.ok) {
-        await fetchTransactions();
-      } else {
-        const error = await response.json();
-        alert(`Error: ${error.error}`);
-      }
-    } catch (error) {
-      console.error('Error updating transaction:', error);
-      alert('Failed to update transaction');
-    }
-  }
-
-  const getTypeIcon = (type: string) => {
+  const getTransactionTypeColor = (type: string) => {
     switch (type) {
-      case 'deposit':
-        return <ArrowDownLeft className='h-5 w-5 text-green-600' />;
-      case 'swap':
-        return <RefreshCw className='h-5 w-5 text-blue-600' />;
-      case 'payout':
-        return <ArrowUpRight className='h-5 w-5 text-orange-600' />;
+      case 'Deposit':
+        return 'bg-green-100 text-green-600';
+      case 'Withdrawal':
+        return 'bg-red-100 text-red-600';
+      case 'Bank Payment':
+        return 'bg-blue-100 text-blue-600';
       default:
-        return <Clock className='h-5 w-5 text-gray-600' />;
+        return 'bg-gray-100 text-gray-600';
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    const configs: Record<string, { bg: string; text: string; icon: any }> = {
-      pending: { bg: 'bg-yellow-100', text: 'text-yellow-800', icon: Clock },
-      pending_deposit: { bg: 'bg-yellow-100', text: 'text-yellow-800', icon: Clock },
-      deposit_received: { bg: 'bg-blue-100', text: 'text-blue-800', icon: CheckCircle },
-      swap_pending: { bg: 'bg-yellow-100', text: 'text-yellow-800', icon: Clock },
-      swap_completed: { bg: 'bg-green-100', text: 'text-green-800', icon: CheckCircle },
-      payout_pending: { bg: 'bg-yellow-100', text: 'text-yellow-800', icon: Clock },
-      payout_completed: { bg: 'bg-green-100', text: 'text-green-800', icon: CheckCircle },
-      completed: { bg: 'bg-green-100', text: 'text-green-800', icon: CheckCircle },
-      failed: { bg: 'bg-red-100', text: 'text-red-800', icon: XCircle },
-    };
-    const config = configs[status] || {
-      bg: 'bg-gray-100',
-      text: 'text-gray-800',
-      icon: AlertCircle,
-    };
-    return (
-      <span
-        className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold ${config.bg} ${config.text}`}
-      >
-        <config.icon className='h-3 w-3' />
-        {status.replace('_', ' ')}
-      </span>
-    );
-  };
-
-  const filteredTransactions = transactions.filter(t => {
-    if (filter !== 'all' && t.type !== filter) return false;
-    if (statusFilter === 'pending' && !t.status.includes('pending')) return false;
-    if (statusFilter === 'completed' && !t.status.includes('completed')) return false;
-    return true;
-  });
+  const columns: TableColumn<Transaction>[] = [
+    {
+      key: 'date',
+      header: 'Date & Time',
+      render: row => (
+        <div>
+          <div className='text-sm font-medium text-gray-900'>{row.date}</div>
+          <div className='text-xs text-gray-500'>{row.time}</div>
+        </div>
+      ),
+    },
+    {
+      key: 'recipient',
+      header: 'Recipient',
+      render: row => <div className='text-sm text-gray-900'>{row.recipient}</div>,
+    },
+    {
+      key: 'transactionType',
+      header: 'Transaction Type',
+      render: row => (
+        <span
+          className={`inline-block rounded-lg px-3 py-1.5 text-xs font-medium ${getTransactionTypeColor(row.transactionType)}`}
+        >
+          {row.transactionType}
+        </span>
+      ),
+    },
+    {
+      key: 'paymentMethod',
+      header: 'Payment Method',
+      render: row => <div className='text-sm text-gray-700'>{row.paymentMethod}</div>,
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      render: row => (
+        <span
+          className='inline-flex items-center text-sm font-medium'
+          style={{
+            color:
+              row.status === 'Completed'
+                ? 'var(--color-success-green)'
+                : row.status === 'Failed'
+                  ? 'var(--color-error-red)'
+                  : row.status === 'Pending'
+                    ? '#FF9500'
+                    : 'var(--color-primary-blue)',
+          }}
+        >
+          {getStatusIcon(row.status)}
+          {row.status}
+        </span>
+      ),
+    },
+    {
+      key: 'amount',
+      header: 'Amount',
+      align: 'right',
+      render: row => (
+        <div className='text-right'>
+          <div
+            className={`text-sm font-semibold ${
+              row.transactionType === 'Deposit'
+                ? 'text-green-600'
+                : row.transactionType === 'Withdrawal'
+                  ? 'text-red-600'
+                  : 'text-gray-900'
+            }`}
+          >
+            {row.amount}
+          </div>
+          {row.fromAmount && <div className='text-xs text-gray-500'>{row.fromAmount}</div>}
+        </div>
+      ),
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      align: 'right',
+      render: (row, index) => (
+        <div className='relative'>
+          <button
+            onClick={() => setShowActionsMenu(showActionsMenu === row.id ? null : row.id)}
+            className='cursor-pointer rounded-lg p-1 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-600'
+          >
+            <MoreVertical className='h-5 w-5' />
+          </button>
+          {showActionsMenu === row.id && (
+            <div
+              className={`absolute ${index !== undefined && index < 3 ? 'top-8' : 'bottom-8'} right-0 z-10 w-48 rounded-lg border border-gray-200 bg-white p-2 shadow-lg`}
+            >
+              <button
+                className='flex w-full cursor-pointer items-center gap-3 rounded-lg px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100'
+              >
+                <Eye className='h-4 w-4' />
+                View Details
+              </button>
+              <button className='flex w-full cursor-pointer items-center gap-3 rounded-lg px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100'>
+                <Receipt />
+                View Receipt
+              </button>
+              <button className='flex w-full cursor-pointer items-center gap-3 rounded-lg px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100'>
+                <Download className='h-4 w-4' />
+                Export PDF
+              </button>
+            </div>
+          )}
+        </div>
+      ),
+    },
+  ];
 
   return (
-    <div>
-      <div className='mb-6 flex items-center justify-between'>
-        <h1 className='text-2xl font-bold text-gray-900'>Transactions</h1>
-        <button
-          onClick={fetchTransactions}
-          className='rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50'
-        >
-          Refresh
-        </button>
+    <div className='space-y-6'>
+      {/* Search and Filters */}
+      <div className='rounded-xl border border-gray-200 bg-white p-6'>
+        <div className='mb-4 flex flex-col justify-between gap-4 md:flex-row md:items-center'>
+          {/* Left Side: Search + Filters */}
+          <div className='flex flex-1 flex-col gap-3 lg:flex-row lg:items-center'>
+            {/* Search */}
+            <div className='relative w-full lg:w-64'>
+              <Search className='absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-500' />
+              <input
+                type='text'
+                placeholder='Search transactions'
+                className='w-full rounded-lg border border-gray-200 py-2 pr-4 pl-10 text-sm text-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+              />
+            </div>
+
+            {/* Filters Row */}
+            <div className='grid grid-cols-2 gap-2 sm:grid-cols-3 md:flex md:flex-wrap md:items-center'>
+              <Select
+                options={[
+                  { value: 'all', label: 'All Transactions' },
+                  { value: 'deposit', label: 'Deposit' },
+                  { value: 'withdrawal', label: 'Withdrawal' },
+                  { value: 'bank-payment', label: 'Bank Payment' },
+                ]}
+                value={filter}
+                onChange={setFilter}
+                className='w-full md:w-40'
+              />
+
+              <Select
+                options={[
+                  { value: 'all', label: 'All Payments' },
+                  { value: 'crypto', label: 'Crypto' },
+                  { value: 'fedwire', label: 'Fedwire' },
+                  { value: 'swift', label: 'SWIFT' },
+                ]}
+                value={paymentType}
+                onChange={setPaymentType}
+                className='w-full md:w-40'
+              />
+
+              <Select
+                options={[
+                  { value: 'all', label: 'All Currencies' },
+                  { value: 'usd', label: 'USD' },
+                  { value: 'eur', label: 'EUR' },
+                  { value: 'gbp', label: 'GBP' },
+                  { value: 'brl', label: 'BRL' },
+                  { value: 'usdt', label: 'USDT' },
+                  { value: 'usdc', label: 'USDC' },
+                  { value: 'mxn', label: 'MXN' },
+                ]}
+                value={currency}
+                onChange={setCurrency}
+                className='w-full md:w-40'
+              />
+
+              <Select
+                options={[
+                  { value: 'all', label: 'All Statuses' },
+                  { value: 'completed', label: 'Completed' },
+                  { value: 'processing', label: 'Processing' },
+                  { value: 'failed', label: 'Failed' },
+                  { value: 'pending', label: 'Pending' },
+                ]}
+                value={status}
+                onChange={setStatus}
+                className='w-full md:w-40'
+              />
+
+              <Select
+                options={[{ value: 'all', label: 'All Clients' }]}
+                value={client}
+                onChange={setClient}
+                className='w-full md:w-40'
+              />
+            </div>
+          </div>
+
+          {/* Right Side: Date Picker */}
+          <div className='w-full md:w-auto'>
+            <DatePicker value={dateFilter} onChange={setDateFilter} className='w-full md:w-40' />
+          </div>
+        </div>
+
+        {/* Table */}
+        <DataTable
+          data={mockTransactions}
+          columns={columns}
+          getRowId={row => row.id}
+          showCheckbox={true}
+          onSelectionChange={handleSelectionChange}
+          selectedIds={selectedIds}
+        />
+
+        {/* Pagination */}
+        <Pagination
+          currentPage={activePage}
+          totalPages={25}
+          onPageChange={setActivePage}
+          itemsPerPage={rowsPerPage}
+          onItemsPerPageChange={setRowsPerPage}
+        />
       </div>
 
-      {/* Filters */}
-      <div className='mb-6 flex gap-4'>
-        <div className='flex gap-2'>
-          {['all', 'deposit', 'swap', 'payout'].map(type => (
-            <button
-              key={type}
-              onClick={() => setFilter(type as any)}
-              className={`rounded-full px-3 py-1 text-sm ${
-                filter === type
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              {type.charAt(0).toUpperCase() + type.slice(1)}
-            </button>
-          ))}
-        </div>
-        <div className='flex gap-2'>
-          {['all', 'pending', 'completed'].map(status => (
-            <button
-              key={status}
-              onClick={() => setStatusFilter(status as any)}
-              className={`rounded-full px-3 py-1 text-sm ${
-                statusFilter === status
-                  ? 'bg-green-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              {status.charAt(0).toUpperCase() + status.slice(1)}
-            </button>
-          ))}
-        </div>
-      </div>
+      {/* Floating Action Bar */}
+      {selectedIds.size > 0 && (
+        <div className='bg-gradient-dark fixed bottom-8 left-1/2 z-50 flex -translate-x-1/2 items-center gap-4 rounded-xl px-4 py-3 text-white shadow-xl md:left-[calc(50%+8rem)]'>
+          <span className='text-sm font-light'>{selectedIds.size} transaction(s) selected</span>
 
-      {/* Transactions Table */}
-      {loading ? (
-        <div className='py-12 text-center'>
-          <div className='mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600'></div>
-        </div>
-      ) : filteredTransactions.length === 0 ? (
-        <div className='rounded-lg border border-gray-200 bg-white p-12 text-center'>
-          <Clock className='mx-auto mb-4 h-12 w-12 text-gray-300' />
-          <h3 className='text-lg font-medium text-gray-900'>No Transactions</h3>
-          <p className='mt-1 text-gray-500'>No transactions match your filters.</p>
-        </div>
-      ) : (
-        <div className='overflow-hidden rounded-lg border border-gray-200 bg-white shadow'>
-          <table className='min-w-full divide-y divide-gray-200'>
-            <thead className='bg-gray-50'>
-              <tr>
-                <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
-                  Type
-                </th>
-                <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
-                  Client
-                </th>
-                <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
-                  Amount
-                </th>
-                <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
-                  Reference
-                </th>
-                <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
-                  Status
-                </th>
-                <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
-                  Date
-                </th>
-                <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase'>
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className='divide-y divide-gray-200'>
-              {filteredTransactions.map(txn => (
-                <tr key={txn.id} className='hover:bg-gray-50'>
-                  <td className='px-6 py-4 whitespace-nowrap'>
-                    <div className='flex items-center gap-2'>
-                      {getTypeIcon(txn.type)}
-                      <span className='text-sm font-medium text-gray-900 capitalize'>
-                        {txn.type}
-                      </span>
-                    </div>
-                  </td>
-                  <td className='px-6 py-4 whitespace-nowrap'>
-                    <div className='text-sm font-medium text-gray-900'>
-                      {txn.client_profiles?.first_name} {txn.client_profiles?.last_name}
-                    </div>
-                    <div className='text-sm text-gray-500'>{txn.client_profiles?.company_name}</div>
-                  </td>
-                  <td className='px-6 py-4 whitespace-nowrap'>
-                    <div className='text-sm font-semibold text-gray-900'>
-                      {txn.amount.toLocaleString()} {txn.currency}
-                    </div>
-                  </td>
-                  <td className='px-6 py-4 font-mono text-sm whitespace-nowrap text-gray-500'>
-                    {txn.referenceNumber || '-'}
-                  </td>
-                  <td className='px-6 py-4 whitespace-nowrap'>{getStatusBadge(txn.status)}</td>
-                  <td className='px-6 py-4 text-sm whitespace-nowrap text-gray-500'>
-                    {new Date(txn.createdAt).toLocaleString()}
-                  </td>
-                  <td className='space-x-2 px-6 py-4 text-sm whitespace-nowrap'>
-                    {txn.type === 'deposit' && txn.status === 'pending_deposit' && (
-                      <button
-                        onClick={() => updateTransactionStatus(txn.id, 'mark_received')}
-                        className='font-medium text-green-600 hover:text-green-800'
-                      >
-                        Mark Received
-                      </button>
-                    )}
-                    {txn.type === 'swap' && txn.status === 'swap_pending' && (
-                      <button
-                        onClick={() => updateTransactionStatus(txn.id, 'execute_swap')}
-                        className='font-medium text-blue-600 hover:text-blue-800'
-                      >
-                        Execute Swap
-                      </button>
-                    )}
-                    {txn.type === 'payout' && txn.status === 'payout_pending' && (
-                      <button
-                        onClick={() => updateTransactionStatus(txn.id, 'send_payout')}
-                        className='font-medium text-orange-600 hover:text-orange-800'
-                      >
-                        Send Payout
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className='flex items-center gap-3 border-l border-gray-600 pl-4'>
+            <button className='flex cursor-pointer items-center gap-2 rounded-lg bg-white/10 px-3 py-1.5 text-xs font-light text-white transition-colors hover:bg-white/20'>
+              <Eye className='h-3.5 w-3.5' />
+              View Receipt
+            </button>
+            <button className='bg-gradient-blue flex cursor-pointer items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-light text-white transition-colors hover:bg-blue-700'>
+              <Download className='h-3.5 w-3.5' />
+              Export PDF
+            </button>
+            <button
+              onClick={handleDeselectAll}
+              className='ml-1 cursor-pointer text-xs font-light text-gray-400 hover:text-white'
+            >
+              Deselect
+            </button>
+          </div>
         </div>
       )}
+
     </div>
   );
 }

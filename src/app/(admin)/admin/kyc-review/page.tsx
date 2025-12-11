@@ -1,32 +1,24 @@
 'use client';
 
+import KycReviewModal, { type KYCRecord } from '@/components/admin/KycReviewModal';
+import { DataTable, getStatusIcon, type TableColumn } from '@/components/ui/DataTable';
+import { DatePicker } from '@/components/ui/DatePicker';
+import { Pagination } from '@/components/ui/Pagination';
+import { Select } from '@/components/ui/Select';
+import { Eye, FileText, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { XCircle, Eye, FileText, AlertCircle } from 'lucide-react';
-
-interface KYCRecord {
-  id: string;
-  userId: string;
-  status: 'pending' | 'under_review' | 'approved' | 'rejected';
-  createdAt: string;
-  notes: string[];
-  client_profiles: {
-    first_name: string;
-    last_name: string;
-    company_name: string;
-  };
-  kyc_documents: {
-    id: string;
-    documentType: string;
-    fileUrl: string;
-    fileName: string;
-  }[];
-}
 
 export default function KYCReviewPage() {
   const [kycRecords, setKycRecords] = useState<KYCRecord[]>([]);
   const [selectedRecord, setSelectedRecord] = useState<KYCRecord | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [filter, setFilter] = useState('all');
+  const [status, setStatus] = useState('all');
+  const [dateFilter, setDateFilter] = useState<string>('');
+  const [activePage, setActivePage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState('10');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchKYCRecords();
@@ -72,218 +64,222 @@ export default function KYCReviewPage() {
     }
   }
 
-  const getStatusBadge = (status: string) => {
-    const configs: Record<string, string> = {
-      pending: 'bg-yellow-100 text-yellow-800',
-      under_review: 'bg-blue-100 text-blue-800',
-      approved: 'bg-green-100 text-green-800',
-      rejected: 'bg-red-100 text-red-800',
-    };
-    return configs[status] || 'bg-gray-100 text-gray-800';
+  /* eslint-disable react/display-name */
+  const columns: TableColumn<KYCRecord>[] = [
+    {
+      key: 'companyName',
+      header: 'Company Name',
+      // width: '200px',
+      render: row => (
+        <span className='text-sm text-gray-800'>
+          {row.client_profiles.company_name}
+        </span>
+      ),
+    },
+    {
+      key: 'country',
+      header: 'Country',
+      render: row => <span className='text-sm text-gray-800'>-</span>, // flexible placeholder as per design/data mismatch
+    },
+    {
+      key: 'submitted',
+      header: 'Submitted',
+      render: row => (
+        <div className='flex flex-col'>
+          <span className='text-sm text-gray-800'>
+            {new Date(row.createdAt).toLocaleDateString('en-US', {
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric',
+            })}
+          </span>
+          <span className='text-xs text-gray-500'>
+            {new Date(row.createdAt).toLocaleTimeString('en-US', {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: false,
+              timeZone: 'UTC',
+            })}{' '}
+            UTC
+          </span>
+        </div>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      render: row => {
+        const getIconStatus = (status: string) => {
+          switch (status) {
+            case 'approved':
+              return 'Completed';
+            case 'rejected':
+              return 'Failed';
+            case 'pending':
+              return 'Pending';
+            case 'under_review':
+              return 'Processing';
+            default:
+              return 'Processing';
+          }
+        };
+
+        const getColorAndText = (status: string) => {
+          switch (status) {
+            case 'approved':
+              return { color: 'var(--color-success-green)', text: 'Approved' };
+            case 'rejected':
+              return { color: 'var(--color-error-red)', text: 'Rejected' };
+            case 'pending':
+              return { color: '#FF9500', text: 'Pending' };
+            case 'under_review':
+              return { color: 'var(--color-primary-blue)', text: 'Under Review' };
+            default:
+              return { color: 'var(--color-primary-blue)', text: status };
+          }
+        };
+
+        const { color, text } = getColorAndText(row.status);
+
+        return (
+          <span className='inline-flex items-center text-sm font-medium' style={{ color }}>
+            {getStatusIcon(getIconStatus(row.status))}
+            {text}
+          </span>
+        );
+      },
+    },
+    {
+      key: 'comments',
+      header: 'Comments',
+      render: row => (
+        <span className={`text-sm ${row.notes && row.notes.length > 0 ? 'text-gray-500' : 'text-gray-400 font-light'}`}>
+          {row.notes && row.notes.length > 0 ? row.notes[0] : 'No Comments'}
+        </span>
+      ),
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      align: 'right',
+      render: (row, index) => (
+        <button
+          onClick={() => setSelectedRecord(row)}
+          className='inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 cursor-pointer'
+        >
+          <Eye className='h-4 w-4 text-gray-600' />
+          View
+        </button>
+      ),
+    },
+  ];
+
+  const handleSelectionChange = (ids: Set<string>) => {
+    setSelectedIds(ids);
   };
 
+  console.log(kycRecords);
   return (
-    <div>
-      {loading ? (
-        <div className='py-12 text-center'>
-          <div className='mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600'></div>
-          <p className='mt-4 text-gray-500'>Loading records...</p>
-        </div>
-      ) : kycRecords.length === 0 ? (
-        <div className='rounded-lg border border-gray-200 bg-white py-12 text-center'>
-          <FileText className='mx-auto mb-4 h-12 w-12 text-gray-400' />
-          <h3 className='text-lg font-medium text-gray-900'>No Pending KYC Requests</h3>
-          <p className='mt-2 text-gray-500'>
-            All caught up! There are no KYC documents waiting for review.
-          </p>
-        </div>
-      ) : (
-        <div className='overflow-hidden rounded-lg border border-gray-200 bg-white shadow'>
-          <table className='min-w-full divide-y divide-gray-200'>
-            <thead className='bg-gray-50'>
-              <tr>
-                <th className='px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase'>
-                  User
-                </th>
-                <th className='px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase'>
-                  Company
-                </th>
-                <th className='px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase'>
-                  Status
-                </th>
-                <th className='px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase'>
-                  Submitted
-                </th>
-                <th className='px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase'>
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className='divide-y divide-gray-200 bg-white'>
-              {kycRecords.map(record => (
-                <tr key={record.id} className='hover:bg-gray-50'>
-                  <td className='px-6 py-4 whitespace-nowrap'>
-                    <div className='flex items-center'>
-                      <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100 font-bold text-gray-500'>
-                        {record.client_profiles?.first_name?.charAt(0) || '?'}
-                      </div>
-                      <div className='ml-4'>
-                        <div className='text-sm font-medium text-gray-900'>
-                          {record.client_profiles?.first_name} {record.client_profiles?.last_name}
-                        </div>
-                        <div className='text-sm text-gray-500'>User ID: {record.userId}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className='px-6 py-4 text-sm whitespace-nowrap text-gray-500'>
-                    {record.client_profiles?.company_name || '-'}
-                  </td>
-                  <td className='px-6 py-4 whitespace-nowrap'>
-                    <span
-                      className={`inline-flex rounded-full px-2 py-1 text-xs leading-5 font-semibold ${getStatusBadge(record.status)}`}
-                    >
-                      {record.status.replace('_', ' ')}
-                    </span>
-                  </td>
-                  <td className='px-6 py-4 text-sm whitespace-nowrap text-gray-500'>
-                    {new Date(record.createdAt).toLocaleDateString()}
-                  </td>
-                  <td className='space-x-3 px-6 py-4 text-sm font-medium whitespace-nowrap'>
-                    <button
-                      onClick={() => setSelectedRecord(record)}
-                      className='flex items-center gap-1 text-blue-600 hover:text-blue-900'
-                    >
-                      <Eye className='h-4 w-4' /> Review
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
+    <>
       {/* Document Review Modal */}
-      {selectedRecord && (
-        <div className='bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black p-4'>
-          <div className='flex max-h-[90vh] w-full max-w-5xl flex-col rounded-xl bg-white shadow-2xl'>
-            {/* Header */}
-            <div className='flex items-center justify-between border-b border-gray-200 px-6 py-4'>
-              <div>
-                <h2 className='text-xl font-bold text-gray-900'>Review KYC Documents</h2>
-                <p className='text-sm text-gray-500'>
-                  {selectedRecord.client_profiles?.first_name}{' '}
-                  {selectedRecord.client_profiles?.last_name} •{' '}
-                  {selectedRecord.client_profiles?.company_name}
-                </p>
-              </div>
-              <button
-                onClick={() => setSelectedRecord(null)}
-                className='text-gray-400 hover:text-gray-500'
-              >
-                <XCircle className='h-6 w-6' />
-              </button>
-            </div>
+      <KycReviewModal
+        isOpen={!!selectedRecord}
+        onClose={() => setSelectedRecord(null)}
+        record={selectedRecord}
+        onUpdateStatus={updateKYCStatus} // @ts-ignore
+        loading={actionLoading}
+      />
 
-            {/* Content */}
-            <div className='flex-1 overflow-y-auto p-6'>
-              <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3'>
-                {selectedRecord.kyc_documents?.map(doc => (
-                  <div key={doc.id} className='overflow-hidden rounded-lg border border-gray-200'>
-                    <div className='flex items-center justify-between border-b border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700 capitalize'>
-                      {doc.documentType.replace('_', ' ')}
-                      <a
-                        href={doc.fileUrl}
-                        target='_blank'
-                        rel='noopener noreferrer'
-                        className='text-xs text-blue-600 hover:text-blue-800'
-                      >
-                        Open Original
-                      </a>
-                    </div>
-                    <div className='relative flex aspect-3/4 items-center justify-center bg-gray-100'>
-                      {doc.fileName.toLowerCase().endsWith('.pdf') ? (
-                        <div className='p-4 text-center'>
-                          <FileText className='mx-auto mb-2 h-16 w-16 text-gray-400' />
-                          <p className='text-sm break-all text-gray-500'>{doc.fileName}</p>
-                          <a
-                            href={doc.fileUrl}
-                            target='_blank'
-                            rel='noopener noreferrer'
-                            className='mt-4 inline-block rounded border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50'
-                          >
-                            View PDF
-                          </a>
-                        </div>
-                      ) : (
-                        <div className='relative h-full w-full'>
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={doc.fileUrl}
-                            alt={doc.documentType}
-                            className='h-full w-full object-contain'
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {(!selectedRecord.kyc_documents || selectedRecord.kyc_documents.length === 0) && (
-                <div className='rounded-lg border border-dashed border-gray-300 bg-gray-50 py-12 text-center'>
-                  <AlertCircle className='mx-auto mb-2 h-12 w-12 text-gray-400' />
-                  <p className='text-gray-500'>No documents uploaded for this record.</p>
-                </div>
-              )}
-            </div>
-
-            {/* Footer Actions */}
-            <div className='flex items-center justify-between border-t border-gray-200 bg-gray-50 px-6 py-4'>
-              <div className='text-sm text-gray-500'>
-                Status:{' '}
-                <span
-                  className={`font-medium ${getStatusBadge(selectedRecord.status)} rounded-full px-2 py-0.5`}
-                >
-                  {selectedRecord.status}
-                </span>
-              </div>
-
-              <div className='flex space-x-3'>
-                {selectedRecord.status !== 'approved' && (
-                  <>
-                    <button
-                      onClick={() => {
-                        const reason = prompt('Please enter a reason for rejection:');
-                        if (reason) updateKYCStatus(selectedRecord.id, 'rejected', [reason]);
-                      }}
-                      disabled={actionLoading}
-                      className='rounded-md border border-red-300 bg-white px-4 py-2 text-red-700 hover:bg-red-50 disabled:opacity-50'
-                    >
-                      Reject
-                    </button>
-                    <button
-                      onClick={() => updateKYCStatus(selectedRecord.id, 'approved', [])}
-                      disabled={actionLoading}
-                      className='rounded-md bg-green-600 px-4 py-2 text-white hover:bg-green-700 disabled:opacity-50'
-                    >
-                      {actionLoading ? 'Processing...' : 'Approve KYC'}
-                    </button>
-                  </>
-                )}
-                {selectedRecord.status === 'approved' && (
-                  <button
-                    onClick={() => setSelectedRecord(null)}
-                    className='rounded-md bg-gray-200 px-4 py-2 text-gray-800 hover:bg-gray-300'
-                  >
-                    Close
-                  </button>
-                )}
-              </div>
-            </div>
+      <div className='space-y-6'>
+        {loading ? (
+          <div className='py-12 text-center'>
+            <div className='mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600'></div>
+            <p className='mt-4 text-gray-500'>Loading records...</p>
           </div>
-        </div>
-      )}
-    </div>
+        ) : kycRecords.length === 0 ? (
+          <div className='rounded-lg border border-gray-200 bg-white py-12 text-center'>
+            <FileText className='mx-auto mb-4 h-12 w-12 text-gray-400' />
+            <h3 className='text-lg font-medium text-gray-900'>No Pending KYC Requests</h3>
+            <p className='mt-2 text-gray-500'>
+              All caught up! There are no KYC documents waiting for review.
+            </p>
+          </div>
+        ) : (
+          <>
+            {/* Search and Filters */}
+            <div className='rounded-xl border border-gray-200 bg-white p-6'>
+              <div className='mb-4 flex flex-col justify-between gap-4 md:flex-row md:items-center'>
+                {/* Left Side: Search + Filters */}
+                <div className='flex flex-1 flex-col gap-3 lg:flex-row lg:items-center'>
+                  {/* Search */}
+                  <div className='relative w-full lg:w-64'>
+                    <Search className='absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-500' />
+                    <input
+                      type='text'
+                      placeholder='Search companies'
+                      className='w-full rounded-lg border border-gray-200 py-2 pr-4 pl-10 text-sm text-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                    />
+                  </div>
+
+                  {/* Filters Row */}
+                  <div className='grid grid-cols-2 gap-2 sm:grid-cols-3 md:flex md:flex-wrap md:items-center'>
+                    <Select
+                      options={[
+                        { value: 'all', label: 'All Companies' },
+                        { value: 'Liberty Trading Inc.', label: 'Liberty Trading Inc.' },
+                      ]}
+                      value={filter}
+                      onChange={setFilter}
+                      className='w-full md:w-40'
+                    />
+
+                    <Select
+                      options={[
+                        { value: 'all', label: 'All Statuses' },
+                        { value: 'completed', label: 'Completed' },
+                        { value: 'processing', label: 'Processing' },
+                        { value: 'failed', label: 'Failed' },
+                        { value: 'pending', label: 'Pending' },
+                      ]}
+                      value={status}
+                      onChange={setStatus}
+                      className='w-full md:w-40'
+                    />
+                  </div>
+                </div>
+
+                {/* Right Side: Date Picker */}
+                <div className='w-full md:w-auto'>
+                  <DatePicker
+                    value={dateFilter}
+                    onChange={setDateFilter}
+                    className='w-full md:w-40'
+                  />
+                </div>
+              </div>
+
+              {/* Table */}
+              <DataTable
+                data={kycRecords}
+                columns={columns}
+                getRowId={row => row.id}
+                showCheckbox={true}
+                onSelectionChange={handleSelectionChange}
+                selectedIds={selectedIds}
+              />
+
+              {/* Pagination */}
+              <Pagination
+                currentPage={activePage}
+                totalPages={25}
+                onPageChange={setActivePage}
+                itemsPerPage={rowsPerPage}
+                onItemsPerPageChange={setRowsPerPage}
+              />
+            </div>
+          </>
+        )}
+      </div>
+    </>
   );
 }
