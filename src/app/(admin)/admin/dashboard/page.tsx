@@ -9,12 +9,7 @@ import KycReviewIcon from '@/components/icons/kycReviewIcon';
 import SendMoney from '@/components/icons/SendMoney';
 import SwapLineIcon from '@/components/icons/SwapLineIcon';
 import TransacionIcon from '@/components/icons/TransacionIcon';
-import {
-  ArrowDownLeft,
-  ArrowUpRight,
-  FileCheck,
-  TrendingUp
-} from 'lucide-react';
+import { ArrowDownLeft, ArrowUpRight, FileCheck, TrendingUp } from 'lucide-react';
 
 import { useEffect, useState } from 'react';
 
@@ -134,9 +129,8 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-
       {/* Recent KYC Requests */}
-      <div className='rounded-lg border border-gray-200 bg-white mb-4'>
+      <div className='mb-4 rounded-lg border border-gray-200 bg-white'>
         <div className='flex items-center justify-between border-b border-gray-200 px-6 py-4'>
           <h2 className='text-lg font-semibold text-gray-900'>Recent KYC Requests</h2>
           <a href='/admin/kyc-review' className='text-sm text-blue-600 hover:text-blue-800'>
@@ -198,100 +192,111 @@ export default function AdminDashboard() {
       {/* 3-Column Layout: Recent Activity, Alerts, Quick Actions */}
       <div className='grid grid-cols-1 gap-4 xl:grid-cols-3'>
         {/* Recent Activity */}
-        <div className='rounded-lg border border-gray-200 bg-white py-4 px-6'>
+        <div className='rounded-lg border border-gray-200 bg-white px-6 py-4'>
           <h2 className='mb-5 text-lg font-normal text-gray-700'>Recent Activity</h2>
           <div className='space-y-6'>
             {activities.length === 0 ? (
-                 <p className="text-gray-500 text-sm">No recent activity.</p>
+              <p className='text-sm text-gray-500'>No recent activity.</p>
             ) : (
-                activities.map((activity, index) => (
-                  <div key={index} className='flex items-center justify-between'>
-                    <div className='flex items-center gap-3'>
-                      <div className={`rounded-lg p-2 ${activity.bg}`}>
-                        {/* Dynamic Icon based on type - simplified for now */}
-                        {activity.iconType === 'kyc' ? (
-                            <ArrowUpRight className={`h-5 w-5 ${activity.color}`} />
-                        ) : activity.iconType === 'deposit' ? (
-                            <ArrowDownLeft className={`h-5 w-5 ${activity.color}`} />
-                        ) : (
-                            <TrendingUp className={`h-5 w-5 ${activity.color}`} />
-                        )}
-                      </div>
-                      <div>
-                        <p className='text-sm font-medium text-gray-700'>{activity.title}</p>
-                        <p className='text-xs text-gray-500'>{activity.subtitle}</p>
-                      </div>
+              activities.map((activity, index) => (
+                <div key={index} className='flex items-center justify-between'>
+                  <div className='flex items-center gap-3'>
+                    <div className={`rounded-lg p-2 ${activity.bg}`}>
+                      {/* Dynamic Icon based on type - simplified for now */}
+                      {activity.iconType === 'kyc' ? (
+                        <ArrowUpRight className={`h-5 w-5 ${activity.color}`} />
+                      ) : activity.iconType === 'deposit' ? (
+                        <ArrowDownLeft className={`h-5 w-5 ${activity.color}`} />
+                      ) : (
+                        <TrendingUp className={`h-5 w-5 ${activity.color}`} />
+                      )}
                     </div>
-                    <span className='text-xs text-gray-600'>
-                        {new Date(activity.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
+                    <div>
+                      <p className='text-sm font-medium text-gray-700'>{activity.title}</p>
+                      <p className='text-xs text-gray-500'>{activity.subtitle}</p>
+                    </div>
                   </div>
-                ))
+                  <span className='text-xs text-gray-600'>
+                    {new Date(activity.time).toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </span>
+                </div>
+              ))
             )}
           </div>
         </div>
 
         {/* Alert & Notification */}
-        <div className='rounded-lg border border-gray-200 bg-white py-4 px-6'>
+        <div className='rounded-lg border border-gray-200 bg-white px-6 py-4'>
           <h2 className='mb-5 text-lg font-normal text-gray-700'>Alert & Notification</h2>
           <div className='space-y-6'>
             {alerts.length === 0 ? (
-                 <p className="text-gray-500 text-sm">No new alerts.</p>
+              <p className='text-sm text-gray-500'>No new alerts.</p>
             ) : (
-                alerts.map((alert, index) => (
-                  <div key={index} className='flex items-center justify-between'>
-                    <div className='flex items-center gap-3'>
-                      <div className={`rounded-lg p-2 ${
-                          alert.type === 'kyc_pending' ? 'bg-orange-100' :
-                          alert.type === 'tx_pending' ? 'bg-blue-100' : 'bg-gray-100'
-                      }`}>
-                         {alert.type === 'kyc_pending' ? (
-                            <KycReviewIcon className={`h-5 w-5 text-orange-600`} />
-                         ) : alert.type === 'tx_pending' ? (
-                            <DepositMoney className={`h-5 w-5 text-blue-600`} />
-                         ) : (
-                            <FileCheck className={`h-5 w-5 text-gray-600`} />
-                         )}
-                      </div>
-                      <span className='text-sm text-gray-700'>{alert.text}</span>
+              alerts.map((alert, index) => (
+                <div key={index} className='flex items-center justify-between'>
+                  <div className='flex items-center gap-3'>
+                    <div
+                      className={`rounded-lg p-2 ${
+                        alert.type === 'kyc_pending'
+                          ? 'bg-orange-100'
+                          : alert.type === 'tx_pending'
+                            ? 'bg-blue-100'
+                            : 'bg-gray-100'
+                      }`}
+                    >
+                      {alert.type === 'kyc_pending' ? (
+                        <KycReviewIcon className={`h-5 w-5 text-orange-600`} />
+                      ) : alert.type === 'tx_pending' ? (
+                        <DepositMoney className={`h-5 w-5 text-blue-600`} />
+                      ) : (
+                        <FileCheck className={`h-5 w-5 text-gray-600`} />
+                      )}
                     </div>
-                    <a href={alert.link || '#'} className='flex w-[120px] items-center justify-center rounded border border-gray-200 px-3 py-1 text-xs font-normal text-gray-700 hover:bg-gray-50'>
-                      {alert.action}
-                    </a>
+                    <span className='text-sm text-gray-700'>{alert.text}</span>
                   </div>
-                ))
+                  <a
+                    href={alert.link || '#'}
+                    className='flex w-[120px] items-center justify-center rounded border border-gray-200 px-3 py-1 text-xs font-normal text-gray-700 hover:bg-gray-50'
+                  >
+                    {alert.action}
+                  </a>
+                </div>
+              ))
             )}
           </div>
         </div>
 
         {/* Quick Actions */}
-        <div className='grid grid-rows-[auto_1fr] rounded-lg border border-gray-200 bg-white py-4 px-6'>
+        <div className='grid grid-rows-[auto_1fr] rounded-lg border border-gray-200 bg-white px-6 py-4'>
           <h2 className='mb-5 text-lg font-normal text-gray-700'>Quick Actions</h2>
           <div className='grid grid-cols-2 gap-4'>
             <a
               href='/admin/kyc-review'
-              className='flex flex-col items-center justify-center rounded-lg border border-gray-100 py-2 px-4 text-center hover:bg-gray-50'
+              className='flex flex-col items-center justify-center rounded-lg border border-gray-100 px-4 py-2 text-center hover:bg-gray-50'
             >
               <KycReviewIcon className='mb-2 h-8 w-8 text-gray-400' />
               <span className='text-xs font-medium text-gray-600'>Review KYC Applications</span>
             </a>
             <a
               href='/admin/transactions'
-              className='flex flex-col items-center justify-center rounded-lg border border-gray-100 py-2 px-4 text-center hover:bg-gray-50'
+              className='flex flex-col items-center justify-center rounded-lg border border-gray-100 px-4 py-2 text-center hover:bg-gray-50'
             >
               <TransacionIcon className='mb-2 h-8 w-8 text-gray-400' />
               <span className='text-xs font-medium text-gray-600'>View Pending Transactions</span>
             </a>
             <a
               href='/admin/swaps'
-              className='flex flex-col items-center justify-center rounded-lg border border-gray-100 py-2 px-4 text-center hover:bg-gray-50'
+              className='flex flex-col items-center justify-center rounded-lg border border-gray-100 px-4 py-2 text-center hover:bg-gray-50'
             >
               <SwapLineIcon className='mb-2 h-8 w-8 text-gray-400' />
               <span className='text-xs font-medium text-gray-600'>Execute Swaps Queue</span>
             </a>
             <a
               href='/admin/payouts'
-              className='flex flex-col items-center justify-center rounded-lg border border-gray-100 py-2 px-4 text-center hover:bg-gray-50'
+              className='flex flex-col items-center justify-center rounded-lg border border-gray-100 px-4 py-2 text-center hover:bg-gray-50'
             >
               <SendMoney className='mb-2 h-8 w-8 text-gray-400' />
               <span className='text-xs font-medium text-gray-600'>Send Payouts Queue</span>

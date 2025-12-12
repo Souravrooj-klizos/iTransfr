@@ -1,6 +1,13 @@
 const WarningIcon = ({ className }: { className?: string }) => {
   return (
-    <svg xmlns='http://www.w3.org/2000/svg' width='20' height='19' viewBox='0 0 20 19' fill='none' className={className}>
+    <svg
+      xmlns='http://www.w3.org/2000/svg'
+      width='20'
+      height='19'
+      viewBox='0 0 20 19'
+      fill='none'
+      className={className}
+    >
       <path
         fillRule='evenodd'
         clipRule='evenodd'

@@ -11,11 +11,14 @@ export async function GET() {
     const result = await testConnection();
 
     if (!result.connected) {
-      return NextResponse.json({
-        success: false,
-        error: result.error || 'Failed to connect to Infinitus',
-        hint: 'Check INFINITUS_API_KEY and INFINITUS_BASE_URL in environment variables',
-      }, { status: 500 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: result.error || 'Failed to connect to Infinitus',
+          hint: 'Check INFINITUS_API_KEY and INFINITUS_BASE_URL in environment variables',
+        },
+        { status: 500 }
+      );
     }
 
     // Try to get supported countries
@@ -36,9 +39,12 @@ export async function GET() {
     });
   } catch (error: any) {
     console.error('[Infinitus Test] Error:', error);
-    return NextResponse.json({
-      success: false,
-      error: error.message || 'Unknown error',
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        error: error.message || 'Unknown error',
+      },
+      { status: 500 }
+    );
   }
 }

@@ -64,8 +64,13 @@ export default function BalancePage() {
         setWallets(formattedWallets);
 
         // Calculate total balance
-        const total = (walletsData.data || []).reduce((sum: number, w: any) => sum + (w.balance || 0), 0);
-        setTotalBalance(`$ ${total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+        const total = (walletsData.data || []).reduce(
+          (sum: number, w: any) => sum + (w.balance || 0),
+          0
+        );
+        setTotalBalance(
+          `$ ${total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+        );
       }
 
       // Process transactions
@@ -77,7 +82,14 @@ export default function BalancePage() {
           time: tx.time,
           asset: {
             name: tx.currency || 'USDT',
-            icon: <Image src={getWalletIcon(tx.currency)} alt={tx.currency || 'USDT'} width={24} height={24} />,
+            icon: (
+              <Image
+                src={getWalletIcon(tx.currency)}
+                alt={tx.currency || 'USDT'}
+                width={24}
+                height={24}
+              />
+            ),
           },
           network: getNetworkType(tx.currency),
           direction: mapDirection(tx.transactionType),
@@ -126,24 +138,27 @@ export default function BalancePage() {
   }
 
   // Default wallets when no data
-  const displayWallets = wallets.length > 0 ? wallets : [
-    {
-      currency: 'USDT',
-      amount: '$ 0.00',
-      network: 'Tron Network',
-      networkType: 'Trc-20',
-      address: 'Not connected',
-      icon: <Image src='/Ellipse 3 (1).svg' alt='USDT' width={36} height={36} />,
-    },
-    {
-      currency: 'USDC',
-      amount: '$ 0.00',
-      network: 'Ethereum Network',
-      networkType: 'Erc-20',
-      address: 'Not connected',
-      icon: <Image src='/Ellipse 3.svg' alt='USDC' width={36} height={36} />,
-    },
-  ];
+  const displayWallets =
+    wallets.length > 0
+      ? wallets
+      : [
+          {
+            currency: 'USDT',
+            amount: '$ 0.00',
+            network: 'Tron Network',
+            networkType: 'Trc-20',
+            address: 'Not connected',
+            icon: <Image src='/Ellipse 3 (1).svg' alt='USDT' width={36} height={36} />,
+          },
+          {
+            currency: 'USDC',
+            amount: '$ 0.00',
+            network: 'Ethereum Network',
+            networkType: 'Erc-20',
+            address: 'Not connected',
+            icon: <Image src='/Ellipse 3.svg' alt='USDC' width={36} height={36} />,
+          },
+        ];
 
   if (loading) {
     return (

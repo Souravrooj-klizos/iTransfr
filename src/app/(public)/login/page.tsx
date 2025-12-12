@@ -33,7 +33,7 @@ function LoginContent() {
       // Show error toast
       // Small delay to ensure UI is ready
       setTimeout(() => {
-          toast.error('Login Failed', error);
+        toast.error('Login Failed', error);
       }, 500);
 
       // Optional: remove the error from URL after a longer delay (e.g. 5 seconds) to keep the static alert visible for a bit

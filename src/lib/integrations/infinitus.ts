@@ -108,7 +108,7 @@ function createInfinitusClient(): AxiosInstance {
 
   // Response interceptor
   client.interceptors.response.use(
-    (response) => {
+    response => {
       console.log(`[Infinitus] Response ${response.status}:`, response.config.url);
       return response;
     },
@@ -141,7 +141,9 @@ function getClient(): AxiosInstance {
  * Create a new payout
  */
 export async function createPayout(request: InfinitusPayoutRequest): Promise<InfinitusPayout> {
-  console.log(`[Infinitus] Creating payout: ${request.amount} ${request.currency} to ${request.recipient.name}`);
+  console.log(
+    `[Infinitus] Creating payout: ${request.amount} ${request.currency} to ${request.recipient.name}`
+  );
 
   // Validate recipient data first
   const validation = validateRecipient(request.recipient);
@@ -237,11 +239,13 @@ export async function cancelPayout(payoutId: string): Promise<InfinitusPayout> {
 /**
  * Get supported countries and currencies
  */
-export async function getSupportedCountries(): Promise<Array<{
-  country: string;
-  currencies: string[];
-  paymentMethods: string[];
-}>> {
+export async function getSupportedCountries(): Promise<
+  Array<{
+    country: string;
+    currencies: string[];
+    paymentMethods: string[];
+  }>
+> {
   console.log('[Infinitus] Getting supported countries');
 
   const response = await getClient().get<InfinitusApiResponse<any[]>>('/supported-countries');

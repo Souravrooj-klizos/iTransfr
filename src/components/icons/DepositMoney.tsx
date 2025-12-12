@@ -1,6 +1,13 @@
 const DepositMoney = ({ className }: { className?: string }) => {
   return (
-    <svg xmlns='http://www.w3.org/2000/svg' width='27' height='27' viewBox='0 0 27 27' fill='none' className={className}>
+    <svg
+      xmlns='http://www.w3.org/2000/svg'
+      width='27'
+      height='27'
+      viewBox='0 0 27 27'
+      fill='none'
+      className={className}
+    >
       <path
         fillRule='evenodd'
         clipRule='evenodd'

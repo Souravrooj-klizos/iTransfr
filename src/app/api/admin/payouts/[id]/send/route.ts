@@ -39,16 +39,19 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           bankName: payout.recipientBank,
           bankCode: payout.recipientBankCode,
           country: payout.recipientCountry,
-          currency: payout.currency // Assuming payout currency same as recipient wallet currency
+          currency: payout.currency, // Assuming payout currency same as recipient wallet currency
         },
         reference: payout.transactionId, // Link to our transaction ID
-        description: `Payout for user ${payout.userId}`
+        description: `Payout for user ${payout.userId}`,
       });
     } catch (infError: any) {
       console.error('[Admin Payout] Infinitus Error:', infError);
-      return NextResponse.json({
-        error: `Infinitus Payout Failed: ${infError.message}`
-      }, { status: 502 });
+      return NextResponse.json(
+        {
+          error: `Infinitus Payout Failed: ${infError.message}`,
+        },
+        { status: 502 }
+      );
     }
 
     // Update payout request with real Infantry data

@@ -108,35 +108,45 @@ export default function ClientDashboard() {
   }
 
   // Convert wallets to the format expected by WalletCard
-  const walletCards = wallets.length > 0 ? wallets.map((wallet) => ({
-    currency: wallet.currency,
-    amount: wallet.formattedBalance,
-    network: wallet.network,
-    networkType: wallet.networkType,
-    address: formatAddress(wallet.address),
-    icon: <Image src={getWalletIcon(wallet.currency)} alt={wallet.currency} width={36} height={36} />,
-    bgColor: getWalletBgColor(wallet.currency),
-  })) : [
-    // Default wallets when no data
-    {
-      currency: 'USDT',
-      amount: '$ 0.00',
-      network: 'Tron Network',
-      networkType: 'Trc-20',
-      address: 'Not connected',
-      icon: <Image src='/Ellipse 3 (1).svg' alt='USDT' width={36} height={36} />,
-      bgColor: 'bg-green-100',
-    },
-    {
-      currency: 'USDC',
-      amount: '$ 0.00',
-      network: 'Ethereum Network',
-      networkType: 'Erc-20',
-      address: 'Not connected',
-      icon: <Image src='/Ellipse 3.svg' alt='USDC' width={36} height={36} />,
-      bgColor: 'bg-blue-100',
-    },
-  ];
+  const walletCards =
+    wallets.length > 0
+      ? wallets.map(wallet => ({
+          currency: wallet.currency,
+          amount: wallet.formattedBalance,
+          network: wallet.network,
+          networkType: wallet.networkType,
+          address: formatAddress(wallet.address),
+          icon: (
+            <Image
+              src={getWalletIcon(wallet.currency)}
+              alt={wallet.currency}
+              width={36}
+              height={36}
+            />
+          ),
+          bgColor: getWalletBgColor(wallet.currency),
+        }))
+      : [
+          // Default wallets when no data
+          {
+            currency: 'USDT',
+            amount: '$ 0.00',
+            network: 'Tron Network',
+            networkType: 'Trc-20',
+            address: 'Not connected',
+            icon: <Image src='/Ellipse 3 (1).svg' alt='USDT' width={36} height={36} />,
+            bgColor: 'bg-green-100',
+          },
+          {
+            currency: 'USDC',
+            amount: '$ 0.00',
+            network: 'Ethereum Network',
+            networkType: 'Erc-20',
+            address: 'Not connected',
+            icon: <Image src='/Ellipse 3.svg' alt='USDC' width={36} height={36} />,
+            bgColor: 'bg-blue-100',
+          },
+        ];
 
   function formatAddress(address: string): string {
     if (!address || address.length < 10) return address || 'N/A';
@@ -174,7 +184,7 @@ export default function ClientDashboard() {
 
       {/* Error Banner */}
       {error && (
-        <div className='rounded-lg bg-red-50 border border-red-200 p-4 text-red-700'>
+        <div className='rounded-lg border border-red-200 bg-red-50 p-4 text-red-700'>
           <p className='text-sm'>{error}</p>
           <button
             onClick={fetchDashboardData}
@@ -195,7 +205,7 @@ export default function ClientDashboard() {
         </div>
 
         {/* Quick Actions */}
-        <div className='flex flex-col rounded-xl border border-gray-200 bg-white px-2 xl:px-6 py-4 transition-shadow hover:shadow-md lg:col-span-1 xl:col-span-2'>
+        <div className='flex flex-col rounded-xl border border-gray-200 bg-white px-2 py-4 transition-shadow hover:shadow-md lg:col-span-1 xl:col-span-2 xl:px-6'>
           <div className='grid flex-1 grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-4'>
             <QuickActionButton
               icon={<CryptoDeposit />}
@@ -203,21 +213,9 @@ export default function ClientDashboard() {
               variant='primary'
               href='/deposit'
             />
-            <QuickActionButton
-              icon={<CryptoSend />}
-              label='Send Crypto'
-              href='/send'
-            />
-            <QuickActionButton
-              icon={<DepositMoney />}
-              label='Deposit Money'
-              href='/deposit'
-            />
-            <QuickActionButton
-              icon={<SendMoney />}
-              label='Send Money'
-              href='/send'
-            />
+            <QuickActionButton icon={<CryptoSend />} label='Send Crypto' href='/send' />
+            <QuickActionButton icon={<DepositMoney />} label='Deposit Money' href='/deposit' />
+            <QuickActionButton icon={<SendMoney />} label='Send Money' href='/send' />
           </div>
         </div>
       </div>
@@ -226,7 +224,7 @@ export default function ClientDashboard() {
       <div className='mb-3 grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3'>
         {/* Recent Transactions */}
         <div className='rounded-xl border border-gray-200 bg-white px-6 py-3 lg:col-span-2'>
-          <div className='mb-4 flex items-center justify-between flex-col lg:flex-row'>
+          <div className='mb-4 flex flex-col items-center justify-between lg:flex-row'>
             <h2 className='text-lg font-normal text-gray-500'>Recent Transactions</h2>
             <div className='flex items-center gap-3'>
               <div className='relative'>

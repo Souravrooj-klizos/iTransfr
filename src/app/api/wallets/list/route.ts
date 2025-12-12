@@ -24,18 +24,18 @@ export async function GET(request: NextRequest) {
       {
         cookies: {
           getAll() {
-             return cookieStore.getAll();
+            return cookieStore.getAll();
           },
         },
       }
     ).auth.getUser();
 
     if (!user) {
-       return NextResponse.json({ error: 'Unauthorized - No session found' }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized - No session found' }, { status: 401 });
     }
 
     if (!supabaseAdmin) {
-       return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
     }
 
     const targetUserId = userId || user.id;

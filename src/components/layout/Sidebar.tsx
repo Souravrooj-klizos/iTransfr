@@ -151,9 +151,7 @@ export function Sidebar() {
                   onClick={closeMobileSidebar}
                   title={isEffectiveCollapsed ? item.name : ''}
                   className={`group flex items-center rounded-lg py-2.5 text-sm font-medium transition-colors ${
-                    isActive
-                      ? 'bg-gradient-blue text-white'
-                      : 'text-gray-700 hover:bg-gray-100'
+                    isActive ? 'bg-gradient-blue text-white' : 'text-gray-700 hover:bg-gray-100'
                   } ${isEffectiveCollapsed ? 'justify-center px-[10px]' : 'px-3'}`}
                 >
                   <item.icon

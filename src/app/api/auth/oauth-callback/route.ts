@@ -52,7 +52,9 @@ export async function GET(request: NextRequest) {
           await supabaseAdmin.auth.admin.deleteUser(data.user.id);
           await supabase.auth.signOut();
 
-          return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent('Account not found. Please sign up.')}`);
+          return NextResponse.redirect(
+            `${origin}/login?error=${encodeURIComponent('Account not found. Please sign up.')}`
+          );
         }
         // If user exists, allow.
       } else {
@@ -62,15 +64,16 @@ export async function GET(request: NextRequest) {
           const { error: createError } = await supabaseAdmin.from('users').insert({
             supabaseUserId: data.user.id,
             email: data.user.email,
-            fullName: data.user.user_metadata?.full_name || data.user.user_metadata?.name || 'OAuth User',
+            fullName:
+              data.user.user_metadata?.full_name || data.user.user_metadata?.name || 'OAuth User',
             role: 'client',
             status: 'pending_kyc',
           });
 
           if (createError) {
-             console.error('OAuth user creation error:', createError);
-             // If creation fails, maybe we should also fail the login?
-             // For now logging it and letting them in (they might have issues without profile)
+            console.error('OAuth user creation error:', createError);
+            // If creation fails, maybe we should also fail the login?
+            // For now logging it and letting them in (they might have issues without profile)
           }
         }
       }

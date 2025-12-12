@@ -6,14 +6,16 @@
  * Returns an HTML receipt that can be printed to PDF by the browser.
  */
 
-import { DepositReceiptData, generateDepositReceiptHTML, generatePayoutReceiptHTML, PayoutReceiptData } from '@/lib/pdf/receipts';
+import {
+  DepositReceiptData,
+  generateDepositReceiptHTML,
+  generatePayoutReceiptHTML,
+  PayoutReceiptData,
+} from '@/lib/pdf/receipts';
 import { supabaseAdmin } from '@/lib/supabaseClient';
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id: transactionId } = await params;
 
@@ -84,18 +86,26 @@ export async function GET(
         status,
         amount: transaction.amount,
         currency: transaction.currency,
-        recipientName: payoutRequest?.recipientName || payoutRequest?.destinationBank?.beneficiaryName || 'N/A',
-        recipientBank: payoutRequest?.recipientBank || payoutRequest?.destinationBank?.bankName || 'N/A',
-        recipientAccount: payoutRequest?.recipientAccount || payoutRequest?.destinationBank?.accountNumber || 'N/A',
+        recipientName:
+          payoutRequest?.recipientName || payoutRequest?.destinationBank?.beneficiaryName || 'N/A',
+        recipientBank:
+          payoutRequest?.recipientBank || payoutRequest?.destinationBank?.bankName || 'N/A',
+        recipientAccount:
+          payoutRequest?.recipientAccount || payoutRequest?.destinationBank?.accountNumber || 'N/A',
         recipientCountry: payoutRequest?.recipientCountry || payoutRequest?.destinationCountry,
         clientName,
-        exchangeRate: transaction.exchangeRate ? `1 ${transaction.currencyFrom} = ${transaction.exchangeRate} ${transaction.currencyTo}` : undefined,
+        exchangeRate: transaction.exchangeRate
+          ? `1 ${transaction.currencyFrom} = ${transaction.exchangeRate} ${transaction.currencyTo}`
+          : undefined,
         fees: transaction.metadata?.fees,
       };
 
       html = generatePayoutReceiptHTML(payoutData);
     } else {
-      return NextResponse.json({ error: 'Receipt not available for this transaction type' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Receipt not available for this transaction type' },
+        { status: 400 }
+      );
     }
 
     // Return HTML (user can print to PDF from browser)

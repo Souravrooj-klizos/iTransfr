@@ -38,26 +38,26 @@ export async function GET() {
       .single();
 
     if (error || !profile) {
-       // fallback if profile missing (shouldn't happen for valid users)
-       return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
+      // fallback if profile missing (shouldn't happen for valid users)
+      return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
     }
 
     // Map to UserProfile interface expected by frontend
     const userProfile = {
-       fullName: `${profile.first_name} ${profile.last_name}`,
-       email: user.email, // Email often in auth.users, sometimes in profile
-       companyName: profile.company_name,
-       mobileNumber: profile.contact_number || '', // Assuming column name
-       address: profile.address || '',
-       timezone: profile.timezone || 'UTC',
-       language: profile.language || 'English',
-       role: 'Admin', // Default or fetch from roles table
-       permissions: ['View', 'Edit'] // Mock permissions for now
+      fullName: `${profile.first_name} ${profile.last_name}`,
+      email: user.email, // Email often in auth.users, sometimes in profile
+      companyName: profile.company_name,
+      mobileNumber: profile.contact_number || '', // Assuming column name
+      address: profile.address || '',
+      timezone: profile.timezone || 'UTC',
+      language: profile.language || 'English',
+      role: 'Admin', // Default or fetch from roles table
+      permissions: ['View', 'Edit'], // Mock permissions for now
     };
 
     return NextResponse.json({
       success: true,
-      data: userProfile
+      data: userProfile,
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -65,6 +65,6 @@ export async function GET() {
 }
 
 export async function PUT(request: Request) {
-    // Implement update logic if needed
-    return NextResponse.json({ success: true, message: "Update not implemented yet" });
+  // Implement update logic if needed
+  return NextResponse.json({ success: true, message: 'Update not implemented yet' });
 }

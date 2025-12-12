@@ -49,16 +49,15 @@ export async function POST(request: NextRequest) {
     console.log('[Recipients Create] Mocking save for:', body.name);
 
     return NextResponse.json({
-        success: true,
-        data: {
-            id: `rec_${Date.now()}`,
-            userId: user.id,
-            ...body,
-            type,
-            added: new Date().toISOString()
-        }
+      success: true,
+      data: {
+        id: `rec_${Date.now()}`,
+        userId: user.id,
+        ...body,
+        type,
+        added: new Date().toISOString(),
+      },
     });
-
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

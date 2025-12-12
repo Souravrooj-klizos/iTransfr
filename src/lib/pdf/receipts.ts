@@ -78,9 +78,12 @@ const baseStyles = `
 `;
 
 export function generateDepositReceiptHTML(data: DepositReceiptData): string {
-  const statusClass = data.status === 'Completed' ? 'status-completed'
-    : data.status === 'Pending' ? 'status-pending'
-    : 'status-processing';
+  const statusClass =
+    data.status === 'Completed'
+      ? 'status-completed'
+      : data.status === 'Pending'
+        ? 'status-pending'
+        : 'status-processing';
 
   const watermark = data.status === 'Completed' ? '<div class="watermark">PAID</div>' : '';
 
@@ -125,12 +128,16 @@ export function generateDepositReceiptHTML(data: DepositReceiptData): string {
           <span class="label">Name</span>
           <span class="value">${data.clientName}</span>
         </div>
-        ${data.clientEmail ? `
+        ${
+          data.clientEmail
+            ? `
           <div class="row">
             <span class="label">Email</span>
             <span class="value">${data.clientEmail}</span>
           </div>
-        ` : ''}
+        `
+            : ''
+        }
       </div>
 
       <div class="section">
@@ -143,18 +150,26 @@ export function generateDepositReceiptHTML(data: DepositReceiptData): string {
           <span class="label">Date</span>
           <span class="value">${data.date}</span>
         </div>
-        ${data.walletAddress ? `
+        ${
+          data.walletAddress
+            ? `
           <div class="row">
             <span class="label">Wallet Address</span>
             <span class="value" style="font-size: 10px; word-break: break-all;">${data.walletAddress}</span>
           </div>
-        ` : ''}
-        ${data.transactionHash ? `
+        `
+            : ''
+        }
+        ${
+          data.transactionHash
+            ? `
           <div class="row">
             <span class="label">Transaction Hash</span>
             <span class="value" style="font-size: 10px; word-break: break-all;">${data.transactionHash}</span>
           </div>
-        ` : ''}
+        `
+            : ''
+        }
       </div>
 
       <div class="footer">
@@ -167,9 +182,12 @@ export function generateDepositReceiptHTML(data: DepositReceiptData): string {
 }
 
 export function generatePayoutReceiptHTML(data: PayoutReceiptData): string {
-  const statusClass = data.status === 'Completed' ? 'status-completed'
-    : data.status === 'Pending' ? 'status-pending'
-    : 'status-processing';
+  const statusClass =
+    data.status === 'Completed'
+      ? 'status-completed'
+      : data.status === 'Pending'
+        ? 'status-pending'
+        : 'status-processing';
 
   const watermark = data.status === 'Completed' ? '<div class="watermark">SENT</div>' : '';
   const maskedAccount = data.recipientAccount ? `****${data.recipientAccount.slice(-4)}` : 'N/A';
@@ -216,12 +234,16 @@ export function generatePayoutReceiptHTML(data: PayoutReceiptData): string {
           <span class="label">Name</span>
           <span class="value">${data.clientName}</span>
         </div>
-        ${data.clientEmail ? `
+        ${
+          data.clientEmail
+            ? `
           <div class="row">
             <span class="label">Email</span>
             <span class="value">${data.clientEmail}</span>
           </div>
-        ` : ''}
+        `
+            : ''
+        }
       </div>
 
       <div class="section">
@@ -238,12 +260,16 @@ export function generatePayoutReceiptHTML(data: PayoutReceiptData): string {
           <span class="label">Account Number</span>
           <span class="value">${maskedAccount}</span>
         </div>
-        ${data.recipientCountry ? `
+        ${
+          data.recipientCountry
+            ? `
           <div class="row">
             <span class="label">Country</span>
             <span class="value">${data.recipientCountry}</span>
           </div>
-        ` : ''}
+        `
+            : ''
+        }
       </div>
 
       <div class="section">

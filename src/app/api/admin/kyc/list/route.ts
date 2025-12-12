@@ -75,8 +75,8 @@ export async function GET() {
         page: 1,
         limit: 100, // fetching all for now as pagination not fully implemented in DB query
         total: kycRecords?.length || 0,
-        totalPages: 1
-      }
+        totalPages: 1,
+      },
     });
   } catch (error: any) {
     console.error('Error fetching KYC records:', error);

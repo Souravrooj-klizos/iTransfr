@@ -44,11 +44,7 @@ export function WalletBalanceCard({
             variant='primary'
             onClick={onDepositClick}
           />
-          <QuickActionButton
-            icon={<CryptoSend />}
-            label='Send Crypto'
-            onClick={onSendClick}
-          />
+          <QuickActionButton icon={<CryptoSend />} label='Send Crypto' onClick={onSendClick} />
         </div>
       </div>
 

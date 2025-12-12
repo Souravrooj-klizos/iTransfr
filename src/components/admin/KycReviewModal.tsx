@@ -51,8 +51,6 @@ export default function KycReviewModal({
   onUpdateStatus,
   loading = false,
 }: KycReviewModalProps) {
-
-
   if (!record) return null;
 
   const handleReject = () => {
@@ -73,7 +71,7 @@ export default function KycReviewModal({
           <button
             onClick={handleReject}
             disabled={loading || record.status !== 'pending'}
-            className='mr-3 cursor-pointer flex-1 rounded-lg border border-red-200 bg-white px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed'
+            className='mr-3 flex-1 cursor-pointer rounded-lg border border-red-200 bg-white px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50'
           >
             <div className='flex items-center justify-center gap-1'>
               <CloseCircle />
@@ -83,7 +81,7 @@ export default function KycReviewModal({
           <button
             onClick={() => onUpdateStatus(record.id, 'approved', [])}
             disabled={loading || record.status !== 'pending'}
-            className='ml-3 flex-1 cursor-pointer rounded-lg border border-blue-600 bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed'
+            className='ml-3 flex-1 cursor-pointer rounded-lg border border-blue-600 bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50'
           >
             <div className='flex items-center justify-center gap-1'>
               <CheckCircle />

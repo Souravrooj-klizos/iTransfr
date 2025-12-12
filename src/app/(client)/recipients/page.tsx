@@ -8,16 +8,7 @@ import { ViewRecipientModal } from '@/components/recipients/ViewRecipientModal';
 import { DataTable, type TableColumn } from '@/components/ui/DataTable';
 import { Tabs } from '@/components/ui/Tabs';
 import { useToast } from '@/components/ui/Toast';
-import {
-    Filter,
-    Globe,
-    Home,
-    MoreVertical,
-    Plus,
-    Search,
-    Users,
-    Wallet,
-} from 'lucide-react';
+import { Filter, Globe, Home, MoreVertical, Plus, Search, Users, Wallet } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface Recipient {
@@ -58,21 +49,23 @@ export default function RecipientsPage() {
       const data = await clientApi.payouts.getRecipients();
       // Map API response to UI model if needed, or update backend to match UI
       // For now assuming direct match, or mapping lightly
-      setRecipients(data.map((r: any) => ({
-        id: r.id,
-        name: r.name || r.recipientName,
-        email: r.email || '',
-        phone: r.phone || '',
-        type: r.type || 'Domestic',
-        details: r.details || `${r.bankName} - ${r.currency}`,
-        lastUsed: r.lastUsed || 'Never',
-        added: r.added || new Date().toLocaleDateString(),
-        bankName: r.bankName,
-        currency: r.currency,
-        routingNumber: r.routingNumber,
-        accountNumber: r.accountNumber,
-        address: r.address
-      })));
+      setRecipients(
+        data.map((r: any) => ({
+          id: r.id,
+          name: r.name || r.recipientName,
+          email: r.email || '',
+          phone: r.phone || '',
+          type: r.type || 'Domestic',
+          details: r.details || `${r.bankName} - ${r.currency}`,
+          lastUsed: r.lastUsed || 'Never',
+          added: r.added || new Date().toLocaleDateString(),
+          bankName: r.bankName,
+          currency: r.currency,
+          routingNumber: r.routingNumber,
+          accountNumber: r.accountNumber,
+          address: r.address,
+        }))
+      );
     } catch (error) {
       console.error('Failed to load recipients', error);
       toast.error('Failed to load recipients');
@@ -89,9 +82,7 @@ export default function RecipientsPage() {
   ];
 
   const filteredRecipients =
-    activeTab === 'all'
-      ? recipients
-      : recipients.filter(r => r.type.toLowerCase() === activeTab);
+    activeTab === 'all' ? recipients : recipients.filter(r => r.type.toLowerCase() === activeTab);
 
   const getTypeColor = (type: string) => {
     switch (type) {

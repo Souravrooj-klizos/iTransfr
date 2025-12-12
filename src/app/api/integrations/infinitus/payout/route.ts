@@ -1,10 +1,10 @@
 import {
-    cancelPayout,
-    createPayout,
-    getPayoutStatus,
-    InfinitusPayoutRequest,
-    listPayouts,
-    validateRecipient
+  cancelPayout,
+  createPayout,
+  getPayoutStatus,
+  InfinitusPayoutRequest,
+  listPayouts,
+  validateRecipient,
 } from '@/lib/integrations/infinitus';
 import { supabaseAdmin } from '@/lib/supabaseClient';
 import { NextRequest, NextResponse } from 'next/server';
@@ -38,27 +38,36 @@ export async function POST(request: NextRequest) {
 
     // Validation
     if (!amount || amount <= 0) {
-      return NextResponse.json({
-        success: false,
-        error: 'Valid amount is required',
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Valid amount is required',
+        },
+        { status: 400 }
+      );
     }
 
     if (!recipient) {
-      return NextResponse.json({
-        success: false,
-        error: 'Recipient details are required',
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Recipient details are required',
+        },
+        { status: 400 }
+      );
     }
 
     // Validate recipient
     const validation = validateRecipient(recipient);
     if (!validation.valid) {
-      return NextResponse.json({
-        success: false,
-        error: 'Invalid recipient data',
-        details: validation.errors,
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Invalid recipient data',
+          details: validation.errors,
+        },
+        { status: 400 }
+      );
     }
 
     console.log('[Infinitus Payout] Creating payout:', {
@@ -104,14 +113,16 @@ export async function POST(request: NextRequest) {
         }
 
         // Update transaction status
-        await supabaseAdmin.from('transactions').update({
-          status: 'PAYOUT_IN_PROGRESS',
-          metadata: {
-            infinitusPayoutId: payout.id,
-            payoutInitiatedAt: new Date().toISOString(),
-          },
-        }).eq('id', transactionId);
-
+        await supabaseAdmin
+          .from('transactions')
+          .update({
+            status: 'PAYOUT_IN_PROGRESS',
+            metadata: {
+              infinitusPayoutId: payout.id,
+              payoutInitiatedAt: new Date().toISOString(),
+            },
+          })
+          .eq('id', transactionId);
       } catch (dbError) {
         console.error('[Infinitus Payout] Database error:', dbError);
       }
@@ -134,10 +145,13 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: any) {
     console.error('[Infinitus Payout] Error:', error);
-    return NextResponse.json({
-      success: false,
-      error: error.message || 'Failed to create payout',
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        error: error.message || 'Failed to create payout',
+      },
+      { status: 500 }
+    );
   }
 }
 
@@ -194,10 +208,13 @@ export async function GET(request: NextRequest) {
     }
   } catch (error: any) {
     console.error('[Infinitus Payout] Error:', error);
-    return NextResponse.json({
-      success: false,
-      error: error.message || 'Failed to get payout',
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        error: error.message || 'Failed to get payout',
+      },
+      { status: 500 }
+    );
   }
 }
 
@@ -211,10 +228,13 @@ export async function DELETE(request: NextRequest) {
     const payoutId = request.nextUrl.searchParams.get('id');
 
     if (!payoutId) {
-      return NextResponse.json({
-        success: false,
-        error: 'Payout ID is required',
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Payout ID is required',
+        },
+        { status: 400 }
+      );
     }
 
     const payout = await cancelPayout(payoutId);
@@ -229,9 +249,12 @@ export async function DELETE(request: NextRequest) {
     });
   } catch (error: any) {
     console.error('[Infinitus Payout Cancel] Error:', error);
-    return NextResponse.json({
-      success: false,
-      error: error.message || 'Failed to cancel payout',
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        error: error.message || 'Failed to cancel payout',
+      },
+      { status: 500 }
+    );
   }
 }

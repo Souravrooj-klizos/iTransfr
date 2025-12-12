@@ -12,7 +12,14 @@ interface FormSelectProps {
   disabled?: boolean;
 }
 
-export function FormSelect({ label, value, onChange, options, required = false, disabled = false }: FormSelectProps) {
+export function FormSelect({
+  label,
+  value,
+  onChange,
+  options,
+  required = false,
+  disabled = false,
+}: FormSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 

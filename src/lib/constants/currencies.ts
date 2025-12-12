@@ -24,14 +24,17 @@ export const CHAIN_TOKEN_STANDARDS: Record<SupportedChain, string> = {
 };
 
 // Chain configuration
-export const CHAIN_CONFIG: Record<SupportedChain, {
-  name: string;
-  standard: string;
-  nativeCurrency: string;
-  explorerUrl: string;
-  avgConfirmationTime: string;
-  avgFee: string;
-}> = {
+export const CHAIN_CONFIG: Record<
+  SupportedChain,
+  {
+    name: string;
+    standard: string;
+    nativeCurrency: string;
+    explorerUrl: string;
+    avgConfirmationTime: string;
+    avgFee: string;
+  }
+> = {
   TRON: {
     name: 'Tron Network',
     standard: 'TRC-20',
@@ -59,13 +62,16 @@ export const CHAIN_CONFIG: Record<SupportedChain, {
 };
 
 // Currency configuration
-export const CURRENCY_CONFIG: Record<SupportedCurrency, {
-  name: string;
-  fullName: string;
-  issuer: string;
-  supportedChains: SupportedChain[];
-  decimals: number;
-}> = {
+export const CURRENCY_CONFIG: Record<
+  SupportedCurrency,
+  {
+    name: string;
+    fullName: string;
+    issuer: string;
+    supportedChains: SupportedChain[];
+    decimals: number;
+  }
+> = {
   USDT: {
     name: 'USDT',
     fullName: 'Tether USD',
@@ -93,10 +99,13 @@ export const CURRENCY_CONFIG: Record<SupportedCurrency, {
 export const SUPPORTED_FIAT_CURRENCIES = ['USD', 'MXN', 'COP', 'INR', 'BRL'];
 
 // Countries supported for payout
-export const SUPPORTED_PAYOUT_COUNTRIES: Record<string, {
-  currency: string;
-  paymentRails: string[];
-}> = {
+export const SUPPORTED_PAYOUT_COUNTRIES: Record<
+  string,
+  {
+    currency: string;
+    paymentRails: string[];
+  }
+> = {
   MX: { currency: 'MXN', paymentRails: ['SPEI'] },
   CO: { currency: 'COP', paymentRails: ['ACH', 'PSE'] },
   IN: { currency: 'INR', paymentRails: ['IMPS', 'NEFT', 'UPI'] },
@@ -132,10 +141,7 @@ export function getChainsForCurrency(currency: SupportedCurrency): SupportedChai
 /**
  * Validate currency and chain combination
  */
-export function isValidCurrencyChainPair(
-  currency: string,
-  chain: string
-): boolean {
+export function isValidCurrencyChainPair(currency: string, chain: string): boolean {
   if (!isSupportedCurrency(currency) || !isSupportedChain(chain)) {
     return false;
   }

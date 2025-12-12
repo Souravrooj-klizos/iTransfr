@@ -20,7 +20,9 @@ export function QuickActionButton({
   const ButtonContent = () => (
     <div
       className={`group flex h-full w-full cursor-pointer flex-col items-center justify-center rounded-xl border p-4 transition-all ${
-        isPrimary ? 'bg-gradient-blue border-transparent' : 'border-gray-200 bg-white hover:border-blue-500 hover:shadow-md'
+        isPrimary
+          ? 'bg-gradient-blue border-transparent'
+          : 'border-gray-200 bg-white hover:border-blue-500 hover:shadow-md'
       }`}
     >
       <div
@@ -42,18 +44,17 @@ export function QuickActionButton({
 
   if (href) {
     return (
-      <Link href={href} className="block h-full w-full" onClick={onClick}>
+      <Link href={href} className='block h-full w-full' onClick={onClick}>
         <ButtonContent />
       </Link>
     );
   }
 
   return (
-    <button onClick={onClick} className="h-full w-full border-none bg-transparent p-0 text-left">
+    <button onClick={onClick} className='h-full w-full border-none bg-transparent p-0 text-left'>
       <ButtonContent />
     </button>
   );
 }
 
 import React from 'react';
-

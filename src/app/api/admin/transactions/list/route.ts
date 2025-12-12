@@ -41,9 +41,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Order and paginate
-    query = query
-      .order('createdAt', { ascending: false })
-      .range(offset, offset + limit - 1);
+    query = query.order('createdAt', { ascending: false }).range(offset, offset + limit - 1);
 
     const { data: transactions, count, error } = await query;
 
@@ -60,7 +58,9 @@ export async function GET(request: NextRequest) {
     // Format transactions for admin view
     const formattedTransactions = (transactions || []).map(tx => {
       const profile = tx.client_profiles as any;
-      const fullName = profile ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() : 'Unknown';
+      const fullName = profile
+        ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim()
+        : 'Unknown';
 
       return {
         id: tx.id,
@@ -70,22 +70,22 @@ export async function GET(request: NextRequest) {
         clientEmail: '', // Email column does not exist in client_profiles
         companyName: profile?.company_name || '',
         recipient: tx.recipientName || 'N/A',
-      transactionType: mapTransactionType(tx.type),
-      paymentMethod: mapPaymentMethod(tx.type, tx.metadata),
-      status: mapStatus(tx.status),
-      rawStatus: tx.status,
-      amount: formatAmount(tx.amount, tx.currency),
-      fromAmount: tx.amountFrom ? `From: ${formatAmount(tx.amountFrom, tx.currency)}` : undefined,
-      currency: tx.currency,
-      currencyTo: tx.currencyTo,
-      exchangeRate: tx.exchangeRate,
-      type: tx.type,
-      referenceNumber: tx.referenceNumber,
-      metadata: tx.metadata,
-      createdAt: tx.createdAt,
-      updatedAt: tx.updatedAt,
-      // Actions available based on status
-      availableActions: getAvailableActions(tx.type, tx.status),
+        transactionType: mapTransactionType(tx.type),
+        paymentMethod: mapPaymentMethod(tx.type, tx.metadata),
+        status: mapStatus(tx.status),
+        rawStatus: tx.status,
+        amount: formatAmount(tx.amount, tx.currency),
+        fromAmount: tx.amountFrom ? `From: ${formatAmount(tx.amountFrom, tx.currency)}` : undefined,
+        currency: tx.currency,
+        currencyTo: tx.currencyTo,
+        exchangeRate: tx.exchangeRate,
+        type: tx.type,
+        referenceNumber: tx.referenceNumber,
+        metadata: tx.metadata,
+        createdAt: tx.createdAt,
+        updatedAt: tx.updatedAt,
+        // Actions available based on status
+        availableActions: getAvailableActions(tx.type, tx.status),
       };
     });
 

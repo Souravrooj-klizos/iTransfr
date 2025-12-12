@@ -1,8 +1,8 @@
 import {
-    DataTable,
-    getAmountColor,
-    getStatusIcon,
-    type TableColumn,
+  DataTable,
+  getAmountColor,
+  getStatusIcon,
+  type TableColumn,
 } from '@/components/ui/DataTable';
 
 interface Transaction {

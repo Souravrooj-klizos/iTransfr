@@ -41,8 +41,6 @@ export default function PayoutsPage() {
     fetchPayouts();
   }, []);
 
-
-
   async function fetchPayouts() {
     try {
       const { data: payouts } = await adminApi.payouts.list();
@@ -79,7 +77,7 @@ export default function PayoutsPage() {
       // Actually, I'll update admin.ts first.
 
       const response = await fetch(`/api/admin/payouts/${id}/send`, { method: 'POST' });
-       if (response.ok) {
+      if (response.ok) {
         await fetchPayouts();
         setSelectedPayout(null);
         alert('Payout sent successfully!');
@@ -88,7 +86,7 @@ export default function PayoutsPage() {
         alert(`Error: ${error.error}`);
       }
     } catch (error) {
-       // ...
+      // ...
     }
     // ...
   }

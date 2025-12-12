@@ -7,12 +7,12 @@
 
 import { adminAxios } from './axios';
 import type {
-    AdminTransactionAction,
-    ApiResponse,
-    DashboardStats,
-    KycRecord,
-    PaginatedResponse,
-    Transaction,
+  AdminTransactionAction,
+  ApiResponse,
+  DashboardStats,
+  KycRecord,
+  PaginatedResponse,
+  Transaction,
 } from './types';
 
 // =====================================================
@@ -24,16 +24,19 @@ export const dashboardApi = {
    * Get dashboard statistics
    */
   async getStats(): Promise<DashboardStats> {
-    const response = await adminAxios.get<ApiResponse<{ stats: DashboardStats }>>('/dashboard/stats');
-    return response.data.data?.stats || {
-      totalClients: 0,
-      pendingKYC: 0,
-      approvedKYC: 0,
-      rejectedKYC: 0,
-      pendingTransactions: 0,
-      completedTransactions: 0,
-      totalVolume: 0,
-    };
+    const response =
+      await adminAxios.get<ApiResponse<{ stats: DashboardStats }>>('/dashboard/stats');
+    return (
+      response.data.data?.stats || {
+        totalClients: 0,
+        pendingKYC: 0,
+        approvedKYC: 0,
+        rejectedKYC: 0,
+        pendingTransactions: 0,
+        completedTransactions: 0,
+        totalVolume: 0,
+      }
+    );
   },
 
   /**

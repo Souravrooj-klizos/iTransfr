@@ -63,7 +63,7 @@ export default function KYCStatus() {
             </p>
             <Link
               href='/signup'
-              className='inline-flex items-center rounded-md bg-gradient-blue px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700'
+              className='bg-gradient-blue inline-flex items-center rounded-md px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700'
             >
               Upload Documents
             </Link>

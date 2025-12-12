@@ -107,7 +107,6 @@ export async function GET() {
       success: true,
       data: [],
     });
-
   } catch (error: any) {
     console.error('[Recipients API] Error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -143,7 +142,8 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { recipientName, bankName, accountNumber, bankCode, currency, country, transferType } = body;
+    const { recipientName, bankName, accountNumber, bankCode, currency, country, transferType } =
+      body;
 
     if (!recipientName || !bankName || !accountNumber) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -189,7 +189,6 @@ export async function POST(request: NextRequest) {
         type: newRecipient.transferType,
       },
     });
-
   } catch (error: any) {
     console.error('[Recipients API] Error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });

@@ -99,11 +99,14 @@ export async function POST(request: NextRequest) {
 
     if (txError || !transaction) {
       console.error('[Deposit] Failed to create transaction:', txError);
-      return NextResponse.json({
-        error: 'Failed to create deposit request',
-        details: (txError as any).message || txError,
-        hint: (txError as any).details || (txError as any).hint
-      }, { status: 500 });
+      return NextResponse.json(
+        {
+          error: 'Failed to create deposit request',
+          details: (txError as any).message || txError,
+          hint: (txError as any).details || (txError as any).hint,
+        },
+        { status: 500 }
+      );
     }
 
     console.log('[Deposit] Transaction created:', transaction.id);
@@ -131,7 +134,7 @@ export async function POST(request: NextRequest) {
               ...currentNotes,
               `AML Check Failed: ${amlResult.reason}`,
               `Risk Score: ${amlResult.riskScore}`,
-            ]
+            ],
           },
           updatedAt: new Date().toISOString(),
         })
@@ -161,7 +164,7 @@ export async function POST(request: NextRequest) {
           notes: [
             ...currentNotes,
             `AML Check Passed - Risk Score: ${amlResult.riskScore} (${amlResult.riskLevel})`,
-          ]
+          ],
         },
         updatedAt: new Date().toISOString(),
       })

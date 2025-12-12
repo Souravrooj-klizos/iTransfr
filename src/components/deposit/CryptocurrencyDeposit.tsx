@@ -9,9 +9,27 @@ import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
 const cryptocurrencies = [
-  { id: 'usdt-trc20', name: 'USDT (TRC-20) Tron Network', currency: 'USDT', chain: 'tron', icon: '/Ellipse 3 (1).svg' },
-  { id: 'usdc-erc20', name: 'USDC (ERC-20) Ethereum Network', currency: 'USDC', chain: 'ethereum', icon: '/Ellipse 3.svg' },
-  { id: 'usdc-sol', name: 'USDC (SPL) Solana Network', currency: 'USDC', chain: 'solana', icon: '/Ellipse 3.svg' },
+  {
+    id: 'usdt-trc20',
+    name: 'USDT (TRC-20) Tron Network',
+    currency: 'USDT',
+    chain: 'tron',
+    icon: '/Ellipse 3 (1).svg',
+  },
+  {
+    id: 'usdc-erc20',
+    name: 'USDC (ERC-20) Ethereum Network',
+    currency: 'USDC',
+    chain: 'ethereum',
+    icon: '/Ellipse 3.svg',
+  },
+  {
+    id: 'usdc-sol',
+    name: 'USDC (SPL) Solana Network',
+    currency: 'USDC',
+    chain: 'solana',
+    icon: '/Ellipse 3.svg',
+  },
 ];
 
 export function CryptocurrencyDeposit() {
@@ -31,7 +49,10 @@ export function CryptocurrencyDeposit() {
         setError(null);
         setDepositAddress('');
 
-        const result = await clientApi.deposits.getAddress(selectedCrypto.currency, selectedCrypto.chain);
+        const result = await clientApi.deposits.getAddress(
+          selectedCrypto.currency,
+          selectedCrypto.chain
+        );
 
         if (result && result.address) {
           setDepositAddress(result.address);
@@ -89,7 +110,12 @@ export function CryptocurrencyDeposit() {
               type='button'
             >
               <div className='flex items-center gap-2'>
-                <Image src={selectedCrypto.icon} alt={selectedCrypto.currency} width={20} height={20} />
+                <Image
+                  src={selectedCrypto.icon}
+                  alt={selectedCrypto.currency}
+                  width={20}
+                  height={20}
+                />
                 <span className='font-medium'>{selectedCrypto.name}</span>
               </div>
               <ChevronDown
@@ -119,22 +145,18 @@ export function CryptocurrencyDeposit() {
         </div>
 
         {/* Deposit Address */}
-        <div className="md:col-span-2">
+        <div className='md:col-span-2'>
           {loading ? (
-            <div className="flex h-[72px] items-center justify-center rounded-lg border border-gray-200 bg-gray-50">
-              <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+            <div className='flex h-[72px] items-center justify-center rounded-lg border border-gray-200 bg-gray-50'>
+              <Loader2 className='h-6 w-6 animate-spin text-blue-600' />
             </div>
           ) : error ? (
-            <div className="flex h-[72px] items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 text-red-600">
-              <AlertCircle className="h-5 w-5" />
-              <span className="text-sm">{error}</span>
+            <div className='flex h-[72px] items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 text-red-600'>
+              <AlertCircle className='h-5 w-5' />
+              <span className='text-sm'>{error}</span>
             </div>
           ) : (
-             <BankDetailsField
-               label='Deposit Address'
-               value={depositAddress}
-               copyable={true}
-             />
+            <BankDetailsField label='Deposit Address' value={depositAddress} copyable={true} />
           )}
         </div>
       </div>
@@ -153,12 +175,12 @@ export function CryptocurrencyDeposit() {
           </div>
         </div>
 
-        <div className='w-full xl:w-2/3 space-y-2'>
+        <div className='w-full space-y-2 xl:w-2/3'>
           <label className='text-sm font-medium text-gray-700'>Bridge URL</label>
-          <div className='flex items-center gap-3 flex-col lg:flex-row'>
+          <div className='flex flex-col items-center gap-3 lg:flex-row'>
             <div className='flex flex-1 items-center justify-between rounded-lg border border-gray-200 bg-gray-50 py-0.5 pr-0.5 pl-4'>
               <span className='font-mono text-sm break-all text-blue-600'>
-                 {depositAddress ? bridgeUrl : 'Loading...'}
+                {depositAddress ? bridgeUrl : 'Loading...'}
               </span>
               <button
                 onClick={handleCopyUrl}
@@ -182,7 +204,7 @@ export function CryptocurrencyDeposit() {
             <Button
               onClick={handleOpenPaymentPage}
               disabled={!depositAddress}
-              className='flex shrink-0 cursor-pointer items-center gap-2 bg-[#B762FF] px-6 py-2.5 text-white hover:bg-[#B762FF]/90 disabled:opacity-50 sm:w-auto w-full justify-center'
+              className='flex w-full shrink-0 cursor-pointer items-center justify-center gap-2 bg-[#B762FF] px-6 py-2.5 text-white hover:bg-[#B762FF]/90 disabled:opacity-50 sm:w-auto'
             >
               <ShareIcon />
               Open Payment Page
@@ -192,25 +214,25 @@ export function CryptocurrencyDeposit() {
       </div>
 
       {/* Create Deposit Request Button (Optional enhancement) */}
-      <div className="flex justify-end pt-4">
+      <div className='flex justify-end pt-4'>
         <Button
-           onClick={async () => {
-             // Create a deposit request record for tracking
-             try {
-               await clientApi.deposits.create({
-                 amount: 100, // Minimum amount to pass validation
-                 currency: selectedCrypto.currency,
-                 chain: selectedCrypto.chain,
-                 source: 'crypto'
-               });
-               alert('Deposit notification sent! Admin will review details.');
-             } catch (e: any) {
-               console.error(e);
-               alert('Failed to notify: ' + (e.response?.data?.error || e.message));
-             }
-           }}
-           variant="outline"
-           className="text-sm"
+          onClick={async () => {
+            // Create a deposit request record for tracking
+            try {
+              await clientApi.deposits.create({
+                amount: 100, // Minimum amount to pass validation
+                currency: selectedCrypto.currency,
+                chain: selectedCrypto.chain,
+                source: 'crypto',
+              });
+              alert('Deposit notification sent! Admin will review details.');
+            } catch (e: any) {
+              console.error(e);
+              alert('Failed to notify: ' + (e.response?.data?.error || e.message));
+            }
+          }}
+          variant='outline'
+          className='text-sm'
         >
           Notify Incoming Deposit
         </Button>

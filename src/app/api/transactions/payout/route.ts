@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
       bankName,
       bankCode,
       country,
-      accountType
+      accountType,
     } = await request.json();
 
     // Validate input
@@ -49,7 +49,10 @@ export async function POST(request: NextRequest) {
     }
 
     if (!recipientName || !accountNumber || !bankName) {
-      return NextResponse.json({ error: 'Recipient bank details are required (Name, Account, Bank)' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Recipient bank details are required (Name, Account, Bank)' },
+        { status: 400 }
+      );
     }
 
     // Construct recipient object for internal usage/logs
@@ -59,7 +62,7 @@ export async function POST(request: NextRequest) {
       bankName,
       bankCode,
       country,
-      accountType
+      accountType,
     };
 
     const currency = sourceCurrency; // Spending currency (USDC/USDT)
@@ -120,7 +123,7 @@ export async function POST(request: NextRequest) {
 
     // If wallet doesn't exist or balance too low
     if (walletError || !wallet || wallet.balance < amount) {
-       return NextResponse.json({ error: 'Insufficient funds' }, { status: 400 });
+      return NextResponse.json({ error: 'Insufficient funds' }, { status: 400 });
     }
 
     // Deduct balance
@@ -130,7 +133,7 @@ export async function POST(request: NextRequest) {
       .eq('id', wallet.id);
 
     if (updateError) {
-       return NextResponse.json({ error: 'Failed to update wallet balance' }, { status: 500 });
+      return NextResponse.json({ error: 'Failed to update wallet balance' }, { status: 500 });
     }
 
     // 3. Generate transaction reference
@@ -147,7 +150,7 @@ export async function POST(request: NextRequest) {
         status: 'PAYOUT_PENDING',
         referenceNumber: reference,
         metadata: {
-            notes: ['Payout request created']
+          notes: ['Payout request created'],
         },
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -170,7 +173,7 @@ export async function POST(request: NextRequest) {
         debit: amount,
         credit: 0,
         currency,
-        description: 'Payout request debit'
+        description: 'Payout request debit',
       },
       {
         transactionId: transaction.id,
@@ -178,8 +181,8 @@ export async function POST(request: NextRequest) {
         debit: 0,
         credit: amount,
         currency,
-        description: 'Payout pending liability'
-      }
+        description: 'Payout pending liability',
+      },
     ]);
 
     // 5. Run AML screening with destination country
@@ -200,12 +203,12 @@ export async function POST(request: NextRequest) {
         .update({
           status: 'FAILED',
           metadata: {
-             ...transaction.metadata,
-             notes: [
-                ...currentNotes,
-                `AML Check Failed: ${amlResult.reason}`,
-                `Risk Score: ${amlResult.riskScore}`,
-             ]
+            ...transaction.metadata,
+            notes: [
+              ...currentNotes,
+              `AML Check Failed: ${amlResult.reason}`,
+              `Risk Score: ${amlResult.riskScore}`,
+            ],
           },
           updatedAt: new Date().toISOString(),
         })
@@ -257,12 +260,12 @@ export async function POST(request: NextRequest) {
       .from('transactions')
       .update({
         metadata: {
-            ...transaction.metadata,
-            notes: [
-                ...currentNotes,
-                `AML Check Passed - Risk Score: ${amlResult.riskScore} (${amlResult.riskLevel})`,
-                'Payout request submitted for processing',
-            ]
+          ...transaction.metadata,
+          notes: [
+            ...currentNotes,
+            `AML Check Passed - Risk Score: ${amlResult.riskScore} (${amlResult.riskLevel})`,
+            'Payout request submitted for processing',
+          ],
         },
         updatedAt: new Date().toISOString(),
       })

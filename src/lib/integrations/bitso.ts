@@ -125,7 +125,7 @@ function createBitsoClient(): AxiosInstance {
 
   // Response interceptor
   client.interceptors.response.use(
-    (response) => {
+    response => {
       console.log(`[Bitso] Response ${response.status}:`, response.config.url);
       return response;
     },
@@ -178,13 +178,18 @@ export async function requestQuote(
     body.receive_amount = amount.toString();
   }
 
-  const response = await getClient().post<BitsoApiResponse<BitsoQuote>>('/currency_conversions', body);
+  const response = await getClient().post<BitsoApiResponse<BitsoQuote>>(
+    '/currency_conversions',
+    body
+  );
 
   if (!response.data.success) {
     throw new Error(response.data.error?.message || 'Failed to get quote');
   }
 
-  console.log(`[Bitso] Quote received: ${response.data.payload.id}, rate: ${response.data.payload.rate}`);
+  console.log(
+    `[Bitso] Quote received: ${response.data.payload.id}, rate: ${response.data.payload.rate}`
+  );
   return response.data.payload;
 }
 
@@ -196,7 +201,9 @@ export async function executeQuote(quoteId: string): Promise<BitsoConversion> {
   console.log(`[Bitso] Executing quote: ${quoteId}`);
 
   // Bitso uses PUT /currency_conversions/{quote_id} to execute
-  const response = await getClient().put<BitsoApiResponse<BitsoConversion>>(`/currency_conversions/${quoteId}`);
+  const response = await getClient().put<BitsoApiResponse<BitsoConversion>>(
+    `/currency_conversions/${quoteId}`
+  );
 
   if (!response.data.success) {
     throw new Error(response.data.error?.message || 'Failed to execute conversion');
@@ -229,14 +236,15 @@ export async function getConversionStatus(conversionId: string): Promise<BitsoCo
 export async function getBalances(): Promise<BitsoBalance[]> {
   console.log('[Bitso] Getting balances');
 
-  const response = await getClient().get<BitsoApiResponse<{balances: BitsoBalance[]}>>('/balance');
+  const response =
+    await getClient().get<BitsoApiResponse<{ balances: BitsoBalance[] }>>('/balance');
 
   if (!response.data.success) {
     throw new Error(response.data.error?.message || 'Failed to get balances');
   }
 
   // Balance response has a nested 'balances' array
-  return response.data.payload.balances || response.data.payload as unknown as BitsoBalance[];
+  return response.data.payload.balances || (response.data.payload as unknown as BitsoBalance[]);
 }
 
 /**

@@ -127,7 +127,7 @@ function addErrorInterceptor(instance: AxiosInstance): void {
  */
 function addRetryInterceptor(instance: AxiosInstance, maxRetries: number = 2): void {
   instance.interceptors.response.use(
-    (response) => response,
+    response => response,
     async (error: AxiosError) => {
       const config = error.config as InternalAxiosRequestConfig & { _retryCount?: number };
 

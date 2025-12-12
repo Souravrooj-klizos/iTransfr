@@ -25,8 +25,6 @@ export default function KYCReviewPage() {
     fetchKYCRecords();
   }, []);
 
-
-
   async function fetchKYCRecords() {
     try {
       const { data: kycRecords } = await adminApi.kyc.list({
@@ -50,15 +48,15 @@ export default function KYCReviewPage() {
     try {
       let result;
       if (status === 'approved') {
-         result = await adminApi.kyc.approve(id, notes[0]);
+        result = await adminApi.kyc.approve(id, notes[0]);
       } else if (status === 'rejected') {
-         result = await adminApi.kyc.reject(id, notes[0]);
+        result = await adminApi.kyc.reject(id, notes[0]);
       } else {
-         // Fallback for other statuses if needed, though approve/reject are primary
-         // adminApi doesn't expose generic updateStatus to keep it strict,
-         // so we might strictly enforce approve/reject locally or extend api
-         console.warn('Only approve/reject supported via helper');
-         return;
+        // Fallback for other statuses if needed, though approve/reject are primary
+        // adminApi doesn't expose generic updateStatus to keep it strict,
+        // so we might strictly enforce approve/reject locally or extend api
+        console.warn('Only approve/reject supported via helper');
+        return;
       }
 
       if (result) {
@@ -80,9 +78,7 @@ export default function KYCReviewPage() {
       header: 'Company Name',
       // width: '200px',
       render: row => (
-        <span className='text-sm text-gray-800'>
-          {row.client_profiles.company_name}
-        </span>
+        <span className='text-sm text-gray-800'>{row.client_profiles.company_name}</span>
       ),
     },
     {
@@ -162,7 +158,9 @@ export default function KYCReviewPage() {
       key: 'comments',
       header: 'Comments',
       render: row => (
-        <span className={`text-sm ${row.notes && row.notes.length > 0 ? 'text-gray-500' : 'text-gray-400 font-light'}`}>
+        <span
+          className={`text-sm ${row.notes && row.notes.length > 0 ? 'text-gray-500' : 'font-light text-gray-400'}`}
+        >
           {row.notes && row.notes.length > 0 ? row.notes[0] : 'No Comments'}
         </span>
       ),
@@ -174,7 +172,7 @@ export default function KYCReviewPage() {
       render: (row, index) => (
         <button
           onClick={() => setSelectedRecord(row)}
-          className='inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 cursor-pointer'
+          className='inline-flex cursor-pointer items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50'
         >
           <Eye className='h-4 w-4 text-gray-600' />
           View

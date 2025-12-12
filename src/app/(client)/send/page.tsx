@@ -96,7 +96,6 @@ export default function SendMoneyPage() {
       setTimeout(() => {
         router.push('/transactions');
       }, 2000);
-
     } catch (err: any) {
       console.error('Payout error:', err);
       setError(err.message || 'Failed to process transfer');
@@ -114,7 +113,7 @@ export default function SendMoneyPage() {
         showFees: false,
       };
     } else if (selectedMethod === 'domestic') {
-      const fees = 25.00;
+      const fees = 25.0;
       const total = parseFloat(amount || '0') + fees;
       return {
         recipientGets: `${amount} USD`,
@@ -127,9 +126,9 @@ export default function SendMoneyPage() {
         showFees: true,
       };
     } else {
-       // International
-       const fees = 30.00;
-       return {
+      // International
+      const fees = 30.0;
+      return {
         recipientGets: `€${(parseFloat(amount || '0') * 0.85).toFixed(2)} EUR`,
         rate: '0.8572 EUR/USDT',
         quoteRate: '0.8572',
@@ -147,22 +146,32 @@ export default function SendMoneyPage() {
   return (
     <>
       {success && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="rounded-xl bg-white p-8 text-center shadow-xl">
-             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-               <svg className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-               </svg>
-             </div>
-             <h3 className="text-xl font-bold text-gray-900">Transfer Successful!</h3>
-             <p className="mt-2 text-gray-600">Your transfer has been initiated.</p>
-             <p className="mt-1 text-sm text-gray-500">Redirecting to transactions...</p>
+        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm'>
+          <div className='rounded-xl bg-white p-8 text-center shadow-xl'>
+            <div className='mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100'>
+              <svg
+                className='h-8 w-8 text-green-600'
+                fill='none'
+                viewBox='0 0 24 24'
+                stroke='currentColor'
+              >
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={2}
+                  d='M5 13l4 4L19 7'
+                />
+              </svg>
+            </div>
+            <h3 className='text-xl font-bold text-gray-900'>Transfer Successful!</h3>
+            <p className='mt-2 text-gray-600'>Your transfer has been initiated.</p>
+            <p className='mt-1 text-sm text-gray-500'>Redirecting to transactions...</p>
           </div>
         </div>
       )}
 
       {error && (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
+        <div className='mb-4 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700'>
           {error}
         </div>
       )}
@@ -194,12 +203,12 @@ export default function SendMoneyPage() {
 
             <div className='space-y-4'>
               {/* Recipient Details */}
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
                 <FormInput
-                  label="Recipient Name"
+                  label='Recipient Name'
                   value={recipientName}
                   onChange={setRecipientName}
-                  placeholder="Enter full name"
+                  placeholder='Enter full name'
                   required
                 />
                 <FormInput
@@ -212,34 +221,36 @@ export default function SendMoneyPage() {
               </div>
 
               {selectedMethod !== 'crypto' && (
-                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <FormInput
-                      label={selectedMethod === 'domestic' ? 'Routing Number' : 'SWIFT/BIC Code'}
-                      value={bankCode}
-                      onChange={setBankCode}
-                      placeholder={selectedMethod === 'domestic' ? '021...' : 'CHAS...'}
-                    />
-                    {selectedMethod === 'international' && (
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-sm font-medium text-gray-700">Country</label>
-                        <select
-                          className="h-[42px] rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                          value={country}
-                          onChange={(e) => setCountry(e.target.value)}
-                        >
-                           <option value="US">United States</option>
-                           <option value="GB">United Kingdom</option>
-                           <option value="IN">India</option>
-                           <option value="MX">Mexico</option>
-                           <option value="CA">Canada</option>
-                        </select>
-                      </div>
-                    )}
-                 </div>
+                <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+                  <FormInput
+                    label={selectedMethod === 'domestic' ? 'Routing Number' : 'SWIFT/BIC Code'}
+                    value={bankCode}
+                    onChange={setBankCode}
+                    placeholder={selectedMethod === 'domestic' ? '021...' : 'CHAS...'}
+                  />
+                  {selectedMethod === 'international' && (
+                    <div className='flex flex-col gap-1.5'>
+                      <label className='text-sm font-medium text-gray-700'>Country</label>
+                      <select
+                        className='h-[42px] rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none'
+                        value={country}
+                        onChange={e => setCountry(e.target.value)}
+                      >
+                        <option value='US'>United States</option>
+                        <option value='GB'>United Kingdom</option>
+                        <option value='IN'>India</option>
+                        <option value='MX'>Mexico</option>
+                        <option value='CA'>Canada</option>
+                      </select>
+                    </div>
+                  )}
+                </div>
               )}
 
               {/* Amount & Currency */}
-              <div className={`grid grid-cols-1 ${showOutputCurrency ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4`}>
+              <div
+                className={`grid grid-cols-1 ${showOutputCurrency ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4`}
+              >
                 <FormInput
                   label='Amount'
                   type='number'
@@ -320,8 +331,8 @@ export default function SendMoneyPage() {
               label='Recipient'
               value={recipientName || 'Not entered'}
               subtext={[
-                 selectedMethod === 'crypto' ? 'Crypto Wallet' : (bankCode || 'Bank Transfer'),
-                 accountNumber || '...'
+                selectedMethod === 'crypto' ? 'Crypto Wallet' : bankCode || 'Bank Transfer',
+                accountNumber || '...',
               ]}
             />
             <hr className='my-4' />
@@ -335,7 +346,11 @@ export default function SendMoneyPage() {
               label='Recipient Gets'
               value={feesData.recipientGets}
               subtext={feesData.rate !== '1:1' ? `Rate: ${feesData.rate}` : undefined}
-              valueStyle={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--color-success-green)' }}
+              valueStyle={{
+                fontSize: '1.125rem',
+                fontWeight: 700,
+                color: 'var(--color-success-green)',
+              }}
             />
 
             {feesData.showFees && (
@@ -349,9 +364,9 @@ export default function SendMoneyPage() {
             )}
 
             {!feesData.showFees && (
-               <div className='mb-6 border-t border-gray-200 pt-4'>
-                 <p className='text-sm text-gray-600 italic'>No fees for crypto transfers</p>
-               </div>
+              <div className='mb-6 border-t border-gray-200 pt-4'>
+                <p className='text-sm text-gray-600 italic'>No fees for crypto transfers</p>
+              </div>
             )}
 
             <label className='mb-4 flex cursor-pointer items-center gap-2'>
@@ -375,7 +390,7 @@ export default function SendMoneyPage() {
                   : 'cursor-not-allowed bg-gray-200 text-gray-400'
               }`}
             >
-              {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+              {loading && <Loader2 className='h-4 w-4 animate-spin' />}
               {loading ? 'Processing...' : 'Continue'}
             </button>
           </div>

@@ -130,7 +130,7 @@ function createAmlBotClient(): AxiosInstance {
   });
 
   // Add auth interceptor
-  client.interceptors.request.use((config) => {
+  client.interceptors.request.use(config => {
     config.headers.Authorization = `Token ${getApiKey()}`;
     console.log(`[AMLBot] ${config.method?.toUpperCase()} ${config.url}`);
     return config;
@@ -138,7 +138,7 @@ function createAmlBotClient(): AxiosInstance {
 
   // Add response interceptor for logging
   client.interceptors.response.use(
-    (response) => {
+    response => {
       console.log(`[AMLBot] Response ${response.status}:`, response.config.url);
       return response;
     },
@@ -189,7 +189,9 @@ export async function getApplicant(applicantId: string): Promise<AMLBotApplicant
 /**
  * Get an applicant by external ID (your user ID)
  */
-export async function getApplicantByExternalId(externalId: string): Promise<AMLBotApplicant | null> {
+export async function getApplicantByExternalId(
+  externalId: string
+): Promise<AMLBotApplicant | null> {
   console.log('[AMLBot] Searching applicant by external ID:', externalId);
   const response = await getClient().get<{ data: AMLBotApplicant[] }>(
     `/applicants?external_id=${encodeURIComponent(externalId)}`
@@ -217,7 +219,9 @@ export async function updateApplicant(
  * Create a new verification for an applicant
  * Types can include: 'document-verification', 'selfie-verification', 'aml-screening'
  */
-export async function createVerification(data: CreateVerificationRequest): Promise<AMLBotVerification> {
+export async function createVerification(
+  data: CreateVerificationRequest
+): Promise<AMLBotVerification> {
   console.log('[AMLBot] Creating verification for applicant:', data.applicant_id);
   const response = await getClient().post<AMLBotVerification>('/verifications', data);
   console.log('[AMLBot] Verification created:', response.data.id);
@@ -236,7 +240,9 @@ export async function getVerification(verificationId: string): Promise<AMLBotVer
 /**
  * Get all verifications for an applicant
  */
-export async function getVerificationsForApplicant(applicantId: string): Promise<AMLBotVerification[]> {
+export async function getVerificationsForApplicant(
+  applicantId: string
+): Promise<AMLBotVerification[]> {
   console.log('[AMLBot] Fetching verifications for applicant:', applicantId);
   const response = await getClient().get<{ data: AMLBotVerification[] }>(
     `/verifications?applicant_id=${applicantId}`
@@ -262,7 +268,10 @@ export async function getForms(): Promise<AMLBotForm[]> {
  * Get a form URL for a user to complete KYC
  * This is the primary method to start KYC verification
  */
-export async function getFormUrl(formId: string, data: CreateFormUrlRequest): Promise<AMLBotFormUrl> {
+export async function getFormUrl(
+  formId: string,
+  data: CreateFormUrlRequest
+): Promise<AMLBotFormUrl> {
   console.log('[AMLBot] Getting form URL for:', data.external_applicant_id);
   const response = await getClient().post<AMLBotFormUrl>(`/forms/${formId}/urls`, data);
   console.log('[AMLBot] Form URL created, verification ID:', response.data.verification_id);

@@ -6,7 +6,16 @@ import { DataTable, getStatusIcon, type TableColumn } from '@/components/ui/Data
 import { DatePicker } from '@/components/ui/DatePicker';
 import { Pagination } from '@/components/ui/Pagination';
 import { Select } from '@/components/ui/Select';
-import { CheckCircle, Download, Eye, Loader2, MoreVertical, RefreshCw, Search, Send } from 'lucide-react';
+import {
+  CheckCircle,
+  Download,
+  Eye,
+  Loader2,
+  MoreVertical,
+  RefreshCw,
+  Search,
+  Send,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface Transaction {
@@ -172,9 +181,7 @@ export default function AdminTransactionsPage() {
     {
       key: 'client',
       header: 'Client',
-      render: row => (
-        <div className='text-sm text-gray-900'>{row.clientName || 'Unknown'}</div>
-      ),
+      render: row => <div className='text-sm text-gray-900'>{row.clientName || 'Unknown'}</div>,
     },
     {
       key: 'recipient',
@@ -372,15 +379,19 @@ export default function AdminTransactionsPage() {
     <div className='space-y-6'>
       {/* Success/Error Messages */}
       {success && (
-        <div className='rounded-lg bg-green-50 border border-green-200 p-4 text-green-700 flex items-center justify-between'>
+        <div className='flex items-center justify-between rounded-lg border border-green-200 bg-green-50 p-4 text-green-700'>
           <span>{success}</span>
-          <button onClick={() => setSuccess(null)} className='text-green-600 hover:text-green-800'>×</button>
+          <button onClick={() => setSuccess(null)} className='text-green-600 hover:text-green-800'>
+            ×
+          </button>
         </div>
       )}
       {error && (
-        <div className='rounded-lg bg-red-50 border border-red-200 p-4 text-red-700 flex items-center justify-between'>
+        <div className='flex items-center justify-between rounded-lg border border-red-200 bg-red-50 p-4 text-red-700'>
           <span>{error}</span>
-          <button onClick={() => setError(null)} className='text-red-600 hover:text-red-800'>×</button>
+          <button onClick={() => setError(null)} className='text-red-600 hover:text-red-800'>
+            ×
+          </button>
         </div>
       )}
 
@@ -464,7 +475,9 @@ export default function AdminTransactionsPage() {
         {transactions.length === 0 && !loading && (
           <div className='py-12 text-center text-gray-500'>
             <p className='text-lg'>No transactions found</p>
-            <p className='text-sm'>Transactions will appear here once clients start making deposits</p>
+            <p className='text-sm'>
+              Transactions will appear here once clients start making deposits
+            </p>
           </div>
         )}
 

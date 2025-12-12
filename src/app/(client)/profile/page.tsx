@@ -57,7 +57,7 @@ const mockProfile: UserProfile = {
   language: 'English (US)',
   status: 'active',
   kycStatus: 'approved',
-  createdAt: new Date().toISOString()
+  createdAt: new Date().toISOString(),
 };
 
 const mockSessions: LoginSession[] = [
@@ -87,90 +87,90 @@ const mockRole: UserRole = {
   permissions: ['Initiate', 'Approve', 'View Balances', 'View History'],
 };
 
-  import clientApi from '@/lib/api/client';
+import clientApi from '@/lib/api/client';
 import { useEffect } from 'react';
 
-  export default function ProfilePage() {
-    const router = useRouter();
-    const [profile, setProfile] = useState<UserProfile | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [twoFactorEnabled, setTwoFactorEnabled] = useState(true);
-    const [notifications, setNotifications] = useState<NotificationPreferences>({
-      transactionAlerts: {
-        incomingDeposits: true,
-        outgoingTransfers: true,
-        failedTransactions: true,
-        pendingApprovals: false,
-        highValueWithdrawals: true,
-      },
-      emailPreferences: {
-        dailyBalanceSummary: true,
-        weeklyActivityDigest: false,
-        teamActivityUpdates: true,
-      },
-    });
-    const [showPassword, setShowPassword] = useState(false);
+export default function ProfilePage() {
+  const router = useRouter();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(true);
+  const [notifications, setNotifications] = useState<NotificationPreferences>({
+    transactionAlerts: {
+      incomingDeposits: true,
+      outgoingTransfers: true,
+      failedTransactions: true,
+      pendingApprovals: false,
+      highValueWithdrawals: true,
+    },
+    emailPreferences: {
+      dailyBalanceSummary: true,
+      weeklyActivityDigest: false,
+      teamActivityUpdates: true,
+    },
+  });
+  const [showPassword, setShowPassword] = useState(false);
 
-    useEffect(() => {
-        fetchProfile();
-    }, []);
+  useEffect(() => {
+    fetchProfile();
+  }, []);
 
-    const fetchProfile = async () => {
-        try {
-            const data = await clientApi.profile.get();
-            if (data) {
-                setProfile({
-                    id: data.id || '',
-                    fullName: data.fullName || 'User',
-                    email: data.email || '',
-                    mobileNumber: data.mobileNumber || data.phone || '',
-                    address: data.address || '',
-                    timezone: data.timezone || 'UTC',
-                    language: data.language || 'English',
-                    status: data.status || 'active',
-                    kycStatus: data.kycStatus || 'pending',
-                    createdAt: data.createdAt || new Date().toISOString()
-                });
-            }
-        } catch (error) {
-            console.error('Error fetching profile:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleToggleNotification = (
-      category: 'transactionAlerts' | 'emailPreferences',
-      key: string
-    ) => {
-      setNotifications(prev => ({
-        ...prev,
-        [category]: {
-          ...prev[category],
-          [key]: !prev[category][key as keyof (typeof prev)[typeof category]],
-        },
-      }));
-    };
-
-    const getRoleColor = (role: string) => {
-      switch (role) {
-        case 'Admin':
-          return 'bg-purple-50 text-purple-600 border border-purple-200';
-        case 'Approver':
-          return 'bg-blue-50 text-blue-600 border border-blue-200';
-        case 'Initiator':
-          return 'bg-green-50 text-green-600 border border-green-200';
-        case 'Viewer':
-          return 'bg-gray-50 text-gray-600 border border-gray-200';
-        default:
-          return 'bg-gray-50 text-gray-600 border border-gray-200';
+  const fetchProfile = async () => {
+    try {
+      const data = await clientApi.profile.get();
+      if (data) {
+        setProfile({
+          id: data.id || '',
+          fullName: data.fullName || 'User',
+          email: data.email || '',
+          mobileNumber: data.mobileNumber || data.phone || '',
+          address: data.address || '',
+          timezone: data.timezone || 'UTC',
+          language: data.language || 'English',
+          status: data.status || 'active',
+          kycStatus: data.kycStatus || 'pending',
+          createdAt: data.createdAt || new Date().toISOString(),
+        });
       }
-    };
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    if (loading) return <div className="p-12 text-center text-gray-500">Loading profile...</div>;
+  const handleToggleNotification = (
+    category: 'transactionAlerts' | 'emailPreferences',
+    key: string
+  ) => {
+    setNotifications(prev => ({
+      ...prev,
+      [category]: {
+        ...prev[category],
+        [key]: !prev[category][key as keyof (typeof prev)[typeof category]],
+      },
+    }));
+  };
 
-    // Fallback if no profile enabled yet
-    const displayProfile = profile || mockProfile;
+  const getRoleColor = (role: string) => {
+    switch (role) {
+      case 'Admin':
+        return 'bg-purple-50 text-purple-600 border border-purple-200';
+      case 'Approver':
+        return 'bg-blue-50 text-blue-600 border border-blue-200';
+      case 'Initiator':
+        return 'bg-green-50 text-green-600 border border-green-200';
+      case 'Viewer':
+        return 'bg-gray-50 text-gray-600 border border-gray-200';
+      default:
+        return 'bg-gray-50 text-gray-600 border border-gray-200';
+    }
+  };
+
+  if (loading) return <div className='p-12 text-center text-gray-500'>Loading profile...</div>;
+
+  // Fallback if no profile enabled yet
+  const displayProfile = profile || mockProfile;
 
   return (
     <div className='space-y-4'>
@@ -251,7 +251,7 @@ import { useEffect } from 'react';
 
         <div className='space-y-4'>
           {/* Password */}
-          <div className='flex items-end justify-between border-b border-gray-100 pb-4 flex-col lg:flex-row'>
+          <div className='flex flex-col items-end justify-between border-b border-gray-100 pb-4 lg:flex-row'>
             <div className='w-full max-w-md'>
               <label className='mb-1 block text-xs text-gray-500'>Password</label>
               <div className='flex items-center rounded-lg bg-gray-50 px-3 py-2.5 text-gray-600'>
@@ -270,7 +270,7 @@ import { useEffect } from 'react';
                 </button>
               </div>
             </div>
-            <button className='flex cursor-pointer items-center rounded-lg border border-gray-200 bg-white px-4 py-3 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50 mt-2 lg:mt-0'>
+            <button className='mt-2 flex cursor-pointer items-center rounded-lg border border-gray-200 bg-white px-4 py-3 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50 lg:mt-0'>
               Change Password
             </button>
           </div>
@@ -342,7 +342,7 @@ import { useEffect } from 'react';
               </table>
             </div>
             <div className='mt-3 text-right'>
-              <button className='cursor-pointer text-sm text-red-500 transition-colors underline hover:text-red-600'>
+              <button className='cursor-pointer text-sm text-red-500 underline transition-colors hover:text-red-600'>
                 Log Out of All Sessions
               </button>
             </div>
@@ -354,14 +354,14 @@ import { useEffect } from 'react';
       <div className='rounded-xl border border-gray-200 bg-white p-6'>
         <div className='mb-6'>
           <h2 className='flex items-center gap-2 text-base font-semibold text-gray-600'>
-            <SheildIcon/>
+            <SheildIcon />
             Your Role & Permissions
           </h2>
         </div>
 
         <div className='space-y-4'>
           {/* Role and Permissions */}
-          <div className='grid grid-cols-2 lg:grid-cols-3 gap-6'>
+          <div className='grid grid-cols-2 gap-6 lg:grid-cols-3'>
             <div>
               <label className='mb-2 block text-xs text-gray-500'>Role</label>
               <span
@@ -376,7 +376,7 @@ import { useEffect } from 'react';
                 {mockRole.permissions.map(permission => (
                   <span
                     key={permission}
-                    className='inline-block rounded-md bg-white px-2 py-0.5 text-xs font-medium text-gray-500 border border-gray-200'
+                    className='inline-block rounded-md border border-gray-200 bg-white px-2 py-0.5 text-xs font-medium text-gray-500'
                   >
                     {permission}
                   </span>
@@ -386,7 +386,7 @@ import { useEffect } from 'react';
           </div>
 
           {/* Member Since and Invited By */}
-          <div className='grid grid-cols-2 lg:grid-cols-3 gap-6'>
+          <div className='grid grid-cols-2 gap-6 lg:grid-cols-3'>
             <div>
               <label className='mb-1 block text-xs text-gray-500'>Member Since</label>
               <p className='text-sm text-gray-900'>{mockRole.memberSince}</p>

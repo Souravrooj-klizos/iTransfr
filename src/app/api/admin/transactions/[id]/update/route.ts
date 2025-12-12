@@ -68,40 +68,42 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         // Update Wallet Balance
         // 1. Get current wallet
         const { data: existingWallet } = await supabaseAdmin
-           .from('wallets')
-           .select('*')
-           .eq('userId', transaction.userId)
-           .eq('currency', currency)
-           .single();
+          .from('wallets')
+          .select('*')
+          .eq('userId', transaction.userId)
+          .eq('currency', currency)
+          .single();
 
         if (existingWallet) {
-            // Update existing
-            const { error: updateError } = await supabaseAdmin.from('wallets').update({
-                balance: existingWallet.balance + transaction.amount,
-                updatedAt: new Date().toISOString()
-            }).eq('id', existingWallet.id);
+          // Update existing
+          const { error: updateError } = await supabaseAdmin
+            .from('wallets')
+            .update({
+              balance: existingWallet.balance + transaction.amount,
+              updatedAt: new Date().toISOString(),
+            })
+            .eq('id', existingWallet.id);
 
-            if (updateError) console.error('[Admin] Wallet update error:', updateError);
-
+          if (updateError) console.error('[Admin] Wallet update error:', updateError);
         } else {
-            // Create new wallet entry
-            // Table only has: id, userId, currency, balance, turnkeyWalletId, createdAt, updatedAt
-            console.log(`[Admin] Creating new wallet for user ${transaction.userId} (${currency})`);
+          // Create new wallet entry
+          // Table only has: id, userId, currency, balance, turnkeyWalletId, createdAt, updatedAt
+          console.log(`[Admin] Creating new wallet for user ${transaction.userId} (${currency})`);
 
-            const { error: insertError } = await supabaseAdmin.from('wallets').insert({
-                userId: transaction.userId,
-                currency: currency,
-                balance: transaction.amount,
-                // store address/chain metadata in turnkeyWalletId if possible, or leave null.
-                // For now, let's just create the record so balance shows up.
-                // If specific ID is needed: turnkeyWalletId: transaction.metadata?.walletId
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-            });
+          const { error: insertError } = await supabaseAdmin.from('wallets').insert({
+            userId: transaction.userId,
+            currency: currency,
+            balance: transaction.amount,
+            // store address/chain metadata in turnkeyWalletId if possible, or leave null.
+            // For now, let's just create the record so balance shows up.
+            // If specific ID is needed: turnkeyWalletId: transaction.metadata?.walletId
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          });
 
-            if (insertError) {
-                console.error('[Admin] Wallet creation failed:', insertError);
-            }
+          if (insertError) {
+            console.error('[Admin] Wallet creation failed:', insertError);
+          }
         }
 
         console.log(`[Admin] ✅ Marked deposit as received and updated balance: ${id}`);
@@ -121,11 +123,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         });
 
         if (!swapAmlCheck.passed) {
-          return NextResponse.json({
-            error: 'Transaction blocked by AML check',
-            riskScore: swapAmlCheck.riskScore,
-            reason: swapAmlCheck.reason,
-          }, { status: 403 });
+          return NextResponse.json(
+            {
+              error: 'Transaction blocked by AML check',
+              riskScore: swapAmlCheck.riskScore,
+              reason: swapAmlCheck.reason,
+            },
+            { status: 403 }
+          );
         }
 
         try {
@@ -186,7 +191,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           });
 
           console.log(`[Admin] ✅ Swap executed via Bitso: ${conversion.id}`);
-
         } catch (bitsoError: any) {
           console.error('[Admin] Bitso swap error:', bitsoError.message);
 
@@ -196,12 +200,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
           // Simulated exchange rates for testing
           const simulatedRates: Record<string, number> = {
-            'USD_MXN': 17.5,
-            'USD_INR': 83.25,
-            'USDC_MXN': 17.5,
-            'USDC_INR': 83.25,
-            'USDT_MXN': 17.5,
-            'USDT_INR': 83.25,
+            USD_MXN: 17.5,
+            USD_INR: 83.25,
+            USDC_MXN: 17.5,
+            USDC_INR: 83.25,
+            USDT_MXN: 17.5,
+            USDT_INR: 83.25,
           };
 
           const fromCurrency = transaction.currencyFrom || 'USD';
@@ -258,7 +262,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             createdAt: new Date().toISOString(),
           });
 
-          console.log(`[Admin] ✅ Simulated swap completed: ${simulatedId} (${transaction.amount} ${fromCurrency} -> ${toAmount.toFixed(2)} ${toCurrency})`);
+          console.log(
+            `[Admin] ✅ Simulated swap completed: ${simulatedId} (${transaction.amount} ${fromCurrency} -> ${toAmount.toFixed(2)} ${toCurrency})`
+          );
         }
         break;
       }
@@ -288,7 +294,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           if (meta.recipientName || meta.recipient) {
             recipientDetails = {
               recipientName: meta.recipientName || meta.recipient?.name,
-              accountNumber: meta.recipientAccount || meta.accountNumber || meta.recipient?.accountNumber,
+              accountNumber:
+                meta.recipientAccount || meta.accountNumber || meta.recipient?.accountNumber,
               bankName: meta.recipientBank || meta.bankName || meta.recipient?.bankName,
               bankCode: meta.recipientBankCode || meta.bankCode || meta.recipient?.bankCode,
               country: meta.recipientCountry || meta.country || 'US',
@@ -328,11 +335,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         });
 
         if (!payoutAmlCheck.passed) {
-          return NextResponse.json({
-            error: 'Payout blocked by AML check',
-            riskScore: payoutAmlCheck.riskScore,
-            reason: payoutAmlCheck.reason,
-          }, { status: 403 });
+          return NextResponse.json(
+            {
+              error: 'Payout blocked by AML check',
+              riskScore: payoutAmlCheck.riskScore,
+              reason: payoutAmlCheck.reason,
+            },
+            { status: 403 }
+          );
         }
 
         // If we still don't have recipient details, simulate the payout for testing
@@ -411,23 +421,25 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           };
 
           // Save payout request record if not exists
-          await supabaseAdmin.from('payout_requests').upsert({
-            transactionId: id,
-            recipientName: recipientDetails.recipientName,
-            recipientAccount: recipientDetails.accountNumber,
-            recipientBank: recipientDetails.bankName,
-            recipientBankCode: recipientDetails.bankCode,
-            recipientCountry: recipientDetails.country,
-            amount: transaction.amountTo || transaction.amount,
-            currency: transaction.currencyTo || 'MXN',
-            infinitusRequestId: payoutResult.id,
-            infinitusTrackingNumber: payoutResult.trackingNumber,
-            status: payoutResult.status.toLowerCase(),
-            createdAt: new Date().toISOString(),
-          }, { onConflict: 'transactionId' });
+          await supabaseAdmin.from('payout_requests').upsert(
+            {
+              transactionId: id,
+              recipientName: recipientDetails.recipientName,
+              recipientAccount: recipientDetails.accountNumber,
+              recipientBank: recipientDetails.bankName,
+              recipientBankCode: recipientDetails.bankCode,
+              recipientCountry: recipientDetails.country,
+              amount: transaction.amountTo || transaction.amount,
+              currency: transaction.currencyTo || 'MXN',
+              infinitusRequestId: payoutResult.id,
+              infinitusTrackingNumber: payoutResult.trackingNumber,
+              status: payoutResult.status.toLowerCase(),
+              createdAt: new Date().toISOString(),
+            },
+            { onConflict: 'transactionId' }
+          );
 
           console.log(`[Admin] ✅ Payout initiated via Infinitus: ${payoutResult.id}`);
-
         } catch (infinitusError: any) {
           console.error('[Admin] Infinitus payout error:', infinitusError.message);
 
@@ -457,20 +469,23 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           };
 
           // Save payout request record
-          await supabaseAdmin.from('payout_requests').upsert({
-            transactionId: id,
-            recipientName: recipientDetails.recipientName || 'Simulated Recipient',
-            recipientAccount: recipientDetails.accountNumber || '****',
-            recipientBank: recipientDetails.bankName || 'Simulated Bank',
-            recipientBankCode: recipientDetails.bankCode,
-            recipientCountry: recipientDetails.country || 'US',
-            amount: transaction.amountTo || transaction.amount,
-            currency: transaction.currencyTo || transaction.currency,
-            infinitusRequestId: simulatedPayoutId,
-            infinitusTrackingNumber: simulatedPayoutId,
-            status: 'completed',
-            createdAt: new Date().toISOString(),
-          }, { onConflict: 'transactionId' });
+          await supabaseAdmin.from('payout_requests').upsert(
+            {
+              transactionId: id,
+              recipientName: recipientDetails.recipientName || 'Simulated Recipient',
+              recipientAccount: recipientDetails.accountNumber || '****',
+              recipientBank: recipientDetails.bankName || 'Simulated Bank',
+              recipientBankCode: recipientDetails.bankCode,
+              recipientCountry: recipientDetails.country || 'US',
+              amount: transaction.amountTo || transaction.amount,
+              currency: transaction.currencyTo || transaction.currency,
+              infinitusRequestId: simulatedPayoutId,
+              infinitusTrackingNumber: simulatedPayoutId,
+              status: 'completed',
+              createdAt: new Date().toISOString(),
+            },
+            { onConflict: 'transactionId' }
+          );
 
           console.log(`[Admin] ✅ Simulated payout completed: ${simulatedPayoutId}`);
         }
@@ -518,7 +533,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       integrationResult,
       message: `Transaction ${action.replace(/_/g, ' ')} successfully`,
     });
-
   } catch (error: any) {
     console.error('[Admin] Error updating transaction:', error);
     return NextResponse.json(

@@ -6,13 +6,7 @@ import kycReviewIcon from '@/components/icons/kycReviewIcon';
 import TransacionIcon from '@/components/icons/TransacionIcon';
 import { supabase } from '@/lib/supabaseClient';
 import { useSidebar } from '@/providers/SidebarProvider';
-import {
-  ChevronDown,
-  CreditCard,
-  LogOut,
-  Settings,
-  X,
-} from 'lucide-react';
+import { ChevronDown, CreditCard, LogOut, Settings, X } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -24,26 +18,26 @@ export function Sidebar() {
   const router = useRouter();
 
   useEffect(() => {
-      const getUser = async () => {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        setUser(user);
-      };
-
-      getUser();
-
+    const getUser = async () => {
       const {
-        data: { subscription },
-      } = supabase.auth.onAuthStateChange((event, session) => {
-        setUser(session?.user ?? null);
-        if (!session) {
-          router.push('/login');
-        }
-      });
+        data: { user },
+      } = await supabase.auth.getUser();
+      setUser(user);
+    };
 
-      return () => subscription.unsubscribe();
-    }, [router]);
+    getUser();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+      if (!session) {
+        router.push('/login');
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [router]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();

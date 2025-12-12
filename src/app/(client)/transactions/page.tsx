@@ -30,7 +30,6 @@ export default function TransactionsPage() {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-
   // Filter states
   const [filter, setFilter] = useState('all');
   const [currency, setCurrency] = useState('all');
@@ -255,9 +254,9 @@ export default function TransactionsPage() {
     <div className='space-y-6'>
       {/* Search and Filters */}
       <div className='rounded-xl border border-gray-200 bg-white p-6'>
-        <div className='mb-4 flex flex-col justify-between gap-4 lg:flex-row md:items-center'>
+        <div className='mb-4 flex flex-col justify-between gap-4 md:items-center lg:flex-row'>
           {/* Left Side: Search + Filters */}
-          <div className='flex flex-1 flex-col gap-3 2xl:flex-row items-start 2xl:items-center'>
+          <div className='flex flex-1 flex-col items-start gap-3 2xl:flex-row 2xl:items-center'>
             {/* Search */}
             <div className='relative w-full lg:w-64'>
               <Search className='absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-500' />

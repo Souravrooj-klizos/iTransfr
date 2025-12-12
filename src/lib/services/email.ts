@@ -77,16 +77,19 @@ const TEMPLATE_FILES: Record<EmailTemplateType, { filename: string; subject: str
 // =====================================================
 
 // Logo SVG as data URL (dark background with white "i" mark)
-const LOGO_DARK_DATA_URL = `data:image/svg+xml;base64,${Buffer.from(`<svg width="39" height="39" viewBox="0 0 39 39" fill="none" xmlns="http://www.w3.org/2000/svg">
+const LOGO_DARK_DATA_URL = `data:image/svg+xml;base64,${Buffer.from(
+  `<svg width="39" height="39" viewBox="0 0 39 39" fill="none" xmlns="http://www.w3.org/2000/svg">
 <rect width="38.9848" height="38.9848" rx="6.49746" fill="#171717"/>
 <rect x="25.0059" y="12.2108" width="18.6917" height="5.40482" transform="rotate(90 25.0059 12.2108)" fill="white"/>
 <path d="M12.9333 14.3126L7.76562 19.5746V30.9024H12.9333V14.3126Z" fill="white"/>
 <path d="M7.82812 8.08215H32.6453V13.502H12.9627L10.3003 10.6494L7.82812 8.08215Z" fill="white"/>
 <path d="M12.9333 8.08221H7.76562L12.9333 13.487V8.08221Z" fill="#2462EB"/>
-</svg>`).toString('base64')}`;
+</svg>`
+).toString('base64')}`;
 
 // "iTransfr" text logo as data URL
-const VECTOR_LOGO_DATA_URL = `data:image/svg+xml;base64,${Buffer.from(`<svg width="109" height="23" viewBox="0 0 109 23" fill="none" xmlns="http://www.w3.org/2000/svg">
+const VECTOR_LOGO_DATA_URL = `data:image/svg+xml;base64,${Buffer.from(
+  `<svg width="109" height="23" viewBox="0 0 109 23" fill="none" xmlns="http://www.w3.org/2000/svg">
 <path d="M6.01388 0.0935854L84.4203 0.0935855V3.86817H16.3931V22.3044H11.9891V3.86817H6.01388V0.0935854Z" fill="#212121"/>
 <path d="M32.7969 5.95823C33.1639 5.95823 33.4985 5.97903 33.8007 6.02062V9.63924H32.7645C31.2102 9.63924 30.012 10.024 29.1701 10.7934C28.3497 11.5421 27.9396 12.6547 27.9396 14.1313V22.3044H23.8594V6.20779H27.81V9.07773C28.7383 6.99806 30.4006 5.95823 32.7969 5.95823Z" fill="#212121"/>
 <path d="M50.0477 22.3044H45.9675C45.7733 21.9716 45.6221 21.3165 45.5142 20.3391C44.3916 21.8989 42.5998 22.6787 40.1388 22.6787C38.3038 22.6787 36.8358 22.2524 35.7348 21.3997C34.6554 20.5471 34.1157 19.3617 34.1157 17.8435C34.1157 14.9112 36.2529 13.2371 40.5274 12.8211L43.0532 12.6028C43.8951 12.4988 44.4996 12.3116 44.8666 12.0412C45.2336 11.7501 45.417 11.3238 45.417 10.7623C45.417 10.076 45.1796 9.57685 44.7046 9.2649C44.2513 8.93215 43.4741 8.76578 42.3731 8.76578C41.1858 8.76578 40.3331 8.96335 39.8149 9.35848C39.2968 9.73282 38.9946 10.3879 38.9082 11.3238H34.8929C35.1303 7.66356 37.6345 5.83345 42.4055 5.83345C47.047 5.83345 49.3677 7.44519 49.3677 10.6687V19.2473C49.3677 20.6614 49.5943 21.6805 50.0477 22.3044ZM41.1102 19.8712C42.3839 19.8712 43.4202 19.5384 44.2189 18.8729C45.0177 18.1866 45.417 17.2092 45.417 15.9406V14.4745C45.0285 14.8072 44.3916 15.0256 43.5065 15.1295L41.3045 15.3791C40.2251 15.5039 39.4479 15.7534 38.973 16.1278C38.5197 16.4813 38.293 17.0012 38.293 17.6875C38.293 18.3738 38.5305 18.9145 39.0054 19.3097C39.5019 19.684 40.2035 19.8712 41.1102 19.8712Z" fill="#212121"/>
@@ -96,7 +99,8 @@ const VECTOR_LOGO_DATA_URL = `data:image/svg+xml;base64,${Buffer.from(`<svg widt
 <path d="M107.016 5.95823C107.383 5.95823 107.718 5.97903 108.02 6.02062V9.63924H106.984C105.43 9.63924 104.232 10.024 103.39 10.7934C102.569 11.5421 102.159 12.6547 102.159 14.1313V22.3044H98.079V6.20779H102.03V9.07773C102.958 6.99806 104.62 5.95823 107.016 5.95823Z" fill="#2462EB"/>
 <path d="M4.22376 22.3044H9.01394e-05L0 8.0511L1.94325 6.56993L4.22376 4.72586V22.3044Z" fill="#212121"/>
 <path d="M2.18741 1.94898L4.22376 3.87023V0.0935989H0L2.18741 1.94898Z" fill="#2462EB"/>
-</svg>`).toString('base64')}`;
+</svg>`
+).toString('base64')}`;
 
 // =====================================================
 // TEMPLATE CACHE (for performance)
@@ -119,7 +123,12 @@ function loadTemplate(templateType: EmailTemplateType): string {
   }
 
   // Load from file
-  const templatePath = path.join(process.cwd(), 'public', 'iTransfr_Email_Template', templateConfig.filename);
+  const templatePath = path.join(
+    process.cwd(),
+    'public',
+    'iTransfr_Email_Template',
+    templateConfig.filename
+  );
 
   try {
     let template = fs.readFileSync(templatePath, 'utf-8');
@@ -205,7 +214,6 @@ export async function sendEmail(options: EmailOptions): Promise<SendEmailResult>
 
     console.log('[Email Service] Email sent successfully via SES:', result.MessageId);
     return { success: true, messageId: result.MessageId };
-
   } catch (error: any) {
     console.error('[Email Service] Error:', error);
     return { success: false, error: error.message || 'Failed to send email' };
@@ -223,7 +231,12 @@ export async function sendOTPEmail(to: string, otpCode: string): Promise<SendEma
   // The OTP template uses the static "85496" - we need to replace it
   // Load template, replace OTP code dynamically
   const templateConfig = TEMPLATE_FILES['otp_verification'];
-  const templatePath = path.join(process.cwd(), 'public', 'iTransfr_Email_Template', templateConfig.filename);
+  const templatePath = path.join(
+    process.cwd(),
+    'public',
+    'iTransfr_Email_Template',
+    templateConfig.filename
+  );
 
   try {
     let html = fs.readFileSync(templatePath, 'utf-8');
@@ -232,14 +245,8 @@ export async function sendOTPEmail(to: string, otpCode: string): Promise<SendEma
     html = html.replace(/85496/g, otpCode);
 
     // Replace logo URLs with embedded base64 data URLs for reliable display
-    html = html.replace(
-      /https:\/\/i-transfr\.vercel\.app\/logo_dark\.svg/g,
-      LOGO_DARK_DATA_URL
-    );
-    html = html.replace(
-      /https:\/\/i-transfr\.vercel\.app\/vector\.svg/g,
-      VECTOR_LOGO_DATA_URL
-    );
+    html = html.replace(/https:\/\/i-transfr\.vercel\.app\/logo_dark\.svg/g, LOGO_DARK_DATA_URL);
+    html = html.replace(/https:\/\/i-transfr\.vercel\.app\/vector\.svg/g, VECTOR_LOGO_DATA_URL);
 
     const result = await sendSESEmail(to, templateConfig.subject, html);
     console.log('[Email Service] OTP email sent via SES:', result.MessageId);
@@ -253,7 +260,10 @@ export async function sendOTPEmail(to: string, otpCode: string): Promise<SendEma
 /**
  * Send KYC approved email
  */
-export async function sendKYCApprovedEmail(to: string, firstName: string): Promise<SendEmailResult> {
+export async function sendKYCApprovedEmail(
+  to: string,
+  firstName: string
+): Promise<SendEmailResult> {
   return sendEmail({
     to,
     template: 'kyc_approved',
@@ -294,7 +304,10 @@ export async function sendKYCRejectedEmail(
 /**
  * Send KYC submitted email
  */
-export async function sendKYCSubmittedEmail(to: string, firstName: string): Promise<SendEmailResult> {
+export async function sendKYCSubmittedEmail(
+  to: string,
+  firstName: string
+): Promise<SendEmailResult> {
   return sendEmail({
     to,
     template: 'kyc_submitted',
@@ -305,13 +318,17 @@ export async function sendKYCSubmittedEmail(to: string, firstName: string): Prom
 /**
  * Send password reset request email
  */
-export async function sendPasswordResetEmail(to: string, firstName: string, resetUrl: string): Promise<SendEmailResult> {
+export async function sendPasswordResetEmail(
+  to: string,
+  firstName: string,
+  resetUrl: string
+): Promise<SendEmailResult> {
   return sendEmail({
     to,
     template: 'password_reset_request',
     data: {
       first_name: firstName,
-      'reset_password _link': resetUrl,  // Note: template has space in variable name
+      'reset_password _link': resetUrl, // Note: template has space in variable name
       reset_password_link: resetUrl,
     },
   });
@@ -320,7 +337,10 @@ export async function sendPasswordResetEmail(to: string, firstName: string, rese
 /**
  * Send password reset success email
  */
-export async function sendPasswordResetSuccessEmail(to: string, firstName: string): Promise<SendEmailResult> {
+export async function sendPasswordResetSuccessEmail(
+  to: string,
+  firstName: string
+): Promise<SendEmailResult> {
   return sendEmail({
     to,
     template: 'password_reset_success',

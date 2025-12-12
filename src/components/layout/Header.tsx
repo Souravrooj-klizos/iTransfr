@@ -41,14 +41,14 @@ export function Header() {
 
   return (
     <header
-      className={`fixed top-0 right-0 z-40 my-3 mr-5 ml-2 rounded-lg border border-gray-200 bg-white transition-all duration-300 left-0 ${isCollapsed ? 'md:left-25' : 'md:left-64'} `}
+      className={`fixed top-0 right-0 left-0 z-40 my-3 mr-5 ml-2 rounded-lg border border-gray-200 bg-white transition-all duration-300 ${isCollapsed ? 'md:left-25' : 'md:left-64'} `}
     >
       <div className='px-5 py-2'>
         <div className='flex items-center justify-between'>
           {/* Left: burger + title */}
           <div className='flex items-center gap-3'>
             <button
-              className='rounded-lg p-1 text-gray-600 hover:bg-gray-100 cursor-pointer'
+              className='cursor-pointer rounded-lg p-1 text-gray-600 hover:bg-gray-100'
               onClick={() => {
                 if (window.innerWidth < 768) toggleMobileSidebar();
                 else toggleSidebar();

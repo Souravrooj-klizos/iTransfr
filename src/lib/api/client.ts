@@ -7,17 +7,17 @@
 
 import { clientAxios } from './axios';
 import type {
-    ApiResponse,
-    CreateDepositRequest,
-    CreatePayoutRequest,
-    DepositAddress,
-    KycRecord,
-    PaginatedResponse,
-    PayoutEstimate,
-    Transaction,
-    UserProfile,
-    Wallet,
-    WalletBalance,
+  ApiResponse,
+  CreateDepositRequest,
+  CreatePayoutRequest,
+  DepositAddress,
+  KycRecord,
+  PaginatedResponse,
+  PayoutEstimate,
+  Transaction,
+  UserProfile,
+  Wallet,
+  WalletBalance,
 } from './types';
 
 // =====================================================
@@ -55,9 +55,10 @@ export const walletApi = {
    * Get total balance across all wallets
    */
   async getTotalBalance(): Promise<{ total: number; currency: string }> {
-    const response = await clientAxios.get<ApiResponse<{ total: number; currency: string }>>(
-      '/wallets/total-balance'
-    );
+    const response =
+      await clientAxios.get<ApiResponse<{ total: number; currency: string }>>(
+        '/wallets/total-balance'
+      );
     return response.data.data || { total: 0, currency: 'USD' };
   },
 };
@@ -157,10 +158,7 @@ export const payoutApi = {
     toCurrency: string;
     country: string;
   }): Promise<PayoutEstimate> {
-    const response = await clientAxios.post<ApiResponse<PayoutEstimate>>(
-      '/payouts/estimate',
-      data
-    );
+    const response = await clientAxios.post<ApiResponse<PayoutEstimate>>('/payouts/estimate', data);
     return response.data.data!;
   },
 
@@ -168,10 +166,7 @@ export const payoutApi = {
    * Create a payout request
    */
   async create(data: CreatePayoutRequest): Promise<ApiResponse<Transaction>> {
-    const response = await clientAxios.post<ApiResponse<Transaction>>(
-      '/transactions/payout',
-      data
-    );
+    const response = await clientAxios.post<ApiResponse<Transaction>>('/transactions/payout', data);
     return response.data;
   },
 
