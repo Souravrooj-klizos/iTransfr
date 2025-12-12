@@ -1,7 +1,7 @@
-import { NextResponse } from 'next/server';
+import { supabaseAdmin } from '@/lib/supabaseClient';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import { supabaseAdmin } from '@/lib/supabaseClient';
+import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
@@ -68,7 +68,16 @@ export async function GET() {
 
     console.log('[KYC List] Found records:', kycRecords?.length);
 
-    return NextResponse.json({ kycRecords });
+    return NextResponse.json({
+      success: true,
+      data: kycRecords,
+      pagination: {
+        page: 1,
+        limit: 100, // fetching all for now as pagination not fully implemented in DB query
+        total: kycRecords?.length || 0,
+        totalPages: 1
+      }
+    });
   } catch (error: any) {
     console.error('Error fetching KYC records:', error);
     return NextResponse.json(

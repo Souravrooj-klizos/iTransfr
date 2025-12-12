@@ -9,9 +9,10 @@ interface FormSelectProps {
   onChange?: (value: string) => void;
   options: { value: string; label: string }[];
   required?: boolean;
+  disabled?: boolean;
 }
 
-export function FormSelect({ label, value, onChange, options, required = false }: FormSelectProps) {
+export function FormSelect({ label, value, onChange, options, required = false, disabled = false }: FormSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -46,8 +47,11 @@ export function FormSelect({ label, value, onChange, options, required = false }
       <div className='relative'>
         <button
           type='button'
-          onClick={() => setIsOpen(!isOpen)}
-          className={`group flex h-11 w-full items-center justify-between rounded-lg border bg-white px-4 py-3 text-sm transition-all hover:bg-gray-50 focus:outline-none ${
+          onClick={() => !disabled && setIsOpen(!isOpen)}
+          disabled={disabled}
+          className={`group flex h-11 w-full items-center justify-between rounded-lg border bg-white px-4 py-3 text-sm transition-all focus:outline-none ${
+            disabled ? 'cursor-not-allowed bg-gray-100 text-gray-400' : 'hover:bg-gray-50'
+          } ${
             isOpen
               ? 'border-blue-500 ring-2 ring-blue-500/20'
               : 'border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20'

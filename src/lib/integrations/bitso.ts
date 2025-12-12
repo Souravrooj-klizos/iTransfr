@@ -1,15 +1,36 @@
+/**
+ * Bitso API Client
+ *
+ * Bitso API for currency conversions (FX swaps)
+ * Documentation: https://docs.bitso.com
+ *
+ * Refactored to use Axios with HMAC-SHA256 authentication.
+ */
+
+import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 import crypto from 'crypto';
 
 // =====================================================
-// BITSO API CLIENT
-// =====================================================
-// Bitso API for currency conversions (FX swaps)
-// Supports: Colombia + Mexico (SPEI, ACH/PSE)
+// CONFIGURATION
 // =====================================================
 
-const BITSO_API_URL = process.env.BITSO_API_URL || 'https://api.bitso.com';
-const BITSO_API_KEY = process.env.BITSO_API_KEY;
-const BITSO_API_SECRET = process.env.BITSO_API_SECRET;
+const BITSO_BASE_URL = process.env.BITSO_API_URL || 'https://api.bitso.com/v3';
+
+function getApiKey(): string {
+  const apiKey = process.env.BITSO_API_KEY;
+  if (!apiKey) {
+    throw new Error('BITSO_API_KEY environment variable is not set');
+  }
+  return apiKey;
+}
+
+function getApiSecret(): string {
+  const apiSecret = process.env.BITSO_API_SECRET;
+  if (!apiSecret) {
+    throw new Error('BITSO_API_SECRET environment variable is not set');
+  }
+  return apiSecret;
+}
 
 // =====================================================
 // TYPES
@@ -54,7 +75,7 @@ export interface BitsoBalance {
   total: string;
 }
 
-export interface BitsoApiResponse<T> {
+interface BitsoApiResponse<T> {
   success: boolean;
   payload: T;
   error?: {
@@ -64,49 +85,69 @@ export interface BitsoApiResponse<T> {
 }
 
 // =====================================================
-// AUTHENTICATION
+// AXIOS CLIENT WITH HMAC AUTHENTICATION
 // =====================================================
-
-function getApiKey(): string {
-  const key = BITSO_API_KEY;
-  if (!key) {
-    throw new Error('BITSO_API_KEY not configured in environment variables');
-  }
-  return key;
-}
-
-function getApiSecret(): string {
-  const secret = BITSO_API_SECRET;
-  if (!secret) {
-    throw new Error('BITSO_API_SECRET not configured in environment variables');
-  }
-  return secret;
-}
 
 /**
  * Create HMAC-SHA256 signature for Bitso API
- * Signature = HMAC-SHA256(nonce + method + path + body, secret)
  */
 function createSignature(nonce: string, method: string, path: string, body: string = ''): string {
-  const secret = getApiSecret();
-  const data = nonce + method + path + body;
-
-  return crypto.createHmac('sha256', secret).update(data).digest('hex');
+  const message = nonce + method.toUpperCase() + path + body;
+  return crypto.createHmac('sha256', getApiSecret()).update(message).digest('hex');
 }
 
 /**
- * Get authentication headers for Bitso API
- * Format: Authorization: Bitso {key}:{nonce}:{signature}
+ * Create Bitso Axios instance with auth interceptor
  */
-function getAuthHeaders(method: string, path: string, body: string = ''): Record<string, string> {
-  const key = getApiKey();
-  const nonce = Date.now().toString();
-  const signature = createSignature(nonce, method, path, body);
+function createBitsoClient(): AxiosInstance {
+  const client = axios.create({
+    baseURL: BITSO_BASE_URL,
+    timeout: 30000,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
 
-  return {
-    Authorization: `Bitso ${key}:${nonce}:${signature}`,
-    'Content-Type': 'application/json',
-  };
+  // Add HMAC authentication interceptor
+  client.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+    const nonce = Date.now().toString();
+    const method = config.method?.toUpperCase() || 'GET';
+    const url = new URL(config.url || '', config.baseURL);
+    const path = url.pathname + url.search;
+    const body = config.data ? JSON.stringify(config.data) : '';
+
+    const signature = createSignature(nonce, method, path, body);
+    config.headers.Authorization = `Bitso ${getApiKey()}:${nonce}:${signature}`;
+
+    console.log(`[Bitso] ${method} ${path}`);
+    return config;
+  });
+
+  // Response interceptor
+  client.interceptors.response.use(
+    (response) => {
+      console.log(`[Bitso] Response ${response.status}:`, response.config.url);
+      return response;
+    },
+    (error: AxiosError) => {
+      const status = error.response?.status;
+      const data = error.response?.data as any;
+      console.error(`[Bitso] Error ${status}:`, data?.error?.message || error.message);
+      throw error;
+    }
+  );
+
+  return client;
+}
+
+// Lazy-initialized client
+let bitsoClient: AxiosInstance | null = null;
+
+function getClient(): AxiosInstance {
+  if (!bitsoClient) {
+    bitsoClient = createBitsoClient();
+  }
+  return bitsoClient;
 }
 
 // =====================================================
@@ -116,11 +157,6 @@ function getAuthHeaders(method: string, path: string, body: string = ''): Record
 /**
  * Request a conversion quote
  * Quote is valid for 30 seconds
- *
- * @param fromCurrency - Source currency (e.g., 'USD', 'MXN')
- * @param toCurrency - Target currency (e.g., 'MXN', 'COP')
- * @param amount - Amount to convert
- * @param type - 'spend' (from amount) or 'receive' (to amount)
  */
 export async function requestQuote(
   fromCurrency: string,
@@ -128,136 +164,94 @@ export async function requestQuote(
   amount: number,
   type: 'spend' | 'receive' = 'spend'
 ): Promise<BitsoQuote> {
-  const path = '/api/v4/currency_conversions';
-  const body = JSON.stringify({
+  console.log(`[Bitso] Requesting quote: ${amount} ${fromCurrency} -> ${toCurrency}`);
+
+  // Bitso uses POST /currency_conversions to request a quote
+  const body: Record<string, any> = {
     from_currency: fromCurrency.toLowerCase(),
     to_currency: toCurrency.toLowerCase(),
-    ...(type === 'spend'
-      ? { spend_amount: amount.toFixed(8) }
-      : { receive_amount: amount.toFixed(8) }),
-  });
+  };
 
-  console.log('[Bitso] Requesting quote:', { fromCurrency, toCurrency, amount, type });
-
-  const response = await fetch(`${BITSO_API_URL}${path}`, {
-    method: 'POST',
-    headers: getAuthHeaders('POST', path, body),
-    body,
-  });
-
-  const data: BitsoApiResponse<BitsoQuote> = await response.json();
-
-  if (!data.success) {
-    console.error('[Bitso] Quote error:', data.error);
-    throw new Error(data.error?.message || 'Failed to get quote from Bitso');
+  if (type === 'spend') {
+    body.spend_amount = amount.toString();
+  } else {
+    body.receive_amount = amount.toString();
   }
 
-  console.log('[Bitso] Quote received:', {
-    id: data.payload.id,
-    rate: data.payload.rate,
-    fromAmount: data.payload.from_amount,
-    toAmount: data.payload.to_amount,
-  });
+  const response = await getClient().post<BitsoApiResponse<BitsoQuote>>('/currency_conversions', body);
 
-  return data.payload;
+  if (!response.data.success) {
+    throw new Error(response.data.error?.message || 'Failed to get quote');
+  }
+
+  console.log(`[Bitso] Quote received: ${response.data.payload.id}, rate: ${response.data.payload.rate}`);
+  return response.data.payload;
 }
 
 /**
  * Execute a conversion quote
  * Must be called within 30 seconds of receiving quote
- *
- * @param quoteId - The quote ID from requestQuote()
  */
 export async function executeQuote(quoteId: string): Promise<BitsoConversion> {
-  const path = `/api/v4/currency_conversions/${quoteId}`;
+  console.log(`[Bitso] Executing quote: ${quoteId}`);
 
-  console.log('[Bitso] Executing quote:', quoteId);
+  // Bitso uses PUT /currency_conversions/{quote_id} to execute
+  const response = await getClient().put<BitsoApiResponse<BitsoConversion>>(`/currency_conversions/${quoteId}`);
 
-  const response = await fetch(`${BITSO_API_URL}${path}`, {
-    method: 'PUT',
-    headers: getAuthHeaders('PUT', path),
-  });
-
-  const data: BitsoApiResponse<BitsoConversion> = await response.json();
-
-  if (!data.success) {
-    console.error('[Bitso] Execute error:', data.error);
-    throw new Error(data.error?.message || 'Failed to execute conversion');
+  if (!response.data.success) {
+    throw new Error(response.data.error?.message || 'Failed to execute conversion');
   }
 
-  console.log('[Bitso] Conversion executed:', {
-    id: data.payload.id,
-    status: data.payload.status,
-    fromAmount: data.payload.from_amount,
-    toAmount: data.payload.to_amount,
-  });
-
-  return data.payload;
+  console.log(`[Bitso] Conversion executed: ${response.data.payload.id}`);
+  return response.data.payload;
 }
 
 /**
  * Get conversion status
- *
- * @param conversionId - The conversion ID from executeQuote()
  */
 export async function getConversionStatus(conversionId: string): Promise<BitsoConversion> {
-  const path = `/api/v4/currency_conversions/${conversionId}`;
+  console.log(`[Bitso] Getting conversion status: ${conversionId}`);
 
-  const response = await fetch(`${BITSO_API_URL}${path}`, {
-    method: 'GET',
-    headers: getAuthHeaders('GET', path),
-  });
+  const response = await getClient().get<BitsoApiResponse<BitsoConversion>>(
+    `/currency_conversions/${conversionId}`
+  );
 
-  const data: BitsoApiResponse<BitsoConversion> = await response.json();
-
-  if (!data.success) {
-    console.error('[Bitso] Status error:', data.error);
-    throw new Error(data.error?.message || 'Failed to get conversion status');
+  if (!response.data.success) {
+    throw new Error(response.data.error?.message || 'Failed to get conversion status');
   }
 
-  return data.payload;
+  return response.data.payload;
 }
 
 /**
  * Get account balances
  */
 export async function getBalances(): Promise<BitsoBalance[]> {
-  const path = '/api/v3/balance/';
+  console.log('[Bitso] Getting balances');
 
-  const response = await fetch(`${BITSO_API_URL}${path}`, {
-    method: 'GET',
-    headers: getAuthHeaders('GET', path),
-  });
+  const response = await getClient().get<BitsoApiResponse<{balances: BitsoBalance[]}>>('/balance');
 
-  const data: BitsoApiResponse<{ balances: BitsoBalance[] }> = await response.json();
-
-  if (!data.success) {
-    console.error('[Bitso] Balance error:', data.error);
-    throw new Error(data.error?.message || 'Failed to get balances');
+  if (!response.data.success) {
+    throw new Error(response.data.error?.message || 'Failed to get balances');
   }
 
-  return data.payload.balances;
+  // Balance response has a nested 'balances' array
+  return response.data.payload.balances || response.data.payload as unknown as BitsoBalance[];
 }
 
 /**
  * Get available trading books (currency pairs)
  */
 export async function getAvailableBooks(): Promise<any[]> {
-  const path = '/api/v3/available_books/';
+  console.log('[Bitso] Getting available books');
 
-  const response = await fetch(`${BITSO_API_URL}${path}`, {
-    method: 'GET',
-    // This is a public endpoint, no auth needed
-    headers: { 'Content-Type': 'application/json' },
-  });
+  const response = await getClient().get<BitsoApiResponse<any[]>>('/available_books');
 
-  const data = await response.json();
-
-  if (!data.success) {
-    throw new Error(data.error?.message || 'Failed to get available books');
+  if (!response.data.success) {
+    throw new Error(response.data.error?.message || 'Failed to get available books');
   }
 
-  return data.payload;
+  return response.data.payload;
 }
 
 /**
@@ -270,24 +264,15 @@ export async function testConnection(): Promise<{
 }> {
   try {
     console.log('[Bitso] Testing connection...');
-    console.log('[Bitso] API URL:', BITSO_API_URL);
-    console.log('[Bitso] API Key configured:', !!BITSO_API_KEY);
-
     const balances = await getBalances();
-
     console.log('[Bitso] ✅ Connection successful');
-    console.log('[Bitso] Currencies available:', balances.map(b => b.currency).join(', '));
-
-    return {
-      connected: true,
-      balances,
-    };
+    return { connected: true, balances };
   } catch (error: any) {
-    console.error('[Bitso] ❌ Connection failed:', error.message);
-    return {
-      connected: false,
-      error: error.message,
-    };
+    const message = axios.isAxiosError(error)
+      ? error.response?.data?.error?.message || error.message
+      : error.message;
+    console.error('[Bitso] ❌ Connection failed:', message);
+    return { connected: false, error: message };
   }
 }
 
@@ -301,7 +286,7 @@ export async function testConnection(): Promise<{
 export async function getExchangeRate(
   fromCurrency: string,
   toCurrency: string,
-  amount: number = 1000 // Default amount for rate calculation
+  amount: number = 1000
 ): Promise<{
   rate: string;
   fromAmount: string;
@@ -316,7 +301,7 @@ export async function getExchangeRate(
     fromAmount: quote.from_amount,
     toAmount: quote.to_amount,
     quoteId: quote.id,
-    expiresAt: new Date(quote.expires),
+    expiresAt: new Date(quote.expires * 1000),
   };
 }
 

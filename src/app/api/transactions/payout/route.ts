@@ -27,20 +27,42 @@ import { NextRequest, NextResponse } from 'next/server';
  */
 export async function POST(request: NextRequest) {
   try {
-    const { amount, currency, recipient } = await request.json();
+    const {
+      amount,
+      sourceCurrency,
+      destinationCurrency,
+      recipientName,
+      accountNumber,
+      bankName,
+      bankCode,
+      country,
+      accountType
+    } = await request.json();
 
     // Validate input
     if (!amount || amount <= 0) {
       return NextResponse.json({ error: 'Valid amount is required' }, { status: 400 });
     }
 
-    if (!currency) {
-      return NextResponse.json({ error: 'Currency is required' }, { status: 400 });
+    if (!sourceCurrency) {
+      return NextResponse.json({ error: 'Source Currency is required' }, { status: 400 });
     }
 
-    if (!recipient || !recipient.accountNumber || !recipient.bankName) {
-      return NextResponse.json({ error: 'Recipient bank details are required' }, { status: 400 });
+    if (!recipientName || !accountNumber || !bankName) {
+      return NextResponse.json({ error: 'Recipient bank details are required (Name, Account, Bank)' }, { status: 400 });
     }
+
+    // Construct recipient object for internal usage/logs
+    const recipient = {
+      name: recipientName,
+      accountNumber,
+      bankName,
+      bankCode,
+      country,
+      accountType
+    };
+
+    const currency = sourceCurrency; // Spending currency (USDC/USDT)
 
     if (!supabaseAdmin) {
       return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
@@ -85,8 +107,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 2. Check user has sufficient balance (TODO: implement wallet check)
-    // For now, we'll skip this and let admin verify
+    // 2. Check user has sufficient balance and deduct
+    const { data: wallet, error: walletError } = await supabaseAdmin
+      .from('wallets')
+      .select('*')
+      .eq('userId', user.id)
+      .eq('userId', user.id)
+      .in('currency', [currency, 'USDT', 'USDC']) // Check for any USD stablecoin
+      .order('balance', { ascending: false }) // Use the one with most balance
+      .limit(1)
+      .single();
+
+    // If wallet doesn't exist or balance too low
+    if (walletError || !wallet || wallet.balance < amount) {
+       return NextResponse.json({ error: 'Insufficient funds' }, { status: 400 });
+    }
+
+    // Deduct balance
+    const { error: updateError } = await supabaseAdmin
+      .from('wallets')
+      .update({ balance: wallet.balance - amount })
+      .eq('id', wallet.id);
+
+    if (updateError) {
+       return NextResponse.json({ error: 'Failed to update wallet balance' }, { status: 500 });
+    }
 
     // 3. Generate transaction reference
     const reference = `PAY-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
@@ -98,10 +143,12 @@ export async function POST(request: NextRequest) {
         userId: user.id,
         type: 'payout',
         amount,
-        currencyFrom: currency,
+        currency: currency,
         status: 'PAYOUT_PENDING',
-        reference,
-        notes: ['Payout request created'],
+        referenceNumber: reference,
+        metadata: {
+            notes: ['Payout request created']
+        },
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       })
@@ -115,6 +162,26 @@ export async function POST(request: NextRequest) {
 
     console.log('[Payout] Transaction created:', transaction.id);
 
+    // 4b. Create ledger entries
+    await supabaseAdmin.from('ledger_entries').insert([
+      {
+        transactionId: transaction.id,
+        account: 'user_wallet',
+        debit: amount,
+        credit: 0,
+        currency,
+        description: 'Payout request debit'
+      },
+      {
+        transactionId: transaction.id,
+        account: 'payout_liability',
+        debit: 0,
+        credit: amount,
+        currency,
+        description: 'Payout pending liability'
+      }
+    ]);
+
     // 5. Run AML screening with destination country
     const amlResult = await screenTransaction({
       transactionId: transaction.id,
@@ -127,15 +194,19 @@ export async function POST(request: NextRequest) {
 
     // 6. Handle AML result
     if (!amlResult.passed) {
+      const currentNotes = transaction.metadata?.notes || [];
       await supabaseAdmin
         .from('transactions')
         .update({
           status: 'FAILED',
-          notes: [
-            ...transaction.notes,
-            `AML Check Failed: ${amlResult.reason}`,
-            `Risk Score: ${amlResult.riskScore}`,
-          ],
+          metadata: {
+             ...transaction.metadata,
+             notes: [
+                ...currentNotes,
+                `AML Check Failed: ${amlResult.reason}`,
+                `Risk Score: ${amlResult.riskScore}`,
+             ]
+          },
           updatedAt: new Date().toISOString(),
         })
         .eq('id', transaction.id);
@@ -164,9 +235,8 @@ export async function POST(request: NextRequest) {
         destinationBank: {
           accountNumber: recipient.accountNumber,
           bankName: recipient.bankName,
-          ifscCode: recipient.ifscCode,
-          beneficiaryName: recipient.name,
           bankCode: recipient.bankCode,
+          beneficiaryName: recipient.name,
         },
         amount,
         currency,
@@ -182,14 +252,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Update transaction notes
+    const currentNotes = transaction.metadata?.notes || [];
     await supabaseAdmin
       .from('transactions')
       .update({
-        notes: [
-          ...transaction.notes,
-          `AML Check Passed - Risk Score: ${amlResult.riskScore} (${amlResult.riskLevel})`,
-          'Payout request submitted for processing',
-        ],
+        metadata: {
+            ...transaction.metadata,
+            notes: [
+                ...currentNotes,
+                `AML Check Passed - Risk Score: ${amlResult.riskScore} (${amlResult.riskLevel})`,
+                'Payout request submitted for processing',
+            ]
+        },
         updatedAt: new Date().toISOString(),
       })
       .eq('id', transaction.id);

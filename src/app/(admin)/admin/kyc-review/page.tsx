@@ -5,6 +5,7 @@ import { DataTable, getStatusIcon, type TableColumn } from '@/components/ui/Data
 import { DatePicker } from '@/components/ui/DatePicker';
 import { Pagination } from '@/components/ui/Pagination';
 import { Select } from '@/components/ui/Select';
+import adminApi from '@/lib/api/admin';
 import { Eye, FileText, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -24,12 +25,16 @@ export default function KYCReviewPage() {
     fetchKYCRecords();
   }, []);
 
+
+
   async function fetchKYCRecords() {
     try {
-      const response = await fetch('/api/admin/kyc/list');
-      const data = await response.json();
-      if (data.kycRecords) {
-        setKycRecords(data.kycRecords);
+      const { data: kycRecords } = await adminApi.kyc.list({
+        status: status !== 'all' ? status : undefined,
+        // filter: filter !== 'all' ? filter : undefined // API needs to support search/filter if not already
+      });
+      if (kycRecords) {
+        setKycRecords(kycRecords as any);
       }
     } catch (error) {
       console.error('Error fetching KYC records:', error);
@@ -43,22 +48,26 @@ export default function KYCReviewPage() {
 
     setActionLoading(true);
     try {
-      const response = await fetch(`/api/admin/kyc/${id}/update-status`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status, notes }),
-      });
+      let result;
+      if (status === 'approved') {
+         result = await adminApi.kyc.approve(id, notes[0]);
+      } else if (status === 'rejected') {
+         result = await adminApi.kyc.reject(id, notes[0]);
+      } else {
+         // Fallback for other statuses if needed, though approve/reject are primary
+         // adminApi doesn't expose generic updateStatus to keep it strict,
+         // so we might strictly enforce approve/reject locally or extend api
+         console.warn('Only approve/reject supported via helper');
+         return;
+      }
 
-      if (response.ok) {
+      if (result) {
         await fetchKYCRecords();
         setSelectedRecord(null);
-      } else {
-        const error = await response.json();
-        alert(`Error: ${error.error}`);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating KYC status:', error);
-      alert('Failed to update KYC status');
+      alert(`Failed to update KYC status: ${error.message || 'Unknown error'}`);
     } finally {
       setActionLoading(false);
     }

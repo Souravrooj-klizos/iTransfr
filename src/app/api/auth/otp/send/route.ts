@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { sendOTPEmail } from '@/lib/services/email';
 import { supabaseAdmin } from '@/lib/supabaseClient';
-import { sendEmail } from '@/lib/aws-ses';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
   try {
@@ -49,43 +49,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Send OTP via email
-    const emailHtml = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-            .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-            .otp-box { background: white; border: 2px dashed #667eea; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 5px; margin: 20px 0; border-radius: 5px; }
-            .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>iTransfr Email Verification</h1>
-            </div>
-            <div class="content">
-              <p>Hello,</p>
-              <p>Thank you for signing up with iTransfr. To complete your registration, please use the following verification code:</p>
-              <div class="otp-box">${otp}</div>
-              <p>This code will expire in <strong>10 minutes</strong>.</p>
-              <p>If you didn't request this code, please ignore this email.</p>
-              <div class="footer">
-                <p>© 2025 iTransfr. All rights reserved.</p>
-              </div>
-            </div>
-          </div>
-        </body>
-      </html>
-    `;
-
+    // Send OTP via email using the proper template
     try {
-      await sendEmail(email, 'Your iTransfr Verification Code', emailHtml);
-      console.log('[OTP] Email sent successfully');
+      const result = await sendOTPEmail(email, otp);
+      if (result.success) {
+        console.log('[OTP] Email sent successfully via template');
+      } else {
+        console.error('[OTP] Email send error:', result.error);
+      }
     } catch (emailError) {
       console.error('[OTP] Email send error:', emailError);
     }
@@ -99,3 +70,4 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to send OTP' }, { status: 500 });
   }
 }
+

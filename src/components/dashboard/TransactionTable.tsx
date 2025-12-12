@@ -1,8 +1,8 @@
 import {
-  DataTable,
-  getAmountColor,
-  getStatusIcon,
-  type TableColumn,
+    DataTable,
+    getAmountColor,
+    getStatusIcon,
+    type TableColumn,
 } from '@/components/ui/DataTable';
 
 interface Transaction {
@@ -11,7 +11,7 @@ interface Transaction {
   time: string;
   recipient: string;
   type: string;
-  status: 'Completed' | 'Processing';
+  status: 'Completed' | 'Processing' | 'Failed' | 'Pending';
   amount: string;
   currency?: string;
   fromAmount?: string;

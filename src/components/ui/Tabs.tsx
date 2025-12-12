@@ -22,7 +22,7 @@ export function Tabs({
 }: TabsProps) {
   return (
     <div>
-      <div className={`flex gap-2 overflow-x-auto ${fullWidth ? 'w-full' : ''}`}>
+      <div className={`flex gap-2 flex-wrap overflow-x-auto ${fullWidth ? 'w-full' : ''}`}>
         {tabs.map(tab => {
           const isActive = activeTab === tab.id;
           const hasCustomColor = tab.activeColor && isActive;

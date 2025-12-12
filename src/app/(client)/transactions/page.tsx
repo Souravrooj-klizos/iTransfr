@@ -6,7 +6,7 @@ import { DataTable, getStatusIcon, type TableColumn } from '@/components/ui/Data
 import { DatePicker } from '@/components/ui/DatePicker';
 import { Pagination } from '@/components/ui/Pagination';
 import { Select } from '@/components/ui/Select';
-import { Download, Eye, MoreVertical, Search } from 'lucide-react';
+import { Download, Eye, MoreVertical, RefreshCw, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface Transaction {
@@ -19,122 +19,17 @@ interface Transaction {
   status: 'Completed' | 'Processing' | 'Failed' | 'Pending';
   amount: string;
   fromAmount?: string;
+  referenceNumber?: string;
 }
 
-// Mock data
-const mockTransactions: Transaction[] = [
-  {
-    id: '1',
-    date: 'Dec 28, 2025',
-    time: '14:32 UTC',
-    recipient: 'Global Industries',
-    transactionType: 'Deposit',
-    paymentMethod: 'Crypto',
-    status: 'Completed',
-    amount: '16,750 USDT',
-  },
-  {
-    id: '2',
-    date: 'Dec 27, 2025',
-    time: '09:15 CST',
-    recipient: 'OmniCorp Logistics',
-    transactionType: 'Withdrawal',
-    paymentMethod: 'Fedwire',
-    status: 'Processing',
-    amount: '$44,775',
-    fromAmount: 'From: 45,000 USDT',
-  },
-  {
-    id: '3',
-    date: 'Dec 23, 2025',
-    time: '16:45 CST',
-    recipient: 'StellarTech Enterprises',
-    transactionType: 'Bank Payment',
-    paymentMethod: 'SWIFT',
-    status: 'Processing',
-    amount: '820,000 MXN',
-    fromAmount: 'From: $32,000',
-  },
-  {
-    id: '4',
-    date: 'Dec 23, 2025',
-    time: '10:45 CST',
-    recipient: 'NovaTech Solutions',
-    transactionType: 'Withdrawal',
-    paymentMethod: 'Crypto',
-    status: 'Completed',
-    amount: '70,000 USDT',
-  },
-  {
-    id: '5',
-    date: 'Dec 23, 2025',
-    time: '10:45 CST',
-    recipient: 'Apex Dynamic Systems',
-    transactionType: 'Bank Payment',
-    paymentMethod: 'Fedwire',
-    status: 'Completed',
-    amount: '$25,000',
-  },
-  {
-    id: '6',
-    date: 'Dec 23, 2025',
-    time: '16:45 CST',
-    recipient: 'Zenith Global Group',
-    transactionType: 'Deposit',
-    paymentMethod: 'Crypto',
-    status: 'Processing',
-    amount: '15.75',
-  },
-  {
-    id: '7',
-    date: 'Dec 23, 2025',
-    time: '16:45 CST',
-    recipient: 'VanGuard Dynamics',
-    transactionType: 'Bank Payment',
-    paymentMethod: 'SWIFT',
-    status: 'Completed',
-    amount: '8,000',
-    fromAmount: 'From: $8,000',
-  },
-  {
-    id: '10',
-    date: 'Dec 27, 2025',
-    time: '09:15 CST',
-    recipient: 'InnoVision Creations',
-    transactionType: 'Withdrawal',
-    paymentMethod: 'Fedwire',
-    status: 'Processing',
-    amount: '$44,775',
-    fromAmount: 'From: 45,000 USDT',
-  },
-  {
-    id: '11',
-    date: 'Dec 26, 2025',
-    time: '11:20 UTC',
-    recipient: 'Quantum Solutions Ltd',
-    transactionType: 'Deposit',
-    paymentMethod: 'Crypto',
-    status: 'Failed',
-    amount: '5,000 USDT',
-  },
-  {
-    id: '12',
-    date: 'Dec 25, 2025',
-    time: '15:45 CST',
-    recipient: 'Nexus Enterprises',
-    transactionType: 'Bank Payment',
-    paymentMethod: 'SWIFT',
-    status: 'Pending',
-    amount: '12,500 EUR',
-    fromAmount: 'From: $13,200',
-  },
-];
-
 export default function TransactionsPage() {
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showActionsMenu, setShowActionsMenu] = useState<string | null>(null);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
 
   // Filter states
   const [filter, setFilter] = useState('all');
@@ -145,6 +40,35 @@ export default function TransactionsPage() {
   const [dateFilter, setDateFilter] = useState<string>('');
   const [activePage, setActivePage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState('10');
+  const [totalPages, setTotalPages] = useState(1);
+
+  useEffect(() => {
+    fetchTransactions();
+  }, [activePage, rowsPerPage, filter, status]);
+
+  async function fetchTransactions() {
+    try {
+      setLoading(true);
+
+      const params = new URLSearchParams();
+      params.set('page', activePage.toString());
+      params.set('limit', rowsPerPage);
+      if (filter !== 'all') params.set('type', filter);
+      if (status !== 'all') params.set('status', status);
+
+      const response = await fetch(`/api/transactions/list?${params.toString()}`);
+
+      if (response.ok) {
+        const data = await response.json();
+        setTransactions(data.data || []);
+        setTotalPages(data.pagination?.totalPages || 1);
+      }
+    } catch (err) {
+      console.error('Error fetching transactions:', err);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const handleSelectionChange = (ids: Set<string>) => {
     setSelectedIds(ids);
@@ -288,13 +212,29 @@ export default function TransactionsPage() {
                 <Eye className='h-4 w-4' />
                 View Details
               </button>
-              <button className='flex w-full cursor-pointer items-center gap-3 rounded-lg px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100'>
+              <button
+                onClick={() => {
+                  window.open(`/api/receipts/${row.id}`, '_blank');
+                  setShowActionsMenu(null);
+                }}
+                className='flex w-full cursor-pointer items-center gap-3 rounded-lg px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100'
+              >
                 <Receipt />
                 View Receipt
               </button>
-              <button className='flex w-full cursor-pointer items-center gap-3 rounded-lg px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100'>
+              <button
+                onClick={() => {
+                  // Open receipt and trigger print dialog
+                  const win = window.open(`/api/receipts/${row.id}`, '_blank');
+                  if (win) {
+                    win.onload = () => win.print();
+                  }
+                  setShowActionsMenu(null);
+                }}
+                className='flex w-full cursor-pointer items-center gap-3 rounded-lg px-4 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-gray-100'
+              >
                 <Download className='h-4 w-4' />
-                Export PDF
+                Print / Save PDF
               </button>
             </div>
           )}
@@ -303,13 +243,21 @@ export default function TransactionsPage() {
     },
   ];
 
+  if (loading && transactions.length === 0) {
+    return (
+      <div className='flex h-64 items-center justify-center'>
+        <div className='h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600'></div>
+      </div>
+    );
+  }
+
   return (
     <div className='space-y-6'>
       {/* Search and Filters */}
       <div className='rounded-xl border border-gray-200 bg-white p-6'>
-        <div className='mb-4 flex flex-col justify-between gap-4 md:flex-row md:items-center'>
+        <div className='mb-4 flex flex-col justify-between gap-4 lg:flex-row md:items-center'>
           {/* Left Side: Search + Filters */}
-          <div className='flex flex-1 flex-col gap-3 lg:flex-row lg:items-center'>
+          <div className='flex flex-1 flex-col gap-3 2xl:flex-row items-start 2xl:items-center'>
             {/* Search */}
             <div className='relative w-full lg:w-64'>
               <Search className='absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-500' />
@@ -351,11 +299,8 @@ export default function TransactionsPage() {
                   { value: 'all', label: 'All Currencies' },
                   { value: 'usd', label: 'USD' },
                   { value: 'eur', label: 'EUR' },
-                  { value: 'gbp', label: 'GBP' },
-                  { value: 'brl', label: 'BRL' },
                   { value: 'usdt', label: 'USDT' },
                   { value: 'usdc', label: 'USDC' },
-                  { value: 'mxn', label: 'MXN' },
                 ]}
                 value={currency}
                 onChange={setCurrency}
@@ -374,25 +319,25 @@ export default function TransactionsPage() {
                 onChange={setStatus}
                 className='w-full md:w-40'
               />
-
-              <Select
-                options={[{ value: 'all', label: 'All Recipients' }]}
-                value={recipient}
-                onChange={setRecipient}
-                className='w-full md:w-40'
-              />
             </div>
           </div>
 
-          {/* Right Side: Date Picker */}
-          <div className='w-full md:w-auto'>
+          {/* Right Side: Refresh + Date Picker */}
+          <div className='flex items-center gap-2'>
+            <button
+              onClick={fetchTransactions}
+              disabled={loading}
+              className='flex items-center gap-2 rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50'
+            >
+              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            </button>
             <DatePicker value={dateFilter} onChange={setDateFilter} className='w-full md:w-40' />
           </div>
         </div>
 
         {/* Table */}
         <DataTable
-          data={mockTransactions}
+          data={transactions}
           columns={columns}
           getRowId={row => row.id}
           showCheckbox={true}
@@ -400,10 +345,20 @@ export default function TransactionsPage() {
           selectedIds={selectedIds}
         />
 
+        {/* Empty State */}
+        {transactions.length === 0 && !loading && (
+          <div className='py-12 text-center text-gray-500'>
+            <p className='text-lg'>No transactions yet</p>
+            <a href='/deposit' className='mt-2 inline-block text-blue-600 hover:text-blue-800'>
+              Make your first deposit →
+            </a>
+          </div>
+        )}
+
         {/* Pagination */}
         <Pagination
           currentPage={activePage}
-          totalPages={25}
+          totalPages={totalPages}
           onPageChange={setActivePage}
           itemsPerPage={rowsPerPage}
           onItemsPerPageChange={setRowsPerPage}

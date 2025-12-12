@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabaseClient';
+import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
@@ -27,7 +27,7 @@ export async function GET() {
 
     if (error) throw error;
 
-    return NextResponse.json({ payouts: payouts || [] });
+    return NextResponse.json({ data: payouts || [] });
   } catch (error: any) {
     console.error('Error fetching payouts:', error);
     return NextResponse.json(

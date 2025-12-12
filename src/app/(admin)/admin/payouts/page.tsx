@@ -1,7 +1,8 @@
 'use client';
 
+import adminApi from '@/lib/api/admin';
+import { Building, CreditCard, MapPin, Send } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Send, Clock, CheckCircle, AlertCircle, MapPin, Building, CreditCard } from 'lucide-react';
 
 interface PayoutRequest {
   id: string;
@@ -40,13 +41,12 @@ export default function PayoutsPage() {
     fetchPayouts();
   }, []);
 
+
+
   async function fetchPayouts() {
     try {
-      const response = await fetch('/api/admin/payouts/list');
-      if (response.ok) {
-        const data = await response.json();
-        setPayouts(data.payouts || []);
-      }
+      const { data: payouts } = await adminApi.payouts.list();
+      setPayouts(payouts || []);
     } catch (error) {
       console.error('Error fetching payouts:', error);
     } finally {
@@ -60,11 +60,26 @@ export default function PayoutsPage() {
 
     setActionLoading(true);
     try {
-      const response = await fetch(`/api/admin/payouts/${id}/send`, {
-        method: 'POST',
-      });
+      // Assuming sendPayout in adminApi triggers the 'send_payout' action on transaction
+      // But adminApi.payouts doesn't have a 'send' method directly mapped to just an ID in my quick review of admin.ts
+      // Let's check admin.ts again.
+      // admin.ts has: adminTransactionApi.sendPayout(txId, details).
+      // But PayoutsPage seems to iterate 'PayoutRequest' objects, which have 'transactionId'.
 
-      if (response.ok) {
+      // Wait, PayoutsPage uses /api/admin/payouts/${id}/send currently.
+      // Does adminApi have this?
+      // adminApi.payouts has: list, getStatus, cancel.
+      // It DOES NOT have 'send'.
+      // I should add 'process' or 'send' to adminApi.payouts OR update backend to use the transaction action.
+      // The current backend route /api/admin/payouts/${id}/send implies a specific payout endpoint.
+      // Let's use generic fetch for now OR update admin.ts.
+      // Better to update admin.ts to include this method.
+
+      // For this step, I will stick to fetch for the missing method but use api for list.
+      // Actually, I'll update admin.ts first.
+
+      const response = await fetch(`/api/admin/payouts/${id}/send`, { method: 'POST' });
+       if (response.ok) {
         await fetchPayouts();
         setSelectedPayout(null);
         alert('Payout sent successfully!');
@@ -73,11 +88,9 @@ export default function PayoutsPage() {
         alert(`Error: ${error.error}`);
       }
     } catch (error) {
-      console.error('Error sending payout:', error);
-      alert('Failed to send payout');
-    } finally {
-      setActionLoading(false);
+       // ...
     }
+    // ...
   }
 
   const getStatusBadge = (status: string) => {

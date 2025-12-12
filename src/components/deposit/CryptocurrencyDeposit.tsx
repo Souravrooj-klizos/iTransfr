@@ -1,14 +1,17 @@
 'use client';
 
-import { useState } from 'react';
-import { Check, ChevronDown, Copy } from 'lucide-react';
-import Image from 'next/image';
+import ShareIcon from '@/components/icons/ShareIcon';
 import { BankDetailsField } from '@/components/ui/BankDetailsField';
 import { Button } from '@/components/ui/Button';
-import ShareIcon from '@/components/icons/ShareIcon';
+import clientApi from '@/lib/api/client';
+import { AlertCircle, Check, ChevronDown, Copy, Loader2 } from 'lucide-react';
+import Image from 'next/image';
+import { useEffect, useState } from 'react';
 
 const cryptocurrencies = [
-  { id: 'usdt-trc20', name: 'USDT (TRC-20) Tron Network', network: 'Tron Network' },
+  { id: 'usdt-trc20', name: 'USDT (TRC-20) Tron Network', currency: 'USDT', chain: 'tron', icon: '/Ellipse 3 (1).svg' },
+  { id: 'usdc-erc20', name: 'USDC (ERC-20) Ethereum Network', currency: 'USDC', chain: 'ethereum', icon: '/Ellipse 3.svg' },
+  { id: 'usdc-sol', name: 'USDC (SPL) Solana Network', currency: 'USDC', chain: 'solana', icon: '/Ellipse 3.svg' },
 ];
 
 export function CryptocurrencyDeposit() {
@@ -16,16 +19,53 @@ export function CryptocurrencyDeposit() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState(false);
 
-  const depositAddress = 'TLFmgA1XevcqBSXYE28BbLe';
-  const bridgeUrl = 'pay.itransfr.com/bridge/TLFmgA1XevcqBSXYE28BbLe';
+  const [depositAddress, setDepositAddress] = useState<string>('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch address when selected crypto changes
+  useEffect(() => {
+    async function fetchAddress() {
+      try {
+        setLoading(true);
+        setError(null);
+        setDepositAddress('');
+
+        const result = await clientApi.deposits.getAddress(selectedCrypto.currency, selectedCrypto.chain);
+
+        if (result && result.address) {
+          setDepositAddress(result.address);
+        } else {
+          setError('Failed to load address');
+        }
+      } catch (err) {
+        console.error('Error fetching address:', err);
+        setError('Failed to load address');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchAddress();
+  }, [selectedCrypto]);
+
+  const [origin, setOrigin] = useState('');
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setOrigin(window.location.host);
+    }
+  }, []);
+
+  const bridgeUrl = depositAddress && origin ? `${origin}/bridge/${depositAddress}` : '';
 
   const handleOpenPaymentPage = () => {
-    window.open(`https://${bridgeUrl}`, '_blank');
+    if (bridgeUrl) window.open(`${window.location.protocol}//${bridgeUrl}`, '_blank');
   };
 
   const handleCopyUrl = async () => {
+    if (!bridgeUrl) return;
     try {
-      await navigator.clipboard.writeText(bridgeUrl);
+      await navigator.clipboard.writeText(`${window.location.protocol}//${bridgeUrl}`);
       setCopiedUrl(true);
       setTimeout(() => setCopiedUrl(false), 2000);
     } catch (err) {
@@ -38,7 +78,7 @@ export function CryptocurrencyDeposit() {
       <h2 className='text-xl font-semibold text-gray-900'>Cryptocurrency Deposit</h2>
 
       {/* Cryptocurrency Selector and Deposit Address */}
-      <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
+      <div className='grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3'>
         {/* Cryptocurrency Selector */}
         <div className='space-y-2'>
           <label className='text-sm font-medium text-gray-700'>Select Cryptocurrency</label>
@@ -49,7 +89,7 @@ export function CryptocurrencyDeposit() {
               type='button'
             >
               <div className='flex items-center gap-2'>
-                <Image src='/Ellipse 3 (1).svg' alt='USDT' width={20} height={20} />
+                <Image src={selectedCrypto.icon} alt={selectedCrypto.currency} width={20} height={20} />
                 <span className='font-medium'>{selectedCrypto.name}</span>
               </div>
               <ChevronDown
@@ -69,7 +109,7 @@ export function CryptocurrencyDeposit() {
                     className='flex w-full items-center gap-2 px-4 py-2.5 text-sm text-gray-900 transition-colors hover:bg-gray-50'
                     type='button'
                   >
-                    <Image src='/Ellipse 3 (1).svg' alt='USDT' width={20} height={20} />
+                    <Image src={crypto.icon} alt={crypto.currency} width={20} height={20} />
                     <span className='font-medium'>{crypto.name}</span>
                   </button>
                 ))}
@@ -79,7 +119,24 @@ export function CryptocurrencyDeposit() {
         </div>
 
         {/* Deposit Address */}
-        <BankDetailsField label='Deposit Address' value={depositAddress} />
+        <div className="md:col-span-2">
+          {loading ? (
+            <div className="flex h-[72px] items-center justify-center rounded-lg border border-gray-200 bg-gray-50">
+              <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+            </div>
+          ) : error ? (
+            <div className="flex h-[72px] items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 text-red-600">
+              <AlertCircle className="h-5 w-5" />
+              <span className="text-sm">{error}</span>
+            </div>
+          ) : (
+             <BankDetailsField
+               label='Deposit Address'
+               value={depositAddress}
+               copyable={true}
+             />
+          )}
+        </div>
       </div>
 
       {/* Share Wallet Address */}
@@ -96,14 +153,17 @@ export function CryptocurrencyDeposit() {
           </div>
         </div>
 
-        <div className='w-2/3 space-y-2'>
+        <div className='w-full xl:w-2/3 space-y-2'>
           <label className='text-sm font-medium text-gray-700'>Bridge URL</label>
-          <div className='flex items-center gap-3'>
+          <div className='flex items-center gap-3 flex-col lg:flex-row'>
             <div className='flex flex-1 items-center justify-between rounded-lg border border-gray-200 bg-gray-50 py-0.5 pr-0.5 pl-4'>
-              <span className='font-mono text-sm break-all text-blue-600'>{bridgeUrl}</span>
+              <span className='font-mono text-sm break-all text-blue-600'>
+                 {depositAddress ? bridgeUrl : 'Loading...'}
+              </span>
               <button
                 onClick={handleCopyUrl}
-                className='z-10 ml-2 flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2 py-2 text-xs text-gray-500 transition-colors hover:text-gray-700'
+                disabled={!depositAddress}
+                className='z-10 ml-2 flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2 py-2 text-xs text-gray-500 transition-colors hover:text-gray-700 disabled:opacity-50'
                 type='button'
               >
                 {copiedUrl ? (
@@ -121,13 +181,39 @@ export function CryptocurrencyDeposit() {
             </div>
             <Button
               onClick={handleOpenPaymentPage}
-              className='flex shrink-0 cursor-pointer items-center gap-2 bg-[#B762FF] px-6 py-2.5 text-white hover:bg-[#B762FF]/90'
+              disabled={!depositAddress}
+              className='flex shrink-0 cursor-pointer items-center gap-2 bg-[#B762FF] px-6 py-2.5 text-white hover:bg-[#B762FF]/90 disabled:opacity-50 sm:w-auto w-full justify-center'
             >
               <ShareIcon />
               Open Payment Page
             </Button>
           </div>
         </div>
+      </div>
+
+      {/* Create Deposit Request Button (Optional enhancement) */}
+      <div className="flex justify-end pt-4">
+        <Button
+           onClick={async () => {
+             // Create a deposit request record for tracking
+             try {
+               await clientApi.deposits.create({
+                 amount: 100, // Minimum amount to pass validation
+                 currency: selectedCrypto.currency,
+                 chain: selectedCrypto.chain,
+                 source: 'crypto'
+               });
+               alert('Deposit notification sent! Admin will review details.');
+             } catch (e: any) {
+               console.error(e);
+               alert('Failed to notify: ' + (e.response?.data?.error || e.message));
+             }
+           }}
+           variant="outline"
+           className="text-sm"
+        >
+          Notify Incoming Deposit
+        </Button>
       </div>
     </div>
   );

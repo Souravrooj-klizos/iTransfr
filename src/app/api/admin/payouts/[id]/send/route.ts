@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { createPayout } from '@/lib/integrations/infinitus';
 import { supabaseAdmin } from '@/lib/supabaseClient';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -24,32 +25,40 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: 'Payout already processed' }, { status: 400 });
     }
 
-    // TODO: Call Infinitus API to send payout
-    // const infinitusResult = await initiateInfinitusPayout({
-    //   amount: payout.amount,
-    //   currency: payout.currency,
-    //   recipientName: payout.recipientName,
-    //   recipientAccount: payout.recipientAccount,
-    //   recipientBank: payout.recipientBank,
-    //   recipientBankCode: payout.recipientBankCode,
-    //   recipientCountry: payout.recipientCountry
-    // })
+    // Call Infinitus API to send payout
+    console.log(`[Admin Payout] Initiating Infinitus payout for ${payout.id}`);
 
-    // Mock Infinitus response for now
-    const mockInfinitusResult = {
-      requestId: `INF-${Date.now()}`,
-      trackingNumber: `TRK-${Date.now()}`,
-      status: 'sent',
-    };
+    let infinitusResult;
+    try {
+      infinitusResult = await createPayout({
+        amount: payout.amount,
+        currency: payout.currency,
+        recipient: {
+          name: payout.recipientName,
+          accountNumber: payout.recipientAccount,
+          bankName: payout.recipientBank,
+          bankCode: payout.recipientBankCode,
+          country: payout.recipientCountry,
+          currency: payout.currency // Assuming payout currency same as recipient wallet currency
+        },
+        reference: payout.transactionId, // Link to our transaction ID
+        description: `Payout for user ${payout.userId}`
+      });
+    } catch (infError: any) {
+      console.error('[Admin Payout] Infinitus Error:', infError);
+      return NextResponse.json({
+        error: `Infinitus Payout Failed: ${infError.message}`
+      }, { status: 502 });
+    }
 
-    // Update payout request
+    // Update payout request with real Infantry data
     const { error: updateError } = await supabaseAdmin
       .from('payout_requests')
       .update({
         status: 'sent',
         sentAt: new Date().toISOString(),
-        infinitusRequestId: mockInfinitusResult.requestId,
-        infinitusTrackingNumber: mockInfinitusResult.trackingNumber,
+        infinitusRequestId: infinitusResult.id,
+        infinitusTrackingNumber: infinitusResult.trackingNumber,
       })
       .eq('id', id);
 
@@ -74,11 +83,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       description: `Payout sent to ${payout.recipientName} via Infinitus`,
     });
 
-    console.log(`✅ Payout ${id} sent - Tracking: ${mockInfinitusResult.trackingNumber}`);
+    console.log(`✅ Payout ${id} sent - Tracking: ${infinitusResult.trackingNumber}`);
 
     return NextResponse.json({
       success: true,
-      trackingNumber: mockInfinitusResult.trackingNumber,
+      trackingNumber: infinitusResult.trackingNumber,
       message: 'Payout sent successfully',
     });
   } catch (error: any) {

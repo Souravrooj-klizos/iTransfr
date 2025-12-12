@@ -9,14 +9,14 @@ import { DataTable, type TableColumn } from '@/components/ui/DataTable';
 import { Tabs } from '@/components/ui/Tabs';
 import { useToast } from '@/components/ui/Toast';
 import {
-  Filter,
-  Globe,
-  Home,
-  MoreVertical,
-  Plus,
-  Search,
-  Users,
-  Wallet,
+    Filter,
+    Globe,
+    Home,
+    MoreVertical,
+    Plus,
+    Search,
+    Users,
+    Wallet,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -36,97 +36,50 @@ interface Recipient {
   address?: string;
 }
 
-// Mock data
-const mockRecipients: Recipient[] = [
-  {
-    id: '1',
-    name: 'Alex Chan',
-    email: 'aichan@acme.com',
-    phone: '+1(555) 123-4567',
-    type: 'Crypto',
-    details: 'USDT - TRC-20',
-    lastUsed: 'Dec 28, 2025 14:32 UTC',
-    added: 'Dec 28, 2025 | 14:32 UTC',
-  },
-  {
-    id: '2',
-    name: 'James Wilson',
-    email: 'jwilson@acme.com',
-    phone: '+1(555) 123-4567',
-    type: 'International',
-    details: 'HSBC - UK - GBP',
-    lastUsed: 'Dec 28, 2025 14:32 UTC',
-    added: 'Dec 28, 2025 | 14:32 UTC',
-    bankName: 'HSBC UK',
-    currency: 'GBP',
-    routingNumber: '021000021',
-    accountNumber: '****7890',
-    address: '123 Main Street, New York, NY 10001, United States',
-  },
-  {
-    id: '3',
-    name: 'John Smith',
-    email: 'jsmith@acme.com',
-    phone: '+1(555) 123-4567',
-    type: 'Domestic',
-    details: 'Chase Bank - USD',
-    lastUsed: 'Dec 28, 2025 14:32 UTC',
-    added: 'Dec 28, 2025 | 14:32 UTC',
-    bankName: 'Chase Bank',
-    currency: 'USD',
-    routingNumber: '021000021',
-    accountNumber: '****7890',
-    address: '123 Main Street, New York, NY 10001, United States',
-  },
-  {
-    id: '4',
-    name: 'Lisa Rodriguez',
-    email: 'lisa.rodriguez@acme.com',
-    phone: '+1(555) 123-4567',
-    type: 'Crypto',
-    details: 'USDC - ERC-20',
-    lastUsed: 'Dec 28, 2025 14:32 UTC',
-    added: 'Dec 28, 2025 | 14:32 UTC',
-  },
-  {
-    id: '5',
-    name: 'Marie Dubois',
-    email: 'marie@acme.com',
-    phone: '+1(555) 123-4567',
-    type: 'International',
-    details: 'BNP Paribas - EUR',
-    lastUsed: 'Dec 28, 2025 14:32 UTC',
-    added: 'Dec 28, 2025 | 14:32 UTC',
-    bankName: 'BNP Paribas',
-    currency: 'EUR',
-    routingNumber: '021000021',
-    accountNumber: '****7890',
-    address: '45 Baker Street, London, England NW1 6XE, United Kingdom',
-  },
-  {
-    id: '6',
-    name: 'Sarah Johnson',
-    email: 'sarah329@acme.com',
-    phone: '+1(555) 123-4567',
-    type: 'Domestic',
-    details: 'Bank of America - USD',
-    lastUsed: 'Dec 28, 2025 14:32 UTC',
-    added: 'Dec 28, 2025 | 14:32 UTC',
-    bankName: 'Bank of America',
-    currency: 'USD',
-    routingNumber: '021000021',
-    accountNumber: '****7890',
-    address: '456 Oak Avenue, Los Angeles, CA 90001, United States',
-  },
-];
+import clientApi from '@/lib/api/client';
 
 export default function RecipientsPage() {
   const [activeTab, setActiveTab] = useState('all');
+  const [recipients, setRecipients] = useState<Recipient[]>([]); // Initialize empty
+  const [loading, setLoading] = useState(true);
   const [selectedRecipient, setSelectedRecipient] = useState<Recipient | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [showActionsMenu, setShowActionsMenu] = useState<string | null>(null);
   const toast = useToast();
+
+  useEffect(() => {
+    fetchRecipients();
+  }, []);
+
+  const fetchRecipients = async () => {
+    try {
+      setLoading(true);
+      const data = await clientApi.payouts.getRecipients();
+      // Map API response to UI model if needed, or update backend to match UI
+      // For now assuming direct match, or mapping lightly
+      setRecipients(data.map((r: any) => ({
+        id: r.id,
+        name: r.name || r.recipientName,
+        email: r.email || '',
+        phone: r.phone || '',
+        type: r.type || 'Domestic',
+        details: r.details || `${r.bankName} - ${r.currency}`,
+        lastUsed: r.lastUsed || 'Never',
+        added: r.added || new Date().toLocaleDateString(),
+        bankName: r.bankName,
+        currency: r.currency,
+        routingNumber: r.routingNumber,
+        accountNumber: r.accountNumber,
+        address: r.address
+      })));
+    } catch (error) {
+      console.error('Failed to load recipients', error);
+      toast.error('Failed to load recipients');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const tabs = [
     { id: 'all', label: 'All Recipients', icon: <Users className='h-4 w-4' /> },
@@ -137,8 +90,8 @@ export default function RecipientsPage() {
 
   const filteredRecipients =
     activeTab === 'all'
-      ? mockRecipients
-      : mockRecipients.filter(r => r.type.toLowerCase() === activeTab);
+      ? recipients
+      : recipients.filter(r => r.type.toLowerCase() === activeTab);
 
   const getTypeColor = (type: string) => {
     switch (type) {
@@ -238,9 +191,17 @@ export default function RecipientsPage() {
     },
   ];
 
-  const handleAddRecipient = (data: any) => {
-    console.log('Adding recipient:', data);
-    toast.success('New Domestic Recipient Successfully Added!');
+  const handleAddRecipient = async (data: any) => {
+    try {
+      console.log('Adding recipient:', data);
+      await clientApi.payouts.saveRecipient(data);
+      toast.success('New Recipient Successfully Added!');
+      setIsAddModalOpen(false);
+      fetchRecipients(); // Refresh list
+    } catch (error) {
+      console.error('Failed to add recipient', error);
+      toast.error('Failed to add recipient');
+    }
   };
 
   // Close dropdown when clicking outside

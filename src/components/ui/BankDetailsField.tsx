@@ -1,7 +1,7 @@
 'use client';
 
+import { Check, Copy } from 'lucide-react';
 import { useState } from 'react';
-import { Copy, Check } from 'lucide-react';
 
 interface BankDetailsFieldProps {
   label: string;
@@ -9,6 +9,7 @@ interface BankDetailsFieldProps {
   className?: string;
   labelClassName?: string;
   valueClassName?: string;
+  copyable?: boolean;
 }
 
 export function BankDetailsField({
@@ -17,6 +18,7 @@ export function BankDetailsField({
   className = '',
   labelClassName = '',
   valueClassName = '',
+  copyable = true,
 }: BankDetailsFieldProps) {
   const [copied, setCopied] = useState(false);
 
@@ -40,23 +42,25 @@ export function BankDetailsField({
           <span className={valueClassName || 'text-sm font-normal tracking-widest text-gray-800'}>
             {value}
           </span>
-          <button
-            onClick={handleCopy}
-            className='z-10 flex cursor-pointer items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2 py-[9px] text-xs text-gray-500 transition-colors hover:text-gray-700'
-            type='button'
-          >
-            {copied ? (
-              <>
-                <Check className='h-4 w-4 text-green-600' />
-                <span className='text-green-600'>Copied</span>
-              </>
-            ) : (
-              <>
-                <Copy className='h-4 w-4' />
-                <span>Copy</span>
-              </>
-            )}
-          </button>
+          {copyable && (
+            <button
+              onClick={handleCopy}
+              className='z-10 flex cursor-pointer items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2 py-[9px] text-xs text-gray-500 transition-colors hover:text-gray-700'
+              type='button'
+            >
+              {copied ? (
+                <>
+                  <Check className='h-4 w-4 text-green-600' />
+                  <span className='text-green-600'>Copied</span>
+                </>
+              ) : (
+                <>
+                  <Copy className='h-4 w-4' />
+                  <span>Copy</span>
+                </>
+              )}
+            </button>
+          )}
         </div>
       </div>
     </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import ReceivedIcon from '@/components/icons/ReceivedIcon';
-import SendIcon from '@/components/icons/SendIcon';
+import SendArrowIcon from '@/components/icons/SendArrowIcon';
 import { DataTable, getStatusIcon, type TableColumn } from '@/components/ui/DataTable';
 import { Filter, Search } from 'lucide-react';
 
@@ -25,7 +25,7 @@ interface CryptoTransactionsTableProps {
 
 const getDirectionIcon = (direction: string) => {
   if (direction === 'Sent') {
-    return <SendIcon />;
+    return <SendArrowIcon />;
   }
   return <ReceivedIcon />;
 };

@@ -7,16 +7,13 @@ import DepositMoney from '@/components/icons/DepositMoney';
 import KycApplication from '@/components/icons/KycApplication';
 import KycReviewIcon from '@/components/icons/kycReviewIcon';
 import SendMoney from '@/components/icons/SendMoney';
-import SwapIcon from '@/components/icons/SwapIcon';
 import SwapLineIcon from '@/components/icons/SwapLineIcon';
 import TransacionIcon from '@/components/icons/TransacionIcon';
-import WarningIcon from '@/components/icons/WarningIcon';
 import {
-  AlertCircle,
   ArrowDownLeft,
   ArrowUpRight,
   FileCheck,
-  TrendingUp,
+  TrendingUp
 } from 'lucide-react';
 
 import { useEffect, useState } from 'react';
@@ -52,6 +49,8 @@ export default function AdminDashboard() {
     completedTransactions: 0,
   });
   const [recentKYC, setRecentKYC] = useState<RecentKYC[]>([]);
+  const [activities, setActivities] = useState<any[]>([]);
+  const [alerts, setAlerts] = useState<any[]>([]); // New state for dynamic alerts
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -66,6 +65,8 @@ export default function AdminDashboard() {
         const data = await response.json();
         setStats(data.stats);
         setRecentKYC(data.recentKYC || []);
+        setActivities(data.activities || []);
+        setAlerts(data.alerts || []); // Set alerts
       }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -200,61 +201,33 @@ export default function AdminDashboard() {
         <div className='rounded-lg border border-gray-200 bg-white py-4 px-6'>
           <h2 className='mb-5 text-lg font-normal text-gray-700'>Recent Activity</h2>
           <div className='space-y-6'>
-            {[
-              {
-                icon: ArrowUpRight,
-                color: 'text-green-600',
-                bg: 'bg-green-100',
-                title: 'KYC Approved',
-                subtitle: 'Acme Corp Inc.',
-                time: '2 minutes ago',
-              },
-              {
-                icon: TrendingUp,
-                color: 'text-blue-600',
-                bg: 'bg-blue-100',
-                title: 'Swap Executed',
-                subtitle: 'Acme Corp Inc.',
-                time: '5 minutes ago',
-              },
-              {
-                icon: AlertCircle,
-                color: 'text-red-600',
-                bg: 'bg-red-100',
-                title: 'KYC Rejected',
-                subtitle: 'Acme Corp Inc.',
-                time: '2 hours ago',
-              },
-              {
-                icon: ArrowUpRight,
-                color: 'text-blue-600',
-                bg: 'bg-blue-100',
-                title: 'Payout Sent',
-                subtitle: 'Acme Corp Inc.',
-                time: '3 hours ago',
-              },
-              {
-                icon: ArrowDownLeft,
-                color: 'text-green-600',
-                bg: 'bg-green-100',
-                title: 'Deposit Received',
-                subtitle: 'Acme Corp Inc.',
-                time: '3 hours ago',
-              },
-            ].map((activity, index) => (
-              <div key={index} className='flex items-center justify-between'>
-                <div className='flex items-center gap-3'>
-                  <div className={`rounded-lg p-2 ${activity.bg}`}>
-                    <activity.icon className={`h-5 w-5 ${activity.color}`} />
+            {activities.length === 0 ? (
+                 <p className="text-gray-500 text-sm">No recent activity.</p>
+            ) : (
+                activities.map((activity, index) => (
+                  <div key={index} className='flex items-center justify-between'>
+                    <div className='flex items-center gap-3'>
+                      <div className={`rounded-lg p-2 ${activity.bg}`}>
+                        {/* Dynamic Icon based on type - simplified for now */}
+                        {activity.iconType === 'kyc' ? (
+                            <ArrowUpRight className={`h-5 w-5 ${activity.color}`} />
+                        ) : activity.iconType === 'deposit' ? (
+                            <ArrowDownLeft className={`h-5 w-5 ${activity.color}`} />
+                        ) : (
+                            <TrendingUp className={`h-5 w-5 ${activity.color}`} />
+                        )}
+                      </div>
+                      <div>
+                        <p className='text-sm font-medium text-gray-700'>{activity.title}</p>
+                        <p className='text-xs text-gray-500'>{activity.subtitle}</p>
+                      </div>
+                    </div>
+                    <span className='text-xs text-gray-600'>
+                        {new Date(activity.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
                   </div>
-                  <div>
-                    <p className='text-sm font-medium text-gray-700'>{activity.title}</p>
-                    <p className='text-xs text-gray-500'>{activity.subtitle}</p>
-                  </div>
-                </div>
-                <span className='text-xs text-gray-600'>{activity.time}</span>
-              </div>
-            ))}
+                ))
+            )}
           </div>
         </div>
 
@@ -262,55 +235,32 @@ export default function AdminDashboard() {
         <div className='rounded-lg border border-gray-200 bg-white py-4 px-6'>
           <h2 className='mb-5 text-lg font-normal text-gray-700'>Alert & Notification</h2>
           <div className='space-y-6'>
-            {[
-              {
-                icon: KycReviewIcon,
-                bg: 'bg-orange-100',
-                color: 'text-orange-600',
-                text: 'KYC Pending (3)',
-                action: 'Review KYC',
-              },
-              {
-                icon: DepositMoney,
-                bg: 'bg-green-100',
-                color: 'text-green-600',
-                text: 'Deposit waiting (6)',
-                action: 'Mark Received',
-              },
-              {
-                icon: WarningIcon,
-                bg: 'bg-red-100',
-                color: 'text-red-500',
-                text: 'High-risk KYC flagged by AML (1)',
-                action: 'Open KYC',
-              },
-              {
-                icon: SwapIcon,
-                bg: 'bg-red-100',
-                color: 'text-red-500',
-                text: 'Swap failed (2)',
-                action: 'Retry Swap',
-              },
-              {
-                icon: DepositMoney,
-                bg: 'bg-green-100',
-                color: 'text-green-600',
-                text: 'Deposit Received (124)',
-                action: 'View Deposit',
-              },
-            ].map((alert, index) => (
-              <div key={index} className='flex items-center justify-between'>
-                <div className='flex items-center gap-3'>
-                  <div className={`rounded-lg p-2 ${alert.bg}`}>
-                    <alert.icon className={`h-5 w-5 ${alert.color}`} />
+            {alerts.length === 0 ? (
+                 <p className="text-gray-500 text-sm">No new alerts.</p>
+            ) : (
+                alerts.map((alert, index) => (
+                  <div key={index} className='flex items-center justify-between'>
+                    <div className='flex items-center gap-3'>
+                      <div className={`rounded-lg p-2 ${
+                          alert.type === 'kyc_pending' ? 'bg-orange-100' :
+                          alert.type === 'tx_pending' ? 'bg-blue-100' : 'bg-gray-100'
+                      }`}>
+                         {alert.type === 'kyc_pending' ? (
+                            <KycReviewIcon className={`h-5 w-5 text-orange-600`} />
+                         ) : alert.type === 'tx_pending' ? (
+                            <DepositMoney className={`h-5 w-5 text-blue-600`} />
+                         ) : (
+                            <FileCheck className={`h-5 w-5 text-gray-600`} />
+                         )}
+                      </div>
+                      <span className='text-sm text-gray-700'>{alert.text}</span>
+                    </div>
+                    <a href={alert.link || '#'} className='flex w-[120px] items-center justify-center rounded border border-gray-200 px-3 py-1 text-xs font-normal text-gray-700 hover:bg-gray-50'>
+                      {alert.action}
+                    </a>
                   </div>
-                  <span className='text-sm text-gray-700'>{alert.text}</span>
-                </div>
-                <button className='flex w-[120px] items-center justify-center rounded border border-gray-200 px-3 py-1 text-xs font-normal text-gray-700 hover:bg-gray-50'>
-                  {alert.action}
-                </button>
-              </div>
-            ))}
+                ))
+            )}
           </div>
         </div>
 

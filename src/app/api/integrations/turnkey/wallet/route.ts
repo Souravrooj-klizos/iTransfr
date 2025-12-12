@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
       ? `${userName}-${userId.slice(0, 8)}`
       : `wallet-${userId.slice(0, 8)}`;
 
-    const wallet = await createWallet(walletName, userId);
+    const wallet = await createWallet({ walletName, userId });
 
     // Save to our database
     if (supabaseAdmin) {

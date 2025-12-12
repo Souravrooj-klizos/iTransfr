@@ -1,19 +1,33 @@
-// =====================================================
-// INFINITUS API CLIENT
-// =====================================================
-// Infinitus: Global payout provider
-// Handles bank payouts to 150+ countries in 60+ currencies
-// Supported: Mexico (SPEI), Colombia (ACH/PSE), India (IMPS/NEFT/UPI), Brazil (PIX/TED)
-// =====================================================
+/**
+ * Infinitus API Client
+ *
+ * Infinitus: Global payout provider
+ * Handles bank payouts to 150+ countries in 60+ currencies
+ * Supported: Mexico (SPEI), Colombia (ACH/PSE), India (IMPS/NEFT/UPI), Brazil (PIX/TED)
+ *
+ * Refactored to use Axios with Bearer token authentication.
+ */
 
-const INFINITUS_API_KEY = process.env.INFINITUS_API_KEY;
-const INFINITUS_BASE_URL = process.env.INFINITUS_BASE_URL;
+import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
+
+// =====================================================
+// CONFIGURATION
+// =====================================================
 
 function getBaseUrl(): string {
-  if (!INFINITUS_BASE_URL) {
-    throw new Error('INFINITUS_BASE_URL not configured in environment variables');
+  const url = process.env.INFINITUS_BASE_URL;
+  if (!url) {
+    throw new Error('INFINITUS_BASE_URL environment variable is not set');
   }
-  return INFINITUS_BASE_URL;
+  return url;
+}
+
+function getApiKey(): string {
+  const apiKey = process.env.INFINITUS_API_KEY;
+  if (!apiKey) {
+    throw new Error('INFINITUS_API_KEY environment variable is not set');
+  }
+  return apiKey;
 }
 
 // =====================================================
@@ -28,8 +42,8 @@ export interface InfinitusRecipient {
   bankCode?: string;
   accountNumber: string;
   accountType?: 'checking' | 'savings';
-  country: string;  // ISO 2-letter code (MX, CO, IN)
-  currency: string; // ISO currency code (MXN, COP, INR)
+  country: string;
+  currency: string;
   address?: {
     street?: string;
     city?: string;
@@ -60,7 +74,7 @@ export interface InfinitusPayoutRequest {
   metadata?: Record<string, string>;
 }
 
-export interface InfinitusApiResponse<T> {
+interface InfinitusApiResponse<T> {
   success: boolean;
   data?: T;
   error?: {
@@ -70,26 +84,53 @@ export interface InfinitusApiResponse<T> {
 }
 
 // =====================================================
-// AUTHENTICATION
+// AXIOS CLIENT WITH BEARER AUTHENTICATION
 // =====================================================
 
-function getApiKey(): string {
-  if (!INFINITUS_API_KEY) {
-    throw new Error('INFINITUS_API_KEY not configured in environment variables');
-  }
-  return INFINITUS_API_KEY;
+/**
+ * Create Infinitus Axios instance
+ */
+function createInfinitusClient(): AxiosInstance {
+  const client = axios.create({
+    baseURL: getBaseUrl(),
+    timeout: 30000,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  // Add Bearer token authentication interceptor
+  client.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+    config.headers.Authorization = `Bearer ${getApiKey()}`;
+    console.log(`[Infinitus] ${config.method?.toUpperCase()} ${config.url}`);
+    return config;
+  });
+
+  // Response interceptor
+  client.interceptors.response.use(
+    (response) => {
+      console.log(`[Infinitus] Response ${response.status}:`, response.config.url);
+      return response;
+    },
+    (error: AxiosError) => {
+      const status = error.response?.status;
+      const data = error.response?.data as any;
+      console.error(`[Infinitus] Error ${status}:`, data?.error?.message || error.message);
+      throw error;
+    }
+  );
+
+  return client;
 }
 
-/**
- * Get authentication headers for Infinitus API
- * Using Bearer token authentication (common pattern)
- */
-function getAuthHeaders(): Record<string, string> {
-  return {
-    'Authorization': `Bearer ${getApiKey()}`,
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-  };
+// Lazy-initialized client
+let infinitusClient: AxiosInstance | null = null;
+
+function getClient(): AxiosInstance {
+  if (!infinitusClient) {
+    infinitusClient = createInfinitusClient();
+  }
+  return infinitusClient;
 }
 
 // =====================================================
@@ -99,123 +140,98 @@ function getAuthHeaders(): Record<string, string> {
 /**
  * Create a new payout
  */
-export async function createPayout(
-  request: InfinitusPayoutRequest
-): Promise<InfinitusPayout> {
-  const path = '/api/v1/payouts';
+export async function createPayout(request: InfinitusPayoutRequest): Promise<InfinitusPayout> {
+  console.log(`[Infinitus] Creating payout: ${request.amount} ${request.currency} to ${request.recipient.name}`);
 
-  console.log('[Infinitus] Creating payout:', {
-    amount: request.amount,
-    currency: request.currency,
-    recipientCountry: request.recipient.country,
-  });
-
-  const response = await fetch(`${getBaseUrl()}${path}`, {
-    method: 'POST',
-    headers: getAuthHeaders(),
-    body: JSON.stringify({
-      amount: request.amount,
-      currency: request.currency,
-      recipient: {
-        name: request.recipient.name,
-        email: request.recipient.email,
-        phone: request.recipient.phone,
-        bank_name: request.recipient.bankName,
-        bank_code: request.recipient.bankCode,
-        account_number: request.recipient.accountNumber,
-        account_type: request.recipient.accountType || 'checking',
-        country: request.recipient.country,
-        address: request.recipient.address,
-      },
-      reference: request.reference,
-      description: request.description,
-      metadata: request.metadata,
-    }),
-  });
-
-  const data = await response.json();
-
-  if (!response.ok || data.error) {
-    console.error('[Infinitus] Payout error:', data);
-    throw new Error(data.error?.message || `HTTP ${response.status}: Failed to create payout`);
+  // Validate recipient data first
+  const validation = validateRecipient(request.recipient);
+  if (!validation.valid) {
+    throw new Error(`Invalid recipient data: ${validation.errors.join(', ')}`);
   }
 
-  console.log('[Infinitus] Payout created:', data.data?.id || data.id);
+  const response = await getClient().post<InfinitusApiResponse<any>>('/payouts', {
+    amount: request.amount,
+    currency: request.currency,
+    recipient: {
+      full_name: request.recipient.name,
+      email: request.recipient.email,
+      phone: request.recipient.phone,
+      bank_name: request.recipient.bankName,
+      bank_code: request.recipient.bankCode,
+      account_number: request.recipient.accountNumber,
+      account_type: request.recipient.accountType,
+      country: request.recipient.country,
+      currency: request.recipient.currency,
+      address: request.recipient.address,
+    },
+    reference: request.reference,
+    description: request.description,
+    metadata: request.metadata,
+  });
 
-  return mapPayoutResponse(data.data || data);
+  if (!response.data.success && response.data.error) {
+    throw new Error(response.data.error.message);
+  }
+
+  const payout = mapPayoutResponse(response.data.data || response.data);
+  console.log(`[Infinitus] ✅ Payout created: ${payout.id}`);
+  return payout;
 }
 
 /**
  * Get payout status
  */
 export async function getPayoutStatus(payoutId: string): Promise<InfinitusPayout> {
-  const path = `/api/v1/payouts/${payoutId}`;
+  console.log(`[Infinitus] Getting payout status: ${payoutId}`);
 
-  const response = await fetch(`${getBaseUrl()}${path}`, {
-    method: 'GET',
-    headers: getAuthHeaders(),
-  });
+  const response = await getClient().get<InfinitusApiResponse<any>>(`/payouts/${payoutId}`);
 
-  const data = await response.json();
-
-  if (!response.ok || data.error) {
-    console.error('[Infinitus] Get payout error:', data);
-    throw new Error(data.error?.message || 'Failed to get payout status');
+  if (!response.data.success && response.data.error) {
+    throw new Error(response.data.error.message);
   }
 
-  return mapPayoutResponse(data.data || data);
+  return mapPayoutResponse(response.data.data || response.data);
 }
 
 /**
  * List payouts
  */
-export async function listPayouts(
-  options?: {
-    status?: string;
-    limit?: number;
-    offset?: number;
-  }
-): Promise<InfinitusPayout[]> {
-  const params = new URLSearchParams();
-  if (options?.status) params.append('status', options.status);
-  if (options?.limit) params.append('limit', options.limit.toString());
-  if (options?.offset) params.append('offset', options.offset.toString());
+export async function listPayouts(options?: {
+  status?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<InfinitusPayout[]> {
+  console.log('[Infinitus] Listing payouts');
 
-  const path = `/api/v1/payouts?${params.toString()}`;
+  const params: Record<string, string> = {};
+  if (options?.status) params.status = options.status;
+  if (options?.limit) params.limit = options.limit.toString();
+  if (options?.offset) params.offset = options.offset.toString();
 
-  const response = await fetch(`${getBaseUrl()}${path}`, {
-    method: 'GET',
-    headers: getAuthHeaders(),
-  });
+  const response = await getClient().get<InfinitusApiResponse<any[]>>('/payouts', { params });
 
-  const data = await response.json();
-
-  if (!response.ok || data.error) {
-    throw new Error(data.error?.message || 'Failed to list payouts');
+  if (!response.data.success && response.data.error) {
+    throw new Error(response.data.error.message);
   }
 
-  const payouts = data.data || data.payouts || data;
-  return Array.isArray(payouts) ? payouts.map(mapPayoutResponse) : [];
+  const payouts = response.data.data || [];
+  return payouts.map(mapPayoutResponse);
 }
 
 /**
  * Cancel a payout (if still pending)
  */
 export async function cancelPayout(payoutId: string): Promise<InfinitusPayout> {
-  const path = `/api/v1/payouts/${payoutId}/cancel`;
+  console.log(`[Infinitus] Cancelling payout: ${payoutId}`);
 
-  const response = await fetch(`${getBaseUrl()}${path}`, {
-    method: 'POST',
-    headers: getAuthHeaders(),
-  });
+  const response = await getClient().post<InfinitusApiResponse<any>>(`/payouts/${payoutId}/cancel`);
 
-  const data = await response.json();
-
-  if (!response.ok || data.error) {
-    throw new Error(data.error?.message || 'Failed to cancel payout');
+  if (!response.data.success && response.data.error) {
+    throw new Error(response.data.error.message);
   }
 
-  return mapPayoutResponse(data.data || data);
+  console.log(`[Infinitus] ✅ Payout cancelled: ${payoutId}`);
+  return mapPayoutResponse(response.data.data || response.data);
 }
 
 /**
@@ -226,26 +242,15 @@ export async function getSupportedCountries(): Promise<Array<{
   currencies: string[];
   paymentMethods: string[];
 }>> {
-  const path = '/api/v1/countries';
+  console.log('[Infinitus] Getting supported countries');
 
-  try {
-    const response = await fetch(`${getBaseUrl()}${path}`, {
-      method: 'GET',
-      headers: getAuthHeaders(),
-    });
+  const response = await getClient().get<InfinitusApiResponse<any[]>>('/supported-countries');
 
-    const data = await response.json();
-    return data.data || data.countries || [];
-  } catch (error) {
-    console.error('[Infinitus] Get countries error:', error);
-    // Return common supported countries as fallback
-    return [
-      { country: 'MX', currencies: ['MXN'], paymentMethods: ['SPEI', 'WIRE'] },
-      { country: 'CO', currencies: ['COP'], paymentMethods: ['ACH', 'PSE'] },
-      { country: 'IN', currencies: ['INR'], paymentMethods: ['IMPS', 'NEFT', 'UPI'] },
-      { country: 'BR', currencies: ['BRL'], paymentMethods: ['PIX', 'TED'] },
-    ];
+  if (!response.data.success && response.data.error) {
+    throw new Error(response.data.error.message);
   }
+
+  return response.data.data || [];
 }
 
 /**
@@ -261,36 +266,29 @@ export async function getPayoutRate(
   toAmount: number;
   fee: number;
 }> {
-  const path = '/api/v1/rates';
+  console.log(`[Infinitus] Getting rate: ${fromCurrency} -> ${toCurrency}`);
 
-  try {
-    const response = await fetch(`${getBaseUrl()}${path}`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify({
-        from_currency: fromCurrency,
-        to_currency: toCurrency,
-        amount: amount,
-      }),
-    });
+  const response = await getClient().post<InfinitusApiResponse<any>>('/rates', {
+    from_currency: fromCurrency,
+    to_currency: toCurrency,
+    amount,
+  });
 
-    const data = await response.json();
-
-    return {
-      rate: data.rate || data.exchange_rate,
-      fromAmount: amount,
-      toAmount: data.converted_amount || amount * parseFloat(data.rate || '1'),
-      fee: data.fee || 0,
-    };
-  } catch (error) {
-    console.error('[Infinitus] Get rate error:', error);
-    throw error;
+  if (!response.data.success && response.data.error) {
+    throw new Error(response.data.error.message);
   }
+
+  const data = response.data.data || response.data;
+  return {
+    rate: data.rate || data.exchange_rate,
+    fromAmount: data.from_amount || amount,
+    toAmount: data.to_amount || 0,
+    fee: data.fee || 0,
+  };
 }
 
 /**
  * Test API connection
- * Uses the configured INFINITUS_BASE_URL from environment variables
  */
 export async function testConnection(): Promise<{
   connected: boolean;
@@ -299,51 +297,27 @@ export async function testConnection(): Promise<{
   error?: string;
 }> {
   try {
-    const baseUrl = getBaseUrl();
-    const apiKey = getApiKey();
-
     console.log('[Infinitus] Testing connection...');
-    console.log('[Infinitus] API URL:', baseUrl);
-    console.log('[Infinitus] API Key configured:', !!apiKey);
+    console.log('[Infinitus] Base URL:', getBaseUrl());
+    console.log('[Infinitus] API Key (first 8 chars):', getApiKey().substring(0, 8) + '...');
 
-    // Try health endpoint first
-    const healthResponse = await fetch(`${baseUrl}/health`, {
-      method: 'GET',
-      headers: getAuthHeaders(),
-    });
+    // Try to get supported countries
+    await getSupportedCountries();
 
-    if (healthResponse.ok) {
-      console.log('[Infinitus] ✅ Connection successful (health endpoint)');
-      return {
-        connected: true,
-        environment: baseUrl.includes('sandbox') ? 'sandbox' : 'production',
-        baseUrl,
-      };
-    }
+    const isSandbox = getBaseUrl().includes('sandbox');
+    console.log('[Infinitus] ✅ Connection successful');
 
-    // Try account endpoint
-    const accountResponse = await fetch(`${baseUrl}/account`, {
-      method: 'GET',
-      headers: getAuthHeaders(),
-    });
-
-    if (accountResponse.ok) {
-      console.log('[Infinitus] ✅ Connection successful (account endpoint)');
-      return {
-        connected: true,
-        environment: baseUrl.includes('sandbox') ? 'sandbox' : 'production',
-        baseUrl,
-      };
-    }
-
-    throw new Error(`API returned status ${healthResponse.status}`);
-
-  } catch (error: any) {
-    console.error('[Infinitus] ❌ Connection failed:', error.message);
     return {
-      connected: false,
-      error: error.message,
+      connected: true,
+      environment: isSandbox ? 'sandbox' : 'production',
+      baseUrl: getBaseUrl(),
     };
+  } catch (error: any) {
+    const message = axios.isAxiosError(error)
+      ? error.response?.data?.error?.message || error.message
+      : error.message;
+    console.error('[Infinitus] ❌ Connection failed:', message);
+    return { connected: false, error: message };
   }
 }
 
@@ -357,25 +331,25 @@ export async function testConnection(): Promise<{
 function mapPayoutResponse(data: any): InfinitusPayout {
   return {
     id: data.id || data.payout_id,
-    status: data.status?.toUpperCase() || 'PENDING',
-    amount: parseFloat(data.amount),
+    status: data.status || 'PENDING',
+    amount: parseFloat(data.amount) || 0,
     currency: data.currency,
     recipient: {
-      name: data.recipient?.name || data.recipient_name,
+      name: data.recipient?.full_name || data.recipient?.name,
       email: data.recipient?.email,
       phone: data.recipient?.phone,
-      bankName: data.recipient?.bank_name || data.bank_name,
-      bankCode: data.recipient?.bank_code || data.bank_code,
-      accountNumber: data.recipient?.account_number || data.account_number,
-      accountType: data.recipient?.account_type,
-      country: data.recipient?.country || data.country,
-      currency: data.currency,
+      bankName: data.recipient?.bank_name || data.recipient?.bankName,
+      bankCode: data.recipient?.bank_code || data.recipient?.bankCode,
+      accountNumber: data.recipient?.account_number || data.recipient?.accountNumber,
+      accountType: data.recipient?.account_type || data.recipient?.accountType,
+      country: data.recipient?.country,
+      currency: data.recipient?.currency,
     },
     reference: data.reference,
-    trackingNumber: data.tracking_number,
+    trackingNumber: data.tracking_number || data.trackingNumber,
     createdAt: data.created_at || data.createdAt || new Date().toISOString(),
     completedAt: data.completed_at || data.completedAt,
-    errorMessage: data.error_message || data.failure_reason,
+    errorMessage: data.error_message || data.errorMessage,
   };
 }
 
@@ -388,15 +362,24 @@ export function validateRecipient(recipient: InfinitusRecipient): {
 } {
   const errors: string[] = [];
 
-  if (!recipient.name) errors.push('Recipient name is required');
-  if (!recipient.bankName) errors.push('Bank name is required');
-  if (!recipient.accountNumber) errors.push('Account number is required');
-  if (!recipient.country) errors.push('Country is required');
-  if (!recipient.currency) errors.push('Currency is required');
+  if (!recipient.name || recipient.name.trim().length < 2) {
+    errors.push('Recipient name is required (min 2 characters)');
+  }
 
-  // Country-specific validation
-  if (recipient.country === 'MX' && !recipient.bankCode) {
-    errors.push('CLABE or bank code is required for Mexico');
+  if (!recipient.bankName || recipient.bankName.trim().length < 2) {
+    errors.push('Bank name is required');
+  }
+
+  if (!recipient.accountNumber || recipient.accountNumber.trim().length < 4) {
+    errors.push('Account number is required (min 4 characters)');
+  }
+
+  if (!recipient.country || recipient.country.length !== 2) {
+    errors.push('Country code is required (2-letter ISO code)');
+  }
+
+  if (!recipient.currency || recipient.currency.length !== 3) {
+    errors.push('Currency code is required (3-letter ISO code)');
   }
 
   return {
@@ -411,6 +394,8 @@ export function validateRecipient(recipient: InfinitusRecipient): {
 export function formatPayoutAmount(amount: number, currency: string): string {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: currency,
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(amount);
 }

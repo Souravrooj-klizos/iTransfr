@@ -348,12 +348,12 @@ export default function SignupPage() {
         )}
 
         {/* Google OAuth Option - Show on first step only */}
-        {step === 1 && (
+        {/* {step === 1 && (
           <>
             <OAuthButton onClick={handleGoogleSignup} />
             <Divider />
           </>
-        )}
+        )} */}
 
         {component}
       </AuthCard>

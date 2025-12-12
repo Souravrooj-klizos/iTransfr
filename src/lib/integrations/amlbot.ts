@@ -8,16 +8,18 @@
  * - Creating applicants for KYC verification
  * - Creating and managing verifications
  * - Fetching verification status and results
+ *
+ * Refactored to use Axios with proper error handling.
  */
+
+import axios, { AxiosError, AxiosInstance } from 'axios';
 
 // =====================================================
 // TYPES & INTERFACES
 // =====================================================
 
 export type ApplicantType = 'PERSON' | 'COMPANY';
-
 export type VerificationStatus = 'pending' | 'in_progress' | 'completed' | 'failed' | 'expired';
-
 export type VerificationResult = 'approved' | 'declined' | 'review_needed';
 
 export interface AMLBotApplicant {
@@ -77,16 +79,6 @@ export interface AMLBotWebhookPayload {
   timestamp: string;
 }
 
-export interface AMLBotError {
-  error: string;
-  message: string;
-  status_code: number;
-}
-
-// =====================================================
-// FORMS API TYPES (AMLBot uses Forms for KYC)
-// =====================================================
-
 export interface AMLBotForm {
   id: string;
   form_id: string;
@@ -112,13 +104,10 @@ export interface CreateFormUrlRequest {
 }
 
 // =====================================================
-// CLIENT CONFIGURATION
+// AXIOS CLIENT CONFIGURATION
 // =====================================================
 
 const AMLBOT_BASE_URL = 'https://kyc-api.amlbot.com';
-
-// TEMPORARY: Hardcoded API key (move to env variable in production)
-// const AMLBOT_API_KEY = '841037a01227c24d100b78e572faa55f3a83';
 
 function getApiKey(): string {
   const apiKey = process.env.AML_BOT_API_KEY;
@@ -126,44 +115,52 @@ function getApiKey(): string {
     throw new Error('AML_BOT_API_KEY environment variable is not set');
   }
   return apiKey;
-  // Use hardcoded key for now, fallback to env
-  // return AMLBOT_API_KEY || process.env.AML_BOT_API_KEY || '';
 }
 
-function getHeaders(): HeadersInit {
-  return {
-    Authorization: `Token ${getApiKey()}`,
-    'Content-Type': 'application/json',
-  };
-}
+/**
+ * Create AMLBot Axios instance with auth headers
+ */
+function createAmlBotClient(): AxiosInstance {
+  const client = axios.create({
+    baseURL: AMLBOT_BASE_URL,
+    timeout: 30000,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
 
-// =====================================================
-// API RESPONSE HANDLER
-// =====================================================
+  // Add auth interceptor
+  client.interceptors.request.use((config) => {
+    config.headers.Authorization = `Token ${getApiKey()}`;
+    console.log(`[AMLBot] ${config.method?.toUpperCase()} ${config.url}`);
+    return config;
+  });
 
-async function handleResponse<T>(response: Response): Promise<T> {
-  const contentType = response.headers.get('content-type');
-
-  if (!response.ok) {
-    let errorMessage = `AMLBot API Error: ${response.status} ${response.statusText}`;
-
-    if (contentType?.includes('application/json')) {
-      try {
-        const errorData = await response.json();
-        errorMessage = errorData.message || errorData.error || errorMessage;
-      } catch {
-        // Use default error message
-      }
+  // Add response interceptor for logging
+  client.interceptors.response.use(
+    (response) => {
+      console.log(`[AMLBot] Response ${response.status}:`, response.config.url);
+      return response;
+    },
+    (error: AxiosError) => {
+      const status = error.response?.status;
+      const data = error.response?.data as any;
+      console.error(`[AMLBot] Error ${status}:`, data?.message || error.message);
+      throw error;
     }
+  );
 
-    throw new Error(errorMessage);
+  return client;
+}
+
+// Lazy-initialized client
+let amlBotClient: AxiosInstance | null = null;
+
+function getClient(): AxiosInstance {
+  if (!amlBotClient) {
+    amlBotClient = createAmlBotClient();
   }
-
-  if (contentType?.includes('application/json')) {
-    return response.json();
-  }
-
-  return {} as T;
+  return amlBotClient;
 }
 
 // =====================================================
@@ -172,21 +169,12 @@ async function handleResponse<T>(response: Response): Promise<T> {
 
 /**
  * Create a new applicant in AMLBot
- * Call this before creating a verification
  */
 export async function createApplicant(data: CreateApplicantRequest): Promise<AMLBotApplicant> {
   console.log('[AMLBot] Creating applicant:', data.external_id);
-
-  const response = await fetch(`${AMLBOT_BASE_URL}/applicants`, {
-    method: 'POST',
-    headers: getHeaders(),
-    body: JSON.stringify(data),
-  });
-
-  const result = await handleResponse<AMLBotApplicant>(response);
-  console.log('[AMLBot] Applicant created:', result.id);
-
-  return result;
+  const response = await getClient().post<AMLBotApplicant>('/applicants', data);
+  console.log('[AMLBot] Applicant created:', response.data.id);
+  return response.data;
 }
 
 /**
@@ -194,33 +182,19 @@ export async function createApplicant(data: CreateApplicantRequest): Promise<AML
  */
 export async function getApplicant(applicantId: string): Promise<AMLBotApplicant> {
   console.log('[AMLBot] Fetching applicant:', applicantId);
-
-  const response = await fetch(`${AMLBOT_BASE_URL}/applicants/${applicantId}`, {
-    method: 'GET',
-    headers: getHeaders(),
-  });
-
-  return handleResponse<AMLBotApplicant>(response);
+  const response = await getClient().get<AMLBotApplicant>(`/applicants/${applicantId}`);
+  return response.data;
 }
 
 /**
  * Get an applicant by external ID (your user ID)
  */
-export async function getApplicantByExternalId(
-  externalId: string
-): Promise<AMLBotApplicant | null> {
+export async function getApplicantByExternalId(externalId: string): Promise<AMLBotApplicant | null> {
   console.log('[AMLBot] Searching applicant by external ID:', externalId);
-
-  const response = await fetch(
-    `${AMLBOT_BASE_URL}/applicants?external_id=${encodeURIComponent(externalId)}`,
-    {
-      method: 'GET',
-      headers: getHeaders(),
-    }
+  const response = await getClient().get<{ data: AMLBotApplicant[] }>(
+    `/applicants?external_id=${encodeURIComponent(externalId)}`
   );
-
-  const result = await handleResponse<{ data: AMLBotApplicant[] }>(response);
-  return result.data?.[0] || null;
+  return response.data.data?.[0] || null;
 }
 
 /**
@@ -231,14 +205,8 @@ export async function updateApplicant(
   data: Partial<CreateApplicantRequest>
 ): Promise<AMLBotApplicant> {
   console.log('[AMLBot] Updating applicant:', applicantId);
-
-  const response = await fetch(`${AMLBOT_BASE_URL}/applicants/${applicantId}`, {
-    method: 'PATCH',
-    headers: getHeaders(),
-    body: JSON.stringify(data),
-  });
-
-  return handleResponse<AMLBotApplicant>(response);
+  const response = await getClient().patch<AMLBotApplicant>(`/applicants/${applicantId}`, data);
+  return response.data;
 }
 
 // =====================================================
@@ -249,21 +217,11 @@ export async function updateApplicant(
  * Create a new verification for an applicant
  * Types can include: 'document-verification', 'selfie-verification', 'aml-screening'
  */
-export async function createVerification(
-  data: CreateVerificationRequest
-): Promise<AMLBotVerification> {
+export async function createVerification(data: CreateVerificationRequest): Promise<AMLBotVerification> {
   console.log('[AMLBot] Creating verification for applicant:', data.applicant_id);
-
-  const response = await fetch(`${AMLBOT_BASE_URL}/verifications`, {
-    method: 'POST',
-    headers: getHeaders(),
-    body: JSON.stringify(data),
-  });
-
-  const result = await handleResponse<AMLBotVerification>(response);
-  console.log('[AMLBot] Verification created:', result.id);
-
-  return result;
+  const response = await getClient().post<AMLBotVerification>('/verifications', data);
+  console.log('[AMLBot] Verification created:', response.data.id);
+  return response.data;
 }
 
 /**
@@ -271,30 +229,19 @@ export async function createVerification(
  */
 export async function getVerification(verificationId: string): Promise<AMLBotVerification> {
   console.log('[AMLBot] Fetching verification:', verificationId);
-
-  const response = await fetch(`${AMLBOT_BASE_URL}/verifications/${verificationId}`, {
-    method: 'GET',
-    headers: getHeaders(),
-  });
-
-  return handleResponse<AMLBotVerification>(response);
+  const response = await getClient().get<AMLBotVerification>(`/verifications/${verificationId}`);
+  return response.data;
 }
 
 /**
  * Get all verifications for an applicant
  */
-export async function getVerificationsForApplicant(
-  applicantId: string
-): Promise<AMLBotVerification[]> {
+export async function getVerificationsForApplicant(applicantId: string): Promise<AMLBotVerification[]> {
   console.log('[AMLBot] Fetching verifications for applicant:', applicantId);
-
-  const response = await fetch(`${AMLBOT_BASE_URL}/verifications?applicant_id=${applicantId}`, {
-    method: 'GET',
-    headers: getHeaders(),
-  });
-
-  const result = await handleResponse<{ data: AMLBotVerification[] }>(response);
-  return result.data || [];
+  const response = await getClient().get<{ data: AMLBotVerification[] }>(
+    `/verifications?applicant_id=${applicantId}`
+  );
+  return response.data.data || [];
 }
 
 // =====================================================
@@ -306,36 +253,20 @@ export async function getVerificationsForApplicant(
  */
 export async function getForms(): Promise<AMLBotForm[]> {
   console.log('[AMLBot] Fetching forms list...');
-
-  const response = await fetch(`${AMLBOT_BASE_URL}/forms`, {
-    method: 'GET',
-    headers: getHeaders(),
-  });
-
-  const result = await handleResponse<{ items: AMLBotForm[] }>(response);
-  console.log('[AMLBot] Forms retrieved:', result.items?.length || 0);
-  return result.items || [];
+  const response = await getClient().get<{ items: AMLBotForm[] }>('/forms');
+  console.log('[AMLBot] Forms retrieved:', response.data.items?.length || 0);
+  return response.data.items || [];
 }
 
 /**
  * Get a form URL for a user to complete KYC
  * This is the primary method to start KYC verification
  */
-export async function getFormUrl(
-  formId: string,
-  data: CreateFormUrlRequest
-): Promise<AMLBotFormUrl> {
+export async function getFormUrl(formId: string, data: CreateFormUrlRequest): Promise<AMLBotFormUrl> {
   console.log('[AMLBot] Getting form URL for:', data.external_applicant_id);
-
-  const response = await fetch(`${AMLBOT_BASE_URL}/forms/${formId}/urls`, {
-    method: 'POST',
-    headers: getHeaders(),
-    body: JSON.stringify(data),
-  });
-
-  const result = await handleResponse<AMLBotFormUrl>(response);
-  console.log('[AMLBot] Form URL created, verification ID:', result.verification_id);
-  return result;
+  const response = await getClient().post<AMLBotFormUrl>(`/forms/${formId}/urls`, data);
+  console.log('[AMLBot] Form URL created, verification ID:', response.data.verification_id);
+  return response.data;
 }
 
 // =====================================================
@@ -350,13 +281,11 @@ export function verifyWebhookSignature(payload: string, signature: string): bool
 
   if (!secret) {
     console.warn('[AMLBot] Webhook secret not configured, skipping verification');
-    return true; // Allow if no secret configured
+    return true;
   }
 
-  // AMLBot typically uses HMAC-SHA256 for webhook signatures
   const crypto = require('crypto');
   const expectedSignature = crypto.createHmac('sha256', secret).update(payload).digest('hex');
-
   return signature === expectedSignature;
 }
 
@@ -366,8 +295,6 @@ export function verifyWebhookSignature(payload: string, signature: string): bool
 
 /**
  * Test API connection
- * Use this to verify your API key is working
- * Returns detailed error info for debugging
  */
 export async function testConnection(): Promise<{
   success: boolean;
@@ -379,33 +306,19 @@ export async function testConnection(): Promise<{
     console.log('[AMLBot] Base URL:', AMLBOT_BASE_URL);
     console.log('[AMLBot] API Key (first 8 chars):', getApiKey().substring(0, 8) + '...');
 
-    const response = await fetch(`${AMLBOT_BASE_URL}/forms`, {
-      method: 'GET',
-      headers: getHeaders(),
-    });
+    const response = await getClient().get('/forms');
 
-    console.log('[AMLBot] Response status:', response.status);
-
-    if (response.ok) {
-      console.log('[AMLBot] ✅ Connection successful');
-      return { success: true, details: 'Connection successful', status: response.status };
-    }
-
-    // Get error details
-    let errorDetails = `HTTP ${response.status} ${response.statusText}`;
-    try {
-      const errorBody = await response.text();
-      console.log('[AMLBot] Error response body:', errorBody);
-      errorDetails += ` - ${errorBody}`;
-    } catch {
-      // ignore
-    }
-
-    console.error('[AMLBot] ❌ Connection failed:', errorDetails);
-    return { success: false, details: errorDetails, status: response.status };
+    console.log('[AMLBot] ✅ Connection successful');
+    return { success: true, details: 'Connection successful', status: response.status };
   } catch (error: any) {
-    console.error('[AMLBot] ❌ Connection error:', error);
-    return { success: false, details: error.message || 'Network error' };
+    if (axios.isAxiosError(error)) {
+      const status = error.response?.status;
+      const message = error.response?.data?.message || error.message;
+      console.error('[AMLBot] ❌ Connection failed:', status, message);
+      return { success: false, details: `HTTP ${status}: ${message}`, status };
+    }
+    console.error('[AMLBot] ❌ Connection error:', error.message);
+    return { success: false, details: error.message };
   }
 }
 

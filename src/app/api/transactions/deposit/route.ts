@@ -21,7 +21,7 @@ import { NextRequest, NextResponse } from 'next/server';
  */
 export async function POST(request: NextRequest) {
   try {
-    const { amount, currency } = await request.json();
+    const { amount, currency, chain, source } = await request.json();
 
     if (!amount || amount <= 0) {
       return NextResponse.json({ error: 'Valid amount is required' }, { status: 400 });
@@ -83,10 +83,14 @@ export async function POST(request: NextRequest) {
         userId: user.id,
         type: 'deposit',
         amount,
-        currencyFrom: currency,
+        currency: currency,
         status: 'DEPOSIT_REQUESTED',
-        reference,
-        notes: ['Deposit request created'],
+        referenceNumber: reference,
+        metadata: {
+          source: source || 'crypto',
+          chain: chain || null,
+          notes: ['Deposit request created'],
+        },
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       })
@@ -95,7 +99,11 @@ export async function POST(request: NextRequest) {
 
     if (txError || !transaction) {
       console.error('[Deposit] Failed to create transaction:', txError);
-      return NextResponse.json({ error: 'Failed to create deposit request' }, { status: 500 });
+      return NextResponse.json({
+        error: 'Failed to create deposit request',
+        details: (txError as any).message || txError,
+        hint: (txError as any).details || (txError as any).hint
+      }, { status: 500 });
     }
 
     console.log('[Deposit] Transaction created:', transaction.id);
@@ -112,15 +120,19 @@ export async function POST(request: NextRequest) {
     // 5. Update transaction with AML result
     if (!amlResult.passed) {
       // Block the transaction
+      const currentNotes = transaction.metadata?.notes || [];
       await supabaseAdmin
         .from('transactions')
         .update({
           status: 'FAILED',
-          notes: [
-            ...transaction.notes,
-            `AML Check Failed: ${amlResult.reason}`,
-            `Risk Score: ${amlResult.riskScore}`,
-          ],
+          metadata: {
+            ...transaction.metadata,
+            notes: [
+              ...currentNotes,
+              `AML Check Failed: ${amlResult.reason}`,
+              `Risk Score: ${amlResult.riskScore}`,
+            ]
+          },
           updatedAt: new Date().toISOString(),
         })
         .eq('id', transaction.id);
@@ -140,13 +152,17 @@ export async function POST(request: NextRequest) {
     }
 
     // 6. AML passed - update transaction and return bank details
+    const currentNotes = transaction.metadata?.notes || [];
     await supabaseAdmin
       .from('transactions')
       .update({
-        notes: [
-          ...transaction.notes,
-          `AML Check Passed - Risk Score: ${amlResult.riskScore} (${amlResult.riskLevel})`,
-        ],
+        metadata: {
+          ...transaction.metadata,
+          notes: [
+            ...currentNotes,
+            `AML Check Passed - Risk Score: ${amlResult.riskScore} (${amlResult.riskLevel})`,
+          ]
+        },
         updatedAt: new Date().toISOString(),
       })
       .eq('id', transaction.id);

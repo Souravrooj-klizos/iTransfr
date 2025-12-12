@@ -16,6 +16,7 @@ export async function GET() {
           success: false,
           error: result.error || 'Failed to connect to Turnkey',
           hint: 'Check TURNKEY_ORGANIZATION_ID, TURNKEY_API_PUBLIC_KEY, and TURNKEY_API_PRIVATE_KEY',
+          devModeHint: 'For development, set TURNKEY_DEV_MODE=true in .env to use mock wallets',
         },
         { status: 500 }
       );
@@ -23,10 +24,13 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
-      message: 'Turnkey API connection successful',
+      message: result.devMode
+        ? 'Turnkey DEV MODE - using mock wallets'
+        : 'Turnkey API connection successful',
       data: {
         organizationId: result.organizationId,
         walletCount: result.walletCount,
+        devMode: result.devMode || false,
       },
     });
   } catch (error: any) {
@@ -35,6 +39,7 @@ export async function GET() {
       {
         success: false,
         error: error.message || 'Unknown error',
+        devModeHint: 'For development, set TURNKEY_DEV_MODE=true in .env to use mock wallets',
       },
       { status: 500 }
     );
