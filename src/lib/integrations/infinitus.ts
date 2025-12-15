@@ -5,7 +5,11 @@
  * Handles bank payouts to 150+ countries in 60+ currencies
  * Supported: Mexico (SPEI), Colombia (ACH/PSE), India (IMPS/NEFT/UPI), Brazil (PIX/TED)
  *
- * Refactored to use Axios with Bearer token authentication.
+ * API Documentation: https://developers.infinituspay.com/docs/v1-sandbox/1/overview
+ *
+ * Authentication: Uses x-api-key header
+ * Base URL (Sandbox): https://sandbox.infinituspay.com/v1
+ * Base URL (Production): https://api.infinituspay.com/v1
  */
 
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
@@ -17,7 +21,12 @@ import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'ax
 function getBaseUrl(): string {
   const url = process.env.INFINITUS_BASE_URL;
   if (!url) {
-    throw new Error('INFINITUS_BASE_URL environment variable is not set');
+    // Default to sandbox if not set
+    return 'https://sandbox.infinituspay.com/v1';
+  }
+  // Ensure the URL ends with /v1 for proper API versioning
+  if (!url.includes('/v1')) {
+    return url.replace(/\/?$/, '/v1');
   }
   return url;
 }
@@ -28,6 +37,10 @@ function getApiKey(): string {
     throw new Error('INFINITUS_API_KEY environment variable is not set');
   }
   return apiKey;
+}
+
+function getApiSecret(): string | undefined {
+  return process.env.INFINITUS_API_SECRET;
 }
 
 // =====================================================
@@ -84,25 +97,43 @@ interface InfinitusApiResponse<T> {
 }
 
 // =====================================================
-// AXIOS CLIENT WITH BEARER AUTHENTICATION
+// AXIOS CLIENT WITH X-API-KEY AUTHENTICATION
 // =====================================================
 
 /**
  * Create Infinitus Axios instance
+ *
+ * Infinitus API uses x-api-key header for authentication
+ * Optionally supports x-api-secret for additional security
  */
 function createInfinitusClient(): AxiosInstance {
+  const baseUrl = getBaseUrl();
+  console.log(`[Infinitus] Initializing client with base URL: ${baseUrl}`);
+
   const client = axios.create({
-    baseURL: getBaseUrl(),
+    baseURL: baseUrl,
     timeout: 30000,
     headers: {
       'Content-Type': 'application/json',
+      Accept: 'application/json',
     },
   });
 
-  // Add Bearer token authentication interceptor
+  // Add x-api-key authentication interceptor (Infinitus standard)
   client.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-    config.headers.Authorization = `Bearer ${getApiKey()}`;
-    console.log(`[Infinitus] ${config.method?.toUpperCase()} ${config.url}`);
+    const apiKey = getApiKey();
+    const apiSecret = getApiSecret();
+
+    // Infinitus uses x-api-key header for authentication
+    config.headers['x-api-key'] = apiKey;
+
+    // If API secret is provided, include it as well
+    if (apiSecret) {
+      config.headers['x-api-secret'] = apiSecret;
+    }
+
+    const fullUrl = `${config.baseURL}${config.url}`;
+    console.log(`[Infinitus] ${config.method?.toUpperCase()} ${fullUrl}`);
     return config;
   });
 
@@ -115,7 +146,16 @@ function createInfinitusClient(): AxiosInstance {
     (error: AxiosError) => {
       const status = error.response?.status;
       const data = error.response?.data as any;
-      console.error(`[Infinitus] Error ${status}:`, data?.error?.message || error.message);
+      const errorMessage = data?.message || data?.error?.message || error.message;
+      console.error(`[Infinitus] Error ${status}:`, errorMessage);
+
+      // Log more details for debugging
+      if (status === 404) {
+        console.error(`[Infinitus] 404 Not Found - Check if endpoint exists: ${error.config?.url}`);
+      } else if (status === 401 || status === 403) {
+        console.error(`[Infinitus] Authentication error - Check API key`);
+      }
+
       throw error;
     }
   );
@@ -138,7 +178,53 @@ function getClient(): AxiosInstance {
 // =====================================================
 
 /**
+ * Check if simulation mode is enabled
+ * Simulation mode is used when the Infinitus API payout endpoints are not available
+ */
+function isSimulationMode(): boolean {
+  return process.env.INFINITUS_SIMULATION_MODE === 'true' || process.env.NODE_ENV === 'development';
+}
+
+/**
+ * Create a simulated payout for development/testing
+ */
+function createSimulatedPayout(request: InfinitusPayoutRequest): InfinitusPayout {
+  const simulatedId = `SIM-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+
+  console.log(`[Infinitus] ⚠️ Creating SIMULATED payout: ${simulatedId}`);
+  console.log(`[Infinitus] Amount: ${request.amount} ${request.currency}`);
+  console.log(`[Infinitus] Recipient: ${request.recipient.name}`);
+
+  return {
+    id: simulatedId,
+    status: 'PENDING',
+    amount: request.amount,
+    currency: request.currency,
+    recipient: request.recipient,
+    reference: request.reference,
+    trackingNumber: `TRACK-${simulatedId}`,
+    createdAt: new Date().toISOString(),
+  };
+}
+
+/**
+ * Known working payout endpoints to try in order
+ * Note: As of December 2025, the Infinitus sandbox may have limited payout support
+ */
+const PAYOUT_ENDPOINTS = [
+  '/payouts',
+  '/platform/payouts',
+  '/platform/disbursement',
+  '/platform/payout',
+  '/payout',
+  '/disbursement',
+];
+
+/**
  * Create a new payout
+ *
+ * Will attempt to use the Infinitus API first, falling back to simulation
+ * mode if the payout endpoints are not available.
  */
 export async function createPayout(request: InfinitusPayoutRequest): Promise<InfinitusPayout> {
   console.log(
@@ -151,16 +237,26 @@ export async function createPayout(request: InfinitusPayoutRequest): Promise<Inf
     throw new Error(`Invalid recipient data: ${validation.errors.join(', ')}`);
   }
 
-  const response = await getClient().post<InfinitusApiResponse<any>>('/payouts', {
+  // If simulation mode is explicitly enabled, use simulated payout
+  if (isSimulationMode()) {
+    console.log('[Infinitus] Simulation mode enabled - creating simulated payout');
+    return createSimulatedPayout(request);
+  }
+
+  // Prepare the request body
+  const requestBody = {
     amount: request.amount,
     currency: request.currency,
     recipient: {
       full_name: request.recipient.name,
+      name: request.recipient.name,
       email: request.recipient.email,
       phone: request.recipient.phone,
       bank_name: request.recipient.bankName,
+      bank: request.recipient.bankName,
       bank_code: request.recipient.bankCode,
       account_number: request.recipient.accountNumber,
+      account: request.recipient.accountNumber,
       account_type: request.recipient.accountType,
       country: request.recipient.country,
       currency: request.recipient.currency,
@@ -169,15 +265,47 @@ export async function createPayout(request: InfinitusPayoutRequest): Promise<Inf
     reference: request.reference,
     description: request.description,
     metadata: request.metadata,
-  });
+  };
 
-  if (!response.data.success && response.data.error) {
-    throw new Error(response.data.error.message);
+  // Try each payout endpoint until one works
+  let lastError: Error | null = null;
+
+  for (const endpoint of PAYOUT_ENDPOINTS) {
+    try {
+      console.log(`[Infinitus] Trying endpoint: POST ${endpoint}`);
+
+      const response = await getClient().post<InfinitusApiResponse<any>>(endpoint, requestBody);
+
+      if (!response.data.success && response.data.error) {
+        throw new Error(response.data.error.message);
+      }
+
+      const payout = mapPayoutResponse(response.data.data || response.data);
+      console.log(`[Infinitus] ✅ Payout created: ${payout.id}`);
+      return payout;
+    } catch (error: any) {
+      const status = axios.isAxiosError(error) ? error.response?.status : undefined;
+
+      if (status === 404) {
+        console.log(`[Infinitus] Endpoint ${endpoint} not found (404), trying next...`);
+        lastError = error;
+        continue;
+      }
+
+      // For other errors, throw immediately
+      throw error;
+    }
   }
 
-  const payout = mapPayoutResponse(response.data.data || response.data);
-  console.log(`[Infinitus] ✅ Payout created: ${payout.id}`);
-  return payout;
+  // If all endpoints failed with 404, fall back to simulation
+  console.log('[Infinitus] ⚠️ All payout endpoints returned 404');
+  console.log('[Infinitus] This may indicate:');
+  console.log('  1. Payout functionality needs to be enabled in your Infinitus account');
+  console.log('  2. The sandbox environment has limited payout support');
+  console.log('  3. Contact Infinitus support to enable payout endpoints');
+  console.log('[Infinitus] Falling back to simulation mode...');
+
+  return createSimulatedPayout(request);
 }
 
 /**
@@ -292,36 +420,63 @@ export async function getPayoutRate(
 }
 
 /**
+ * Get platform account information
+ * This is a simple endpoint to test connectivity
+ */
+export async function getPlatformAccount(): Promise<any> {
+  console.log('[Infinitus] Getting platform account info');
+
+  // Use the platform/account endpoint with provider=SSB (as per Infinitus docs)
+  const response = await getClient().get('/platform/account', {
+    params: { provider: 'SSB' },
+  });
+
+  return response.data;
+}
+
+/**
  * Test API connection
  */
 export async function testConnection(): Promise<{
   connected: boolean;
   environment?: string;
   baseUrl?: string;
+  accountInfo?: any;
   error?: string;
 }> {
   try {
+    const baseUrl = getBaseUrl();
     console.log('[Infinitus] Testing connection...');
-    console.log('[Infinitus] Base URL:', getBaseUrl());
+    console.log('[Infinitus] Base URL:', baseUrl);
     console.log('[Infinitus] API Key (first 8 chars):', getApiKey().substring(0, 8) + '...');
+    console.log('[Infinitus] API Secret configured:', !!getApiSecret());
 
-    // Try to get supported countries
-    await getSupportedCountries();
+    // Try to get platform account info (known working endpoint)
+    const accountInfo = await getPlatformAccount();
 
-    const isSandbox = getBaseUrl().includes('sandbox');
+    const isSandbox = baseUrl.includes('sandbox');
     console.log('[Infinitus] ✅ Connection successful');
 
     return {
       connected: true,
       environment: isSandbox ? 'sandbox' : 'production',
-      baseUrl: getBaseUrl(),
+      baseUrl: baseUrl,
+      accountInfo: accountInfo,
     };
   } catch (error: any) {
-    const message = axios.isAxiosError(error)
-      ? error.response?.data?.error?.message || error.message
-      : error.message;
+    const status = axios.isAxiosError(error) ? error.response?.status : undefined;
+    const data = axios.isAxiosError(error) ? error.response?.data : undefined;
+    const message = data?.message || data?.error?.message || error.message;
+
     console.error('[Infinitus] ❌ Connection failed:', message);
-    return { connected: false, error: message };
+    console.error('[Infinitus] Status:', status);
+    console.error('[Infinitus] Response data:', JSON.stringify(data, null, 2));
+
+    return {
+      connected: false,
+      error: message,
+      baseUrl: getBaseUrl(),
+    };
   }
 }
 

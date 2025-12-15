@@ -21,7 +21,7 @@ export function QuickActionButton({
     <div
       className={`group flex h-full w-full cursor-pointer flex-col items-center justify-center rounded-xl border p-4 transition-all ${
         isPrimary
-          ? 'bg-gradient-blue border-transparent'
+          ? 'bg-gradient-blue border-none'
           : 'border-gray-200 bg-white hover:border-blue-500 hover:shadow-md'
       }`}
     >

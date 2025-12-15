@@ -1,7 +1,7 @@
 # iTransfr Project Progress Analysis
 
-**Last Updated:** December 12, 2025 (Evening Session)
-**Project Started:** ~10 days ago
+**Last Updated:** December 15, 2025 (Evening Session)
+**Project Started:** ~13 days ago
 **Based on:** 15-Day Hackathon Build Plan
 
 ---
@@ -14,14 +14,57 @@
 | Days 4-7 | Connect Everything | ✅ **100% Complete** |
 | Days 8-10 | MVP Polish | ✅ **100% Complete** |
 | Days 11-12 | PDF + Emails | ✅ **100% Complete** |
-| Days 13-14 | UAT + Fixes | 🔄 Partially Done (Testing Complete) |
-| Day 15 | Launch Prep | ⏳ Not Started |
+| Days 13-14 | UAT + Fixes | ✅ **100% Complete** |
+| Day 15 | Launch Prep | 🔄 In Progress |
 
-**You are currently at: DAY 12** (in a 15-day plan)
+**You are currently at: DAY 15** (in a 15-day plan)
 
 ---
 
-## 🎉 Recent Session Accomplishments (Dec 12, 2025 - Evening)
+## 🎉 Latest Session Accomplishments (Dec 15, 2025 - Evening)
+
+### ✅ Verification Complete - ANTIGRAVITY AUDIT
+- [x] **Bitso Simulation**: Verified logic in `admin/transactions/[id]/update` route. Falls back gracefully.
+- [x] **PDF Receipts**: Verified HTML generation in `api/receipts/[id]` and confirmed browser print capability.
+- [x] **Email Service**: Verified `src/lib/services/email.ts` and template storage.
+- [x] **Infinitus Simulation**: Verified explicit simulation mode in `infinitus.ts`.
+
+### ✅ Send Money Page - SOURCE CURRENCY FIXED
+- [x] Source Currency dropdown is now **functional and interactive**
+- [x] Dynamically loads user's wallet balances (USDT, USDC, etc.)
+- [x] Shows available balance per currency: "USDC ($140.00)"
+- [x] Auto-selects currency with highest balance
+- [x] Balance validation before transfer submission
+- [x] Available Balance now shows actual wallet amount
+
+### ✅ Admin Payout (Infinitus) - RECIPIENT DATA FIXED
+- [x] Fixed recipient data extraction from multiple sources:
+  - Direct payout_requests columns (new format)
+  - destinationBank JSON (legacy format)
+  - Transaction metadata (fallback)
+- [x] Added simulation fallback when Infinitus unavailable or data missing
+- [x] Proper logging for debugging recipient data issues
+
+### ✅ Admin Transactions - RECIPIENT NAME FIXED
+- [x] Transactions list now shows recipient names correctly
+- [x] Query joins with payout_requests table for recipient info
+- [x] Multiple fallback sources: tx.recipientName, metadata, payout_requests
+- [x] Deposits show "Self (Deposit)" instead of "N/A"
+
+### ✅ KYC Review Page - COUNTRY FIELD FIXED
+- [x] API now includes country from client_profiles
+- [x] KYC table shows actual country instead of placeholder
+- [x] KYC modal displays country from database
+
+### ✅ Payout Creation - DATA STRUCTURE FIXED
+- [x] Transaction now stores `recipientName` directly for quick admin view
+- [x] Full recipient details stored in transaction metadata
+- [x] payout_requests table uses correct column names:
+  - `recipientName`, `recipientAccount`, `recipientBank`, `recipientBankCode`, `recipientCountry`
+
+---
+
+## 🎉 Previous Session Accomplishments (Dec 12, 2025 - Evening)
 
 ### ✅ PDF Receipts - FULLY WORKING
 - [x] HTML-based receipt templates for deposits and payouts
@@ -60,13 +103,21 @@
 
 ---
 
-## 🔧 Issues Fixed This Session
+## 🔧 Issues Fixed (Dec 15, 2025)
+1. **Source Currency Disabled** - Dropdown now functional with wallet balances
+2. **Infinitus Recipient Data** - Fixed data extraction from multiple sources
+3. **Transactions Recipient N/A** - Now shows recipient names properly
+4. **KYC Country Blank** - Country now displayed from client_profiles
+5. **Payout Data Structure** - Fixed column names in payout_requests
+
+## 🔧 Issues Fixed (Dec 12, 2025)
 1. **PDF Font Error** - Switched from @react-pdf/renderer to HTML-based receipts
 2. **Bitso 404 Error** - Added simulation fallback for swap execution
 3. **Payout Missing Details** - Auto-fetch from transaction metadata
 4. **Admin Menu Not Clickable** - Added click handlers to all dropdown buttons
 5. **View Details Alert** - Changed to proper modal component
 6. **Recipients Static Data** - Made API dynamic
+
 
 ---
 
@@ -271,12 +322,13 @@ The **Swap** feature is for **currency exchange** (FX conversion). In a full rem
 | End-to-End Testing | ✅ Done | - |
 | Error Messages Polish | ⏳ | 2 hours |
 
+
 ### MEDIUM Priority
 | Task | Status | Est. Time |
 |------|--------|-----------|
-| PDF Receipts | ⏳ | 1 day |
-| Email Notifications | ⏳ | 0.5 day |
-| Real-time Polling | ⏳ | 0.5 day |
+| PDF Receipts | ✅ Done | - |
+| Email Notifications | ✅ Done | - |
+| Real-time Polling | ✅ Done | - |
 | Audit Log | ⏳ | 0.5 day |
 
 ### LOW Priority (Nice to Have)
@@ -298,11 +350,11 @@ Day 4-7 Target: ████████████████████ 100
 Actual:         ████████████████████ 100%
 
 Day 8-10 Target: ████████████████████ 100%
-Actual:          ███████████████████░ 95%
+Actual:         ████████████████████ 100%
 
 Overall 15-Day Progress:
 Target:         ████████████████████ 100%
-Actual:         ███████████████░░░░░ 75%
+Actual:         ██████████████████░░ 90%
 ```
 
 ---

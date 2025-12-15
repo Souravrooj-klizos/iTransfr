@@ -5,6 +5,7 @@ import { DataTable, getStatusIcon, type TableColumn } from '@/components/ui/Data
 import { DatePicker } from '@/components/ui/DatePicker';
 import { Pagination } from '@/components/ui/Pagination';
 import { Select } from '@/components/ui/Select';
+import { useToast } from '@/components/ui/Toast';
 import adminApi from '@/lib/api/admin';
 import { Eye, FileText, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -20,6 +21,7 @@ export default function KYCReviewPage() {
   const [activePage, setActivePage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState('10');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const toast = useToast();
 
   useEffect(() => {
     fetchKYCRecords();
@@ -27,35 +29,34 @@ export default function KYCReviewPage() {
 
   async function fetchKYCRecords() {
     try {
+      setLoading(true);
       const { data: kycRecords } = await adminApi.kyc.list({
         status: status !== 'all' ? status : undefined,
-        // filter: filter !== 'all' ? filter : undefined // API needs to support search/filter if not already
       });
       if (kycRecords) {
         setKycRecords(kycRecords as any);
       }
     } catch (error) {
       console.error('Error fetching KYC records:', error);
+      toast.error('Failed to load KYC records', 'Please try refreshing the page.');
     } finally {
       setLoading(false);
     }
   }
 
   async function updateKYCStatus(id: string, status: string, notes: string[]) {
-    if (!confirm(`Are you sure you want to mark this KYC as ${status}?`)) return;
-
     setActionLoading(true);
     try {
       let result;
       if (status === 'approved') {
         result = await adminApi.kyc.approve(id, notes[0]);
+        toast.success('KYC Approved', 'The client has been notified of their approval.');
       } else if (status === 'rejected') {
         result = await adminApi.kyc.reject(id, notes[0]);
+        toast.warning('KYC Rejected', 'The client has been notified with the rejection reason.');
       } else {
-        // Fallback for other statuses if needed, though approve/reject are primary
-        // adminApi doesn't expose generic updateStatus to keep it strict,
-        // so we might strictly enforce approve/reject locally or extend api
         console.warn('Only approve/reject supported via helper');
+        toast.info('Status Update', 'Only approve/reject actions are supported.');
         return;
       }
 
@@ -65,7 +66,7 @@ export default function KYCReviewPage() {
       }
     } catch (error: any) {
       console.error('Error updating KYC status:', error);
-      alert(`Failed to update KYC status: ${error.message || 'Unknown error'}`);
+      toast.error('Failed to Update KYC', error.message || 'Please try again.');
     } finally {
       setActionLoading(false);
     }
@@ -84,7 +85,7 @@ export default function KYCReviewPage() {
     {
       key: 'country',
       header: 'Country',
-      render: row => <span className='text-sm text-gray-800'>-</span>, // flexible placeholder as per design/data mismatch
+      render: row => <span className='text-sm text-gray-800'>{row.client_profiles?.country || '-'}</span>,
     },
     {
       key: 'submitted',

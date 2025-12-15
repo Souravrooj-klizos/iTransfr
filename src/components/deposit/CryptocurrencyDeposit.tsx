@@ -3,6 +3,7 @@
 import ShareIcon from '@/components/icons/ShareIcon';
 import { BankDetailsField } from '@/components/ui/BankDetailsField';
 import { Button } from '@/components/ui/Button';
+import { useToast } from '@/components/ui/Toast';
 import clientApi from '@/lib/api/client';
 import { AlertCircle, Check, ChevronDown, Copy, Loader2 } from 'lucide-react';
 import Image from 'next/image';
@@ -40,6 +41,7 @@ export function CryptocurrencyDeposit() {
   const [depositAddress, setDepositAddress] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
 
   // Fetch address when selected crypto changes
   useEffect(() => {
@@ -225,10 +227,10 @@ export function CryptocurrencyDeposit() {
                 chain: selectedCrypto.chain,
                 source: 'crypto',
               });
-              alert('Deposit notification sent! Admin will review details.');
+              toast.success('Deposit Notification Sent', 'Admin will review your deposit request.');
             } catch (e: any) {
               console.error(e);
-              alert('Failed to notify: ' + (e.response?.data?.error || e.message));
+              toast.error('Failed to Notify', e.response?.data?.error || e.message || 'Please try again.');
             }
           }}
           variant='outline'

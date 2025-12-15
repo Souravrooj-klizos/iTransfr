@@ -21,6 +21,7 @@ interface CryptoTransaction {
 
 interface CryptoTransactionsTableProps {
   transactions: CryptoTransaction[];
+  loading?: boolean;
 }
 
 const getDirectionIcon = (direction: string) => {
@@ -30,7 +31,10 @@ const getDirectionIcon = (direction: string) => {
   return <ReceivedIcon />;
 };
 
-export function CryptoTransactionsTable({ transactions }: CryptoTransactionsTableProps) {
+export function CryptoTransactionsTable({
+  transactions,
+  loading = false,
+}: CryptoTransactionsTableProps) {
   const columns: TableColumn<CryptoTransaction>[] = [
     {
       key: 'date',
@@ -135,6 +139,15 @@ export function CryptoTransactionsTable({ transactions }: CryptoTransactionsTabl
         getRowId={row => row.id}
         showCheckbox={true}
       />
+
+      {transactions.length === 0 && !loading && (
+        <div className='p-8 text-center'>
+          <p className='text-gray-500'>No crypto transactions yet</p>
+          <a href='/deposit' className='mt-2 inline-block text-blue-600 hover:text-blue-800'>
+            Make your first deposit →
+          </a>
+        </div>
+      )}
     </div>
   );
 }

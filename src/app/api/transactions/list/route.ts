@@ -75,23 +75,31 @@ export async function GET(request: NextRequest) {
     }
 
     // Format transactions for frontend
-    const formattedTransactions = (transactions || []).map(tx => ({
-      id: tx.id,
-      date: formatDate(tx.createdAt),
-      time: formatTime(tx.createdAt),
-      recipient: tx.recipientName || 'N/A',
-      transactionType: mapTransactionType(tx.type),
-      paymentMethod: mapPaymentMethod(tx.type, tx.metadata),
-      status: mapStatus(tx.status),
-      amount: formatAmount(tx.amount, tx.currency),
-      fromAmount: tx.amountFrom ? `From: ${formatAmount(tx.amountFrom, tx.currency)}` : undefined,
-      currency: tx.currency,
-      currencyTo: tx.currencyTo,
-      type: tx.type,
-      rawStatus: tx.status,
-      referenceNumber: tx.referenceNumber,
-      createdAt: tx.createdAt,
-    }));
+    const formattedTransactions = (transactions || []).map(tx => {
+      // Get recipient from multiple sources (priority order)
+      const recipientName =
+        tx.recipientName ||  // Direct field on transaction
+        tx.metadata?.recipientName ||  // From transaction metadata
+        (tx.type === 'deposit' ? 'Self (Deposit)' : 'N/A');
+
+      return {
+        id: tx.id,
+        date: formatDate(tx.createdAt),
+        time: formatTime(tx.createdAt),
+        recipient: recipientName,
+        transactionType: mapTransactionType(tx.type),
+        paymentMethod: mapPaymentMethod(tx.type, tx.metadata),
+        status: mapStatus(tx.status),
+        amount: formatAmount(tx.amount, tx.currency),
+        fromAmount: tx.amountFrom ? `From: ${formatAmount(tx.amountFrom, tx.currency)}` : undefined,
+        currency: tx.currency,
+        currencyTo: tx.currencyTo,
+        type: tx.type,
+        rawStatus: tx.status,
+        referenceNumber: tx.referenceNumber,
+        createdAt: tx.createdAt,
+      };
+    });
 
     const total = count || 0;
     const totalPages = Math.ceil(total / limit);

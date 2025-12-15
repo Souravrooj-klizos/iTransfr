@@ -1,7 +1,9 @@
 'use client';
 
+import { Modal } from '@/components/ui/Modal';
+import { useToast } from '@/components/ui/Toast';
 import adminApi from '@/lib/api/admin';
-import { Building, CreditCard, MapPin, Send } from 'lucide-react';
+import { AlertTriangle, Building, CreditCard, MapPin, Send } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface PayoutRequest {
@@ -35,7 +37,9 @@ export default function PayoutsPage() {
   const [payouts, setPayouts] = useState<PayoutRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPayout, setSelectedPayout] = useState<PayoutRequest | null>(null);
+  const [payoutToSend, setPayoutToSend] = useState<PayoutRequest | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
     fetchPayouts();
@@ -43,52 +47,44 @@ export default function PayoutsPage() {
 
   async function fetchPayouts() {
     try {
+      setLoading(true);
       const { data: payouts } = await adminApi.payouts.list();
       setPayouts(payouts || []);
     } catch (error) {
       console.error('Error fetching payouts:', error);
+      toast.error('Failed to load payouts', 'Please try refreshing the page.');
     } finally {
       setLoading(false);
     }
   }
 
-  async function sendPayout(id: string) {
-    if (!confirm('Are you sure you want to send this payout? This action cannot be undone.'))
-      return;
+  async function confirmSendPayout() {
+    if (!payoutToSend) return;
 
     setActionLoading(true);
     try {
-      // Assuming sendPayout in adminApi triggers the 'send_payout' action on transaction
-      // But adminApi.payouts doesn't have a 'send' method directly mapped to just an ID in my quick review of admin.ts
-      // Let's check admin.ts again.
-      // admin.ts has: adminTransactionApi.sendPayout(txId, details).
-      // But PayoutsPage seems to iterate 'PayoutRequest' objects, which have 'transactionId'.
+      const response = await fetch(`/api/admin/payouts/${payoutToSend.id}/send`, { method: 'POST' });
+      const data = await response.json();
 
-      // Wait, PayoutsPage uses /api/admin/payouts/${id}/send currently.
-      // Does adminApi have this?
-      // adminApi.payouts has: list, getStatus, cancel.
-      // It DOES NOT have 'send'.
-      // I should add 'process' or 'send' to adminApi.payouts OR update backend to use the transaction action.
-      // The current backend route /api/admin/payouts/${id}/send implies a specific payout endpoint.
-      // Let's use generic fetch for now OR update admin.ts.
-      // Better to update admin.ts to include this method.
-
-      // For this step, I will stick to fetch for the missing method but use api for list.
-      // Actually, I'll update admin.ts first.
-
-      const response = await fetch(`/api/admin/payouts/${id}/send`, { method: 'POST' });
       if (response.ok) {
         await fetchPayouts();
+        setPayoutToSend(null);
         setSelectedPayout(null);
-        alert('Payout sent successfully!');
+
+        if (data.simulated) {
+          toast.warning('Payout Completed (Simulated)', data.message || 'Payout processed in simulation mode.');
+        } else {
+          toast.success('Payout Sent Successfully!', `Tracking: ${data.trackingNumber || 'N/A'}`);
+        }
       } else {
-        const error = await response.json();
-        alert(`Error: ${error.error}`);
+        toast.error('Payout Failed', data.error || 'Failed to send payout. Please try again.');
       }
-    } catch (error) {
-      // ...
+    } catch (error: any) {
+      console.error('Error sending payout:', error);
+      toast.error('Network Error', 'Failed to communicate with the server.');
+    } finally {
+      setActionLoading(false);
     }
-    // ...
   }
 
   const getStatusBadge = (status: string) => {
@@ -113,15 +109,17 @@ export default function PayoutsPage() {
         <h1 className='text-2xl font-bold text-gray-900'>Payout Requests</h1>
         <button
           onClick={fetchPayouts}
-          className='rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50'
+          disabled={loading}
+          className='rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50'
         >
-          Refresh
+          {loading ? 'Loading...' : 'Refresh'}
         </button>
       </div>
 
       {loading ? (
         <div className='py-12 text-center'>
           <div className='mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600'></div>
+          <p className='mt-4 text-gray-500'>Loading payouts...</p>
         </div>
       ) : payouts.length === 0 ? (
         <div className='rounded-lg border border-gray-200 bg-white p-12 text-center'>
@@ -152,17 +150,17 @@ export default function PayoutsPage() {
                       <CreditCard className='mt-0.5 h-4 w-4 text-gray-400' />
                       <div>
                         <p className='font-medium text-gray-700'>Recipient</p>
-                        <p className='text-gray-600'>{payout.recipientName}</p>
-                        <p className='font-mono text-xs text-gray-500'>{payout.recipientAccount}</p>
+                        <p className='text-gray-600'>{payout.recipientName || 'N/A'}</p>
+                        <p className='font-mono text-xs text-gray-500'>{payout.recipientAccount || 'N/A'}</p>
                       </div>
                     </div>
                     <div className='flex items-start gap-2'>
                       <Building className='mt-0.5 h-4 w-4 text-gray-400' />
                       <div>
                         <p className='font-medium text-gray-700'>Bank</p>
-                        <p className='text-gray-600'>{payout.recipientBank}</p>
+                        <p className='text-gray-600'>{payout.recipientBank || 'N/A'}</p>
                         <p className='font-mono text-xs text-gray-500'>
-                          {payout.recipientBankCode}
+                          {payout.recipientBankCode || '-'}
                         </p>
                       </div>
                     </div>
@@ -170,7 +168,7 @@ export default function PayoutsPage() {
                       <MapPin className='mt-0.5 h-4 w-4 text-gray-400' />
                       <div>
                         <p className='font-medium text-gray-700'>Country</p>
-                        <p className='text-gray-600'>{payout.recipientCountry}</p>
+                        <p className='text-gray-600'>{payout.recipientCountry || 'N/A'}</p>
                       </div>
                     </div>
                   </div>
@@ -188,9 +186,9 @@ export default function PayoutsPage() {
                 <div className='ml-4 flex flex-col gap-2'>
                   {payout.status === 'pending' && (
                     <button
-                      onClick={() => sendPayout(payout.id)}
+                      onClick={() => setPayoutToSend(payout)}
                       disabled={actionLoading}
-                      className='rounded-md bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700 disabled:opacity-50'
+                      className='cursor-pointer rounded-md bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700 disabled:opacity-50'
                     >
                       <Send className='mr-1 inline h-4 w-4' />
                       Send Payout
@@ -198,7 +196,7 @@ export default function PayoutsPage() {
                   )}
                   <button
                     onClick={() => setSelectedPayout(payout)}
-                    className='rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200'
+                    className='cursor-pointer rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200'
                   >
                     View Details
                   </button>
@@ -217,62 +215,132 @@ export default function PayoutsPage() {
         </div>
       )}
 
-      {/* Detail Modal */}
-      {selectedPayout && (
-        <div className='bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black p-4'>
-          <div className='w-full max-w-lg rounded-xl bg-white p-6 shadow-2xl'>
-            <h2 className='mb-4 text-xl font-bold text-gray-900'>Payout Details</h2>
-
-            <div className='space-y-4'>
-              <div className='flex justify-between'>
-                <span className='text-gray-500'>Amount</span>
-                <span className='font-semibold'>
-                  {selectedPayout.amount.toLocaleString()} {selectedPayout.currency}
-                </span>
-              </div>
-              <div className='flex justify-between'>
-                <span className='text-gray-500'>Status</span>
-                {getStatusBadge(selectedPayout.status)}
-              </div>
-              <div className='flex justify-between'>
-                <span className='text-gray-500'>Recipient</span>
-                <span className='font-medium'>{selectedPayout.recipientName}</span>
-              </div>
-              <div className='flex justify-between'>
-                <span className='text-gray-500'>Account</span>
-                <span className='font-mono text-sm'>{selectedPayout.recipientAccount}</span>
-              </div>
-              <div className='flex justify-between'>
-                <span className='text-gray-500'>Bank</span>
-                <span>{selectedPayout.recipientBank}</span>
-              </div>
-              <div className='flex justify-between'>
-                <span className='text-gray-500'>Bank Code</span>
-                <span className='font-mono text-sm'>{selectedPayout.recipientBankCode}</span>
-              </div>
-              <div className='flex justify-between'>
-                <span className='text-gray-500'>Country</span>
-                <span>{selectedPayout.recipientCountry}</span>
-              </div>
-              {selectedPayout.infinitusRequestId && (
-                <div className='flex justify-between'>
-                  <span className='text-gray-500'>Infinitus ID</span>
-                  <span className='font-mono text-sm'>{selectedPayout.infinitusRequestId}</span>
-                </div>
-              )}
-            </div>
-
-            <div className='mt-6 flex justify-end gap-2'>
-              <button
-                onClick={() => setSelectedPayout(null)}
-                className='rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200'
-              >
-                Close
-              </button>
+      {/* Confirmation Modal for Sending Payout */}
+      <Modal
+        isOpen={!!payoutToSend}
+        onClose={() => !actionLoading && setPayoutToSend(null)}
+        title='Confirm Payout'
+        size='md'
+      >
+        <div className='space-y-4'>
+          <div className='flex items-center gap-3 rounded-lg bg-orange-50 p-4'>
+            <AlertTriangle className='h-6 w-6 text-orange-600' />
+            <div>
+              <p className='font-medium text-orange-800'>Are you sure you want to send this payout?</p>
+              <p className='text-sm text-orange-600'>This action cannot be undone.</p>
             </div>
           </div>
+
+          {payoutToSend && (
+            <div className='rounded-lg border border-gray-200 p-4 space-y-2'>
+              <div className='flex justify-between'>
+                <span className='text-gray-700'>Amount</span>
+                <span className='font-semibold text-gray-700'>{payoutToSend.amount.toLocaleString()} {payoutToSend.currency}</span>
+              </div>
+              <div className='flex justify-between'>
+                <span className='text-gray-700'>Recipient</span>
+                <span className='font-medium text-gray-700'>{payoutToSend.recipientName || 'N/A'}</span>
+              </div>
+              <div className='flex justify-between'>
+                <span className='text-gray-700'>Bank</span>
+                <span className='font-medium text-gray-700'>{payoutToSend.recipientBank || 'N/A'}</span>
+              </div>
+              <div className='flex justify-between'>
+                <span className='text-gray-700'>Country</span>
+                <span className='font-medium text-gray-700'>{payoutToSend.recipientCountry || 'N/A'}</span>
+              </div>
+            </div>
+          )}
+
+          <div className='flex justify-end gap-3 pt-4'>
+            <button
+              onClick={() => setPayoutToSend(null)}
+              disabled={actionLoading}
+              className='cursor-pointer rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50'
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmSendPayout}
+              disabled={actionLoading}
+              className='cursor-pointer rounded-lg bg-orange-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-orange-700 disabled:opacity-50'
+            >
+              {actionLoading ? (
+                <>
+                  <span className='mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent'></span>
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Send className='mr-1 inline h-4 w-4' />
+                  Confirm & Send
+                </>
+              )}
+            </button>
+          </div>
         </div>
-      )}
+      </Modal>
+
+      {/* Detail Modal */}
+      <Modal
+        isOpen={!!selectedPayout}
+        onClose={() => setSelectedPayout(null)}
+        title='Payout Details'
+        size='lg'
+      >
+        {selectedPayout && (
+          <div className='space-y-4'>
+            <div className='flex justify-between'>
+              <span className='text-gray-700'>Amount</span>
+              <span className='font-semibold text-gray-700'>
+                {selectedPayout.amount.toLocaleString()} {selectedPayout.currency}
+              </span>
+            </div>
+            <div className='flex justify-between'>
+              <span className='text-gray-700'>Status</span>
+              {getStatusBadge(selectedPayout.status)}
+            </div>
+            <div className='flex justify-between'>
+              <span className='text-gray-700'>Recipient</span>
+              <span className='font-medium text-gray-700'>{selectedPayout.recipientName || 'N/A'}</span>
+            </div>
+            <div className='flex justify-between'>
+              <span className='text-gray-700'>Account</span>
+              <span className='font-mono text-sm text-gray-700'>{selectedPayout.recipientAccount || 'N/A'}</span>
+            </div>
+            <div className='flex justify-between'>
+              <span className='text-gray-700'>Bank</span>
+              <span className='text-gray-700'>{selectedPayout.recipientBank || 'N/A'}</span>
+            </div>
+            <div className='flex justify-between'>
+              <span className='text-gray-700'>Bank Code</span>
+              <span className='font-mono text-sm text-gray-700'>{selectedPayout.recipientBankCode || '-'}</span>
+            </div>
+            <div className='flex justify-between'>
+              <span className='text-gray-700'>Country</span>
+              <span className='text-gray-700'>{selectedPayout.recipientCountry || 'N/A'}</span>
+            </div>
+            {selectedPayout.infinitusRequestId && (
+              <div className='flex justify-between'>
+                <span className='text-gray-700'>Infinitus ID</span>
+                <span className='font-mono text-sm text-gray-700'>{selectedPayout.infinitusRequestId}</span>
+              </div>
+            )}
+            {selectedPayout.infinitusTrackingNumber && (
+              <div className='flex justify-between'>
+                <span className='text-gray-700'>Tracking Number</span>
+                <span className='font-mono text-sm text-green-600'>{selectedPayout.infinitusTrackingNumber}</span>
+              </div>
+            )}
+
+            <div className='border-t border-gray-100 pt-4 text-xs text-gray-500 space-y-1'>
+              <p>Created: {new Date(selectedPayout.createdAt).toLocaleString()}</p>
+              {selectedPayout.sentAt && <p>Sent: {new Date(selectedPayout.sentAt).toLocaleString()}</p>}
+              {selectedPayout.completedAt && <p>Completed: {new Date(selectedPayout.completedAt).toLocaleString()}</p>}
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

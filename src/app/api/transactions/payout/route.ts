@@ -111,19 +111,23 @@ export async function POST(request: NextRequest) {
     }
 
     // 2. Check user has sufficient balance and deduct
+    // Query specifically for the requested currency
     const { data: wallet, error: walletError } = await supabaseAdmin
       .from('wallets')
       .select('*')
       .eq('userId', user.id)
-      .eq('userId', user.id)
-      .in('currency', [currency, 'USDT', 'USDC']) // Check for any USD stablecoin
-      .order('balance', { ascending: false }) // Use the one with most balance
-      .limit(1)
+      .eq('currency', currency) // Match exact currency requested
       .single();
+
+    console.log('[Payout] Wallet lookup:', { currency, wallet: wallet?.id, balance: wallet?.balance, error: walletError?.message });
 
     // If wallet doesn't exist or balance too low
     if (walletError || !wallet || wallet.balance < amount) {
-      return NextResponse.json({ error: 'Insufficient funds' }, { status: 400 });
+      const availableBalance = wallet?.balance || 0;
+      console.log(`[Payout] Insufficient funds: requested ${amount}, available ${availableBalance}`);
+      return NextResponse.json({
+        error: `Insufficient funds. Available ${currency} balance: $${availableBalance.toFixed(2)}`
+      }, { status: 400 });
     }
 
     // Deduct balance
@@ -139,7 +143,8 @@ export async function POST(request: NextRequest) {
     // 3. Generate transaction reference
     const reference = `PAY-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
 
-    // 4. Create transaction record
+    // 4. Create transaction record with recipient details
+    // Note: recipientName and currencyTo don't exist in DB schema, store in metadata only
     const { data: transaction, error: txError } = await supabaseAdmin
       .from('transactions')
       .insert({
@@ -149,8 +154,18 @@ export async function POST(request: NextRequest) {
         currency: currency,
         status: 'PAYOUT_PENDING',
         referenceNumber: reference,
+        // Store all recipient details in metadata since transaction table doesn't have these columns
         metadata: {
           notes: ['Payout request created'],
+          // Store full recipient details for Infinitus payout and display
+          recipientName: recipient.name,
+          recipientAccount: recipient.accountNumber,
+          recipientBank: recipient.bankName,
+          recipientBankCode: recipient.bankCode,
+          recipientCountry: recipient.country || 'US',
+          accountType: recipient.accountType || 'checking',
+          transferType: recipient.country === 'US' ? 'domestic' : 'international',
+          destinationCurrency: destinationCurrency || currency,
         },
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -160,6 +175,14 @@ export async function POST(request: NextRequest) {
 
     if (txError || !transaction) {
       console.error('[Payout] Failed to create transaction:', txError);
+
+      // IMPORTANT: Refund the balance since transaction failed
+      console.log('[Payout] Refunding balance due to transaction failure');
+      await supabaseAdmin
+        .from('wallets')
+        .update({ balance: wallet.balance }) // Restore original balance
+        .eq('id', wallet.id);
+
       return NextResponse.json({ error: 'Failed to create payout request' }, { status: 500 });
     }
 
@@ -233,14 +256,12 @@ export async function POST(request: NextRequest) {
       .from('payout_requests')
       .insert({
         transactionId: transaction.id,
-        userId: user.id,
-        destinationCountry: recipient.country || 'US',
-        destinationBank: {
-          accountNumber: recipient.accountNumber,
-          bankName: recipient.bankName,
-          bankCode: recipient.bankCode,
-          beneficiaryName: recipient.name,
-        },
+        // Use correct column names that admin/transactions/[id]/update expects
+        recipientName: recipient.name,
+        recipientAccount: recipient.accountNumber,
+        recipientBank: recipient.bankName,
+        recipientBankCode: recipient.bankCode || '',
+        recipientCountry: recipient.country || 'US',
         amount,
         currency,
         status: 'pending',

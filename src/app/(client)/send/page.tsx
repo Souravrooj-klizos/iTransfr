@@ -8,10 +8,17 @@ import { FormInput } from '@/components/transfer/FormInput';
 import { FormSelect } from '@/components/transfer/FormSelect';
 import { SummaryItem } from '@/components/transfer/SummaryItem';
 import { TransferMethodCard } from '@/components/transfer/TransferMethodCard';
+import { useToast } from '@/components/ui/Toast';
 import clientApi from '@/lib/api/client';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+
+interface WalletBalance {
+  currency: string;
+  balance: number;
+  formattedBalance: string;
+}
 
 type TransferMethod = 'domestic' | 'international' | 'crypto';
 
@@ -58,12 +65,64 @@ export default function SendMoneyPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [walletBalances, setWalletBalances] = useState<WalletBalance[]>([]);
+  const [selectedCurrency, setSelectedCurrency] = useState('USDC');
+  const [balancesLoading, setBalancesLoading] = useState(true);
+  const toast = useToast();
+
+  // Fetch wallet balances on mount
+  useEffect(() => {
+    async function fetchBalances() {
+      try {
+        setBalancesLoading(true);
+        const wallets = await clientApi.wallets.list();
+        setWalletBalances(wallets);
+
+        // Auto-select currency with highest balance
+        if (wallets.length > 0) {
+          const sortedWallets = [...wallets].sort((a, b) => b.balance - a.balance);
+          setSelectedCurrency(sortedWallets[0].currency);
+        }
+      } catch (err) {
+        console.error('Failed to fetch wallet balances:', err);
+      } finally {
+        setBalancesLoading(false);
+      }
+    }
+    fetchBalances();
+  }, []);
 
   const showOutputCurrency = selectedMethod === 'international';
-  const sourceCurrency = selectedMethod === 'international' ? 'USDT' : 'USDC';
-  const displayCurrency = selectedMethod === 'crypto' ? 'USDT' : sourceCurrency;
+
+  // Get available balance for selected currency
+  const getSelectedBalance = () => {
+    const wallet = walletBalances.find(w => w.currency === selectedCurrency);
+    return wallet ? wallet.balance : 0;
+  };
+
+  const getFormattedBalance = () => {
+    const wallet = walletBalances.find(w => w.currency === selectedCurrency);
+    return wallet ? `${wallet.formattedBalance}` : '0.00';
+  };
+
+  // Build currency options from wallet balances
+  const currencyOptions = walletBalances.length > 0
+    ? walletBalances.map(w => ({
+        value: w.currency,
+        label: `💵 ${w.currency} ($${w.balance.toFixed(2)})`
+      }))
+    : [
+        { value: 'USDC', label: '💵 USDC' },
+        { value: 'USDT', label: '💵 USDT' },
+      ];
 
   const handleSubmit = async () => {
+    // Guard against multiple submissions
+    if (loading || success) {
+      console.log('[Send] Ignoring duplicate submission');
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -73,16 +132,23 @@ export default function SendMoneyPage() {
       if (!recipientName) throw new Error('Recipient Name is required');
       if (!accountNumber) throw new Error('Account Number/Wallet Address is required');
 
+      // Check balance before proceeding
+      if (parseFloat(amount) > getSelectedBalance()) {
+        throw new Error(`Insufficient ${selectedCurrency} balance. Available: $${getSelectedBalance().toFixed(2)}`);
+      }
+
       // Determine bank details based on method
       let bankName = 'Unknown Bank';
       if (selectedMethod === 'domestic') bankName = 'US Domestic Bank';
       if (selectedMethod === 'international') bankName = 'International Bank';
       if (selectedMethod === 'crypto') bankName = 'Crypto Wallet';
 
+      console.log('[Send] Submitting payout request:', { amount, selectedCurrency, recipientName });
+
       const response = await clientApi.payouts.create({
         amount: parseFloat(amount),
-        sourceCurrency: displayCurrency,
-        destinationCurrency: showOutputCurrency ? 'EUR' : displayCurrency, // Default to EUR for international demo
+        sourceCurrency: selectedCurrency,
+        destinationCurrency: showOutputCurrency ? 'EUR' : selectedCurrency, // Default to EUR for international demo
         recipientName,
         accountNumber,
         bankName,
@@ -91,7 +157,10 @@ export default function SendMoneyPage() {
         accountType: 'checking',
       });
 
+      console.log('[Send] Payout response:', response);
+
       setSuccess(true);
+      toast.success('Transfer Submitted!', `Your transfer of ${amount} ${selectedCurrency} to ${recipientName} has been submitted for processing.`);
       // Optional: Redirect after delay
       setTimeout(() => {
         router.push('/transactions');
@@ -99,6 +168,7 @@ export default function SendMoneyPage() {
     } catch (err: any) {
       console.error('Payout error:', err);
       setError(err.message || 'Failed to process transfer');
+      toast.error('Transfer Failed', err.message || 'Failed to process transfer. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -108,7 +178,7 @@ export default function SendMoneyPage() {
     // Simplified fee logic for demo
     if (selectedMethod === 'crypto') {
       return {
-        recipientGets: `${amount} ${displayCurrency}`,
+        recipientGets: `${amount} ${selectedCurrency}`,
         rate: '1:1',
         showFees: false,
       };
@@ -117,7 +187,7 @@ export default function SendMoneyPage() {
       const total = parseFloat(amount || '0') + fees;
       return {
         recipientGets: `${amount} USD`,
-        rate: '0.9900 USDC/USD',
+        rate: `0.9900 ${selectedCurrency}/USD`,
         quoteRate: '0.9900',
         fxFee: '$0.43 USD',
         wireFeeLabel: 'Fed/Wire Fee',
@@ -130,7 +200,7 @@ export default function SendMoneyPage() {
       const fees = 30.0;
       return {
         recipientGets: `€${(parseFloat(amount || '0') * 0.85).toFixed(2)} EUR`,
-        rate: '0.8572 EUR/USDT',
+        rate: `0.8572 EUR/${selectedCurrency}`,
         quoteRate: '0.8572',
         fxFee: '$0.83 USD',
         wireFeeLabel: 'SWIFT Fee',
@@ -262,14 +332,11 @@ export default function SendMoneyPage() {
 
                 <FormSelect
                   label='Source Currency'
-                  value={displayCurrency}
-                  options={[
-                    { value: 'USDC', label: '💵 USDC' },
-                    { value: 'USDT', label: '💵 USDT' },
-                    { value: 'USD', label: '💵 USD' },
-                  ]}
+                  value={selectedCurrency}
+                  onChange={setSelectedCurrency}
+                  options={currencyOptions}
                   required
-                  disabled
+                  disabled={balancesLoading || walletBalances.length === 0}
                 />
 
                 {showOutputCurrency && (
@@ -290,7 +357,11 @@ export default function SendMoneyPage() {
               <div className='flex items-center gap-2 text-sm'>
                 <span className='text-gray-600'>Available Balance:</span>
                 <span className='font-semibold text-gray-900'>
-                  {showBalance ? '10,234.56 USD' : '••••••••• USD'}
+                  {balancesLoading
+                    ? 'Loading...'
+                    : showBalance
+                      ? `${getFormattedBalance()} ${selectedCurrency}`
+                      : `••••••••• ${selectedCurrency}`}
                 </span>
                 <button
                   onClick={() => setShowBalance(!showBalance)}
@@ -307,7 +378,7 @@ export default function SendMoneyPage() {
                 </label>
                 <textarea
                   rows={3}
-                  className='w-full resize-none rounded-lg border border-gray-300 px-4 py-3 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none'
+                  className='w-full resize-none rounded-lg border border-gray-300 px-4 py-3 placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none text-gray-700'
                   placeholder='Payment reference or note'
                 />
               </div>
@@ -338,7 +409,7 @@ export default function SendMoneyPage() {
             <hr className='my-4' />
             <SummaryItem
               label='Source Currency'
-              value={`${displayCurrency} ${amount}`}
+              value={`${selectedCurrency} ${amount}`}
               valueStyle={{ fontWeight: 600 }}
             />
             <hr className='my-4' />

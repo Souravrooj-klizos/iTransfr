@@ -57,7 +57,8 @@ export async function GET() {
                     id,
                     first_name,
                     last_name,
-                    company_name
+                    company_name,
+                    country
                 ),
                 kyc_documents (*)
             `

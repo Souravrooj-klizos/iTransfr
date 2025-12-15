@@ -3,8 +3,7 @@
 import CheckCircle from '@/components/icons/CheckCircle';
 import CloseCircle from '@/components/icons/CloseCircle';
 import { Modal } from '@/components/ui/Modal';
-import { AlertCircle, FileText } from 'lucide-react';
-import { useState } from 'react';
+import { FileText } from 'lucide-react';
 
 // You might want to move this to a shared types file
 export interface KYCRecord {
@@ -23,6 +22,7 @@ export interface KYCRecord {
     first_name: string;
     last_name: string;
     company_name: string;
+    country?: string;
   };
   kyc_documents: {
     id: string;
@@ -114,7 +114,7 @@ export default function KycReviewModal({
             </div>
             <div>
               <p className='text-xs font-normal text-gray-500'>Country</p>
-              <p className='mt-1 text-sm font-medium text-gray-900'>Brazil</p>
+              <p className='mt-1 text-sm font-medium text-gray-900'>{record.client_profiles?.country || '-'}</p>
             </div>
             <div>
               <p className='text-xs font-normal text-gray-500'>Registration Number</p>

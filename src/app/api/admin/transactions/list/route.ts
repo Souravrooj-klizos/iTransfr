@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     // Build query with joins
     let query = supabaseAdmin
       .from('transactions')
-      .select('*, client_profiles!userId(first_name, last_name, company_name)', { count: 'exact' });
+      .select('*, client_profiles!userId(first_name, last_name, company_name), payout_requests!transactionId(recipientName, recipientBank, recipientAccount, recipientCountry)', { count: 'exact' });
 
     // Apply filters
     if (type && type !== 'all') {
@@ -62,6 +62,14 @@ export async function GET(request: NextRequest) {
         ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim()
         : 'Unknown';
 
+      // Get recipient from multiple sources (priority order)
+      // Note: recipientName column doesn't exist on transactions table, so check metadata first
+      const payoutRequest = tx.payout_requests?.[0] as any;
+      const recipientName =
+        tx.metadata?.recipientName ||  // From transaction metadata (primary source)
+        payoutRequest?.recipientName ||  // From payout_requests table
+        (tx.type === 'deposit' ? 'Self (Deposit)' : 'N/A');
+
       return {
         id: tx.id,
         date: formatDate(tx.createdAt),
@@ -69,7 +77,7 @@ export async function GET(request: NextRequest) {
         clientName: fullName || 'Unknown',
         clientEmail: '', // Email column does not exist in client_profiles
         companyName: profile?.company_name || '',
-        recipient: tx.recipientName || 'N/A',
+        recipient: recipientName,
         transactionType: mapTransactionType(tx.type),
         paymentMethod: mapPaymentMethod(tx.type, tx.metadata),
         status: mapStatus(tx.status),

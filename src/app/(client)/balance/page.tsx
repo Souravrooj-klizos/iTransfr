@@ -184,15 +184,7 @@ export default function BalancePage() {
 
         {/* Right Column - Crypto Transactions Table */}
         <div className='lg:col-span-2'>
-          <CryptoTransactionsTable transactions={transactions} />
-          {transactions.length === 0 && !loading && (
-            <div className='rounded-xl border border-gray-200 bg-white p-8 text-center'>
-              <p className='text-gray-500'>No crypto transactions yet</p>
-              <a href='/deposit' className='mt-2 inline-block text-blue-600 hover:text-blue-800'>
-                Make your first deposit →
-              </a>
-            </div>
-          )}
+          <CryptoTransactionsTable transactions={transactions} loading={loading} />
         </div>
       </div>
     </div>

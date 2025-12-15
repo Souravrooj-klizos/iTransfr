@@ -43,11 +43,20 @@ export default function TransactionsPage() {
 
   useEffect(() => {
     fetchTransactions();
+
+    // Poll every 5 seconds for real-time updates
+    const intervalId = setInterval(() => {
+      if (!document.hidden) {
+        fetchTransactions(true); // true = silent refresh
+      }
+    }, 5000);
+
+    return () => clearInterval(intervalId);
   }, [activePage, rowsPerPage, filter, status]);
 
-  async function fetchTransactions() {
+  async function fetchTransactions(silent = false) {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
 
       const params = new URLSearchParams();
       params.set('page', activePage.toString());
@@ -324,7 +333,7 @@ export default function TransactionsPage() {
           {/* Right Side: Refresh + Date Picker */}
           <div className='flex items-center gap-2'>
             <button
-              onClick={fetchTransactions}
+              onClick={() => fetchTransactions()}
               disabled={loading}
               className='flex items-center gap-2 rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50'
             >

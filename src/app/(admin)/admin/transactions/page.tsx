@@ -7,14 +7,14 @@ import { DatePicker } from '@/components/ui/DatePicker';
 import { Pagination } from '@/components/ui/Pagination';
 import { Select } from '@/components/ui/Select';
 import {
-  CheckCircle,
-  Download,
-  Eye,
-  Loader2,
-  MoreVertical,
-  RefreshCw,
-  Search,
-  Send,
+    CheckCircle,
+    Download,
+    Eye,
+    Loader2,
+    MoreVertical,
+    RefreshCw,
+    Search,
+    Send,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -57,11 +57,22 @@ export default function AdminTransactionsPage() {
 
   useEffect(() => {
     fetchTransactions();
+
+    // Poll every 5 seconds for real-time updates
+    const intervalId = setInterval(() => {
+      // Only fetch if not already loading (to avoid stacking requests)
+      // Note: In a real app, you might want to use SWR or React Query for better polling handling
+      if (!document.hidden) {
+        fetchTransactions(true); // true = silent refresh (don't set main loading state)
+      }
+    }, 5000);
+
+    return () => clearInterval(intervalId);
   }, [activePage, rowsPerPage, filter, status]);
 
-  async function fetchTransactions() {
+  async function fetchTransactions(silent = false) {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       setError(null);
 
       const params = new URLSearchParams();
@@ -450,7 +461,7 @@ export default function AdminTransactionsPage() {
           {/* Right Side: Refresh + Date Picker */}
           <div className='flex items-center gap-2'>
             <button
-              onClick={fetchTransactions}
+              onClick={() => fetchTransactions()}
               disabled={loading}
               className='flex items-center gap-2 rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50'
             >
